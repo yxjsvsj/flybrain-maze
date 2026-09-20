@@ -120,7 +120,7 @@ PRESETS = {
         enc=dict(chase_size_gain=0.0, chase_growth_gain=0.0, forward_drive_dv=0.0),
         dec=dict(window_s=0.25, ref_hz=10.0, baseline_hz=0.0, turn_gain=0.8,
                  fwd_gain=0.6, back_gain=0.6, escape_thresh=1.0, deadzone=0.15,
-                 turn_sign=1.0),
+                 turn_sign=1.0, stall_turn_mode="spin"),
     ),
     # DNa02 每侧只有 1 个神经元，发放率被量化成 1/window_s 一跳（0.4s -> 2.5 Hz），
     # 所以 deadzone 基本不起作用，差值总是远大于它。turn_gain 实测 2.0 最好
@@ -133,7 +133,7 @@ PRESETS = {
                  loom_size_gain=0.0, loom_growth_gain=0.5),
         dec=dict(window_s=0.4, ref_hz=4.0, baseline_hz=0.3, turn_gain=2.0,
                  fwd_gain=3.0, back_gain=1.5, escape_thresh=0.4, deadzone=0.15,
-                 turn_sign=-1.0),
+                 turn_sign=-1.0, stall_turn_mode="hold"),
     ),
 }
 
