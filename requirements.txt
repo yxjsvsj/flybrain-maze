@@ -1,0 +1,4 @@
+flybrain[gpu]>=0.1.0
+numpy>=2.0
+matplotlib>=3.9
+imageio-ffmpeg>=0.5   # 只有录 mp4 才需要；录 gif 用 matplotlib 自带的 PillowWriter
