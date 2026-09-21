@@ -114,6 +114,10 @@ class NavConfig:
     unknown_cost: float = 4.0     # 未知格通行代价。1=很敢穿未知区，越大越保守
     lookahead: float = 0.9        # 纯追踪前瞻距离（格）
     arrive_dist: float = 0.6      # 判定"到达当前路点"的距离，触发重规划
+    # 偏离路径判据：车到**剩余路径**的连续距离容差（格）。
+    # 配合栅格 8 邻接判据使用——只要车格与剩余路径任一格相邻就仍算"在路径附近"，
+    # 所以正常切弯不会误判。明显离开才失效重规划。
+    off_path_tol: float = 1.5
 
 
 @dataclass

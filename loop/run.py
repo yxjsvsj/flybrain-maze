@@ -302,7 +302,8 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
         memory = OccupancyMemory(maze.w, maze.h, cfg.encoder.max_range,
                                  unknown_cost=cfg.nav.unknown_cost,
                                  lookahead=cfg.nav.lookahead,
-                                 arrive_dist=cfg.nav.arrive_dist)
+                                 arrive_dist=cfg.nav.arrive_dist,
+                                 off_path_tol=cfg.nav.off_path_tol)
         if maze.goal is not None:
             memory.set_goal(maze.goal[0], maze.goal[1])
 
@@ -375,6 +376,8 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                 "bearing_err": info.get("bearing_err", float("nan")),
                 "path_len": memory.path_len if memory else 0,
                 "replans": memory.replans if memory else 0,
+                "off_path_events": memory.off_path_events if memory else 0,
+                "offpath_dist": memory.last_offpath_dist if memory else float("nan"),
                 "goal_dist": d,
             })
 
@@ -410,6 +413,9 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                             if (reached_goal and car.distance > 0 and optimal > 0) else -1.0),
         "map_explored": memory.explored_fraction(len(maze.free_cells())) if memory else -1.0,
         "replans": memory.replans if memory else 0,
+        "off_path_events": memory.off_path_events if memory else 0,
+        "max_offpath_dist": memory.max_offpath_dist if memory else -1.0,
+        "max_target_dist": memory.max_target_dist if memory else -1.0,
         "realtime_factor": sim_time / wall if wall > 0 else float("inf"),
     }
     return stats

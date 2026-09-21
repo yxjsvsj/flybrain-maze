@@ -179,6 +179,70 @@ def t6():
     assert st["contact_ratio"] < 0.5, f"顶墙时间占比过高: {st['contact_ratio']:.3f}"
 
 
+# ---- Path 生命周期（a-e） ------------------------------------------------------
+def _mem_with_path():
+    """造一条水平直路径 y=5, x=5..15，goal=(15,5)，已知格标 FREE。"""
+    mem = OccupancyMemory(30, 30, 6.0)
+    mem.known[:] = UNKNOWN
+    for x in range(5, 16):
+        mem.known[5, x] = FREE
+    mem.goal = (15, 5)
+    mem.path = [(x, 5) for x in range(5, 16)]
+    mem.wp_idx = 0
+    return mem
+
+
+@check("T7a 车在路径上 -> 不 replan")
+def t7a():
+    mem = _mem_with_path()
+    mem.next_target(6.5, 5.5)
+    assert mem.path is not None, "在路径上不该失效"
+    assert mem.replans == 0, f"不该重规划，replans={mem.replans}"
+    assert mem.off_path_events == 0, "不该判为偏离"
+
+
+@check("T7b 车轻微偏离/切弯 -> 不 replan")
+def t7b():
+    mem = _mem_with_path()
+    mem.next_target(6.5, 6.3)          # 偏离 0.8 格，车格 (6,6) 与路径格 8 邻接
+    assert mem.path is not None, "轻微偏离不该失效（会误杀正常切弯）"
+    assert mem.replans == 0, f"不该重规划，replans={mem.replans}"
+    assert mem.off_path_events == 0, "不该判为偏离"
+
+
+@check("T7c 车明显离开剩余路径 -> 立即失效并重规划")
+def t7c():
+    mem = _mem_with_path()
+    mem.next_target(6.5, 9.5)          # 偏离 4 格，拓扑上也不邻接
+    assert mem.off_path_events == 1, f"应判为偏离，得到 {mem.off_path_events}"
+    assert mem.replans == 1, f"应重规划一次，得到 {mem.replans}"
+    assert mem.path is not None, "重规划后应有新路径"
+    assert mem.path[0] == (6, 9), f"新路径应从车所在格出发，得到 {mem.path[0]}"
+
+
+@check("T7d 车已前进到路径后段 -> wp_idx 向前同步，不追旧路点")
+def t7d():
+    mem = _mem_with_path()
+    tgt = mem.next_target(12.5, 5.5)   # 车格 (12,5) 在路径索引 7
+    assert mem.wp_idx >= 7, f"wp_idx 应单调同步到 7，得到 {mem.wp_idx}"
+    assert mem.path is not None, "在路径上不该失效"
+    assert mem.replans == 0, f"不该重规划，replans={mem.replans}"
+    assert tgt is not None, "在路径上应给出瞄准点"
+    tx, ty, d = tgt
+    assert d < 1.6, f"瞄准点应在前方近处，得到 dist={d:.2f}"
+    assert tx > 12.0, f"不该回头追旧路点，得到 target=({tx:.1f},{ty:.1f})"
+
+
+@check("T7e 剩余路径新出现 OCCUPIED -> 立即重规划")
+def t7e():
+    mem = _mem_with_path()
+    mem.known[5, 8] = OCCUPIED          # 路径中段被证实是墙
+    mem.next_target(6.5, 5.5)
+    assert mem.replans == 1, f"应重规划，得到 {mem.replans}"
+    assert mem.path is not None, "重规划后应有新路径"
+    assert (8, 5) not in mem.path, "新路径不该再穿过已证实是墙的格子"
+
+
 def main():
     print("\n" + "=" * 66)
     n_pass = sum(1 for _, ok, _ in RESULTS if ok)

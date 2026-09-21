@@ -73,7 +73,8 @@ CONTROLLERS = {
 ROLLOUT_FIELDS = ["controller", "maze_seed", "brain_seed", "device", "rep",
                   "reached_goal", "time_to_goal", "distance", "path_efficiency",
                   "contact_ratio", "collision_events", "stalls", "escapes",
-                  "replans", "front_safety_events", "best_goal_dist",
+                  "replans", "off_path_events", "max_offpath_dist", "max_target_dist",
+                  "front_safety_events", "best_goal_dist",
                   "coverage", "map_explored", "steps_done", "sim_time",
                   "optimal_path_cells", "mean_speed", "brain_ms_per_step"]
 
@@ -303,6 +304,9 @@ def main(argv=None):
             "stalls_mean": float(np.mean([s["stalls"] for s in all_stats])),
             "front_safety_mean": float(np.mean([s["front_safety_events"] for s in all_stats])),
             "replans_mean": float(np.mean([s["replans"] for s in all_stats])),
+            "off_path_events_mean": float(np.mean([s["off_path_events"] for s in all_stats])),
+            "max_offpath_dist_mean": float(np.mean([s["max_offpath_dist"] for s in all_stats])),
+            "max_target_dist_mean": float(np.mean([s["max_target_dist"] for s in all_stats])),
             "map_explored_mean": float(np.mean([s["map_explored"] for s in all_stats])),
             "brain_ms_per_step": float(np.mean([s["brain_ms_per_step"] for s in all_stats])),
             "wall_seconds": time.perf_counter() - t0,
@@ -314,23 +318,26 @@ def main(argv=None):
               f"不稳 {agg['seeds_flaky']}\n")
         sys.stdout.flush()
 
-    print("=" * 112)
+    print("=" * 118)
     print(f"{'controller':<20}{'success':>10}{'rate':>7}{'std':>6}{'always':>8}{'never':>7}"
-          f"{'flaky':>7}{'t_goal':>9}{'pathEff':>9}{'contact':>9}{'replan':>8}{'front':>7}")
-    print("-" * 112)
+          f"{'flaky':>7}{'t_goal':>9}{'pathEff':>9}{'contact':>9}{'replan':>8}"
+          f"{'offpath':>9}{'maxTgt':>8}{'front':>7}")
+    print("-" * 118)
     for r in rows:
         print(f"{r['controller']:<20}{r['n_maze_seeds']:>4}x{r['reps']:<5}"
               f"{r['success_rate'] * 100:>6.0f}%{r['success_rate_std_across_mazes'] * 100:>5.0f}%"
               f"{r['seeds_always']:>8}{r['seeds_never']:>7}{r['seeds_flaky']:>7}"
               f"{r['time_to_goal_mean']:>9.1f}{r['path_efficiency_mean']:>9.3f}"
               f"{r['contact_ratio_mean']:>9.3f}{r['replans_mean']:>8.0f}"
+              f"{r['off_path_events_mean']:>9.1f}{r['max_target_dist_mean']:>8.2f}"
               f"{r['front_safety_mean']:>7.1f}")
-    print("=" * 112)
+    print("=" * 118)
     print("success = n_maze_seeds x reps；rate = 各 maze 成功概率的均值（每个 maze 等权）")
     print("std    = 各 maze 成功概率的离散度（跨迷宫，不是跨 rollout）")
     print("always/never/flaky = 全成功 / 全失败 / 结果不稳的 maze 数")
     print("t_goal = 到达终点的平均耗时(s)，只统计成功的 rollout")
     print("pathEff = 最优格数 / 实际行驶距离（越接近 1 越高效）")
+    print("offpath = 因明显偏离路径而失效重规划的均值；maxTgt = 最大瞄准点距离均值")
 
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as fh:

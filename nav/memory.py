@@ -34,13 +34,14 @@ class OccupancyMemory:
 
     def __init__(self, width: int, height: int, max_range: float,
                  unknown_cost: float = 4.0, lookahead: float = 0.9,
-                 arrive_dist: float = 0.6):
+                 arrive_dist: float = 0.6, off_path_tol: float = 1.5):
         self.w, self.h = int(width), int(height)
         self.max_range = float(max_range)
         # 未知格的通行代价。1 = 完全敢穿未知区，越大越保守（只在必要时才走未知区）
         self.unknown_cost = float(unknown_cost)
         self.lookahead = float(lookahead)
         self.arrive_dist = float(arrive_dist)
+        self.off_path_tol = float(off_path_tol)
         self.known = np.zeros((self.h, self.w), np.uint8)
         self.visited = np.zeros((self.h, self.w), bool)
         self.goal: tuple[int, int] | None = None
@@ -51,7 +52,11 @@ class OccupancyMemory:
         self.exhausted = False
         self.goal_planned = False        # 规划器当前能解出到终点的路径
         self.goal_reached_map = False    # 终点格子已在地图上被确认为自由
-        self.replans = 0                 # 真正重新执行规划的次数（诊断用）
+        self.replans = 0                 # 真正执行规划算法的次数（诊断用）
+        self.off_path_events = 0         # 因明显偏离路径而失效重规划的次数
+        self.last_offpath_dist = 0.0     # 最近一次判定的"到剩余路径距离"
+        self.max_offpath_dist = 0.0      # 全程最大偏离距离（诊断用）
+        self.max_target_dist = 0.0       # 全程最大瞄准点距离（诊断用）
 
     # ---- 建图（只用 angles + dists） -----------------------------------------
     def _traverse(self, ox: float, oy: float, angle: float, dist: float,
@@ -207,25 +212,67 @@ class OccupancyMemory:
                     heapq.heappush(pq, (nd, nx, ny))
         return None
 
+    def _sync_and_check_offpath(self, x: float, y: float) -> bool:
+        """判断车是否**明显离开了剩余路径**，同时把 wp_idx 单调向前同步。
+
+        为什么需要它：车一旦跑离路径（打滑、逃逸、急转），旧路径的
+        `stale`（格子被证实是墙）和 `arrived`（到达路径末端）都不会触发，
+        路径永远不失效。于是前瞻点越来越远，`target_dist` 涨到 5~9 格，
+        而纯追踪增益是 `2*v*sin(err)/L`，L 一大增益就塌，车再也转不回来。
+
+        判据用**栅格拓扑 + 连续距离容差**，不用 target_dist 阈值：
+          * 车格与剩余路径任一格 8 邻接（含自身）-> 仍算在路径附近（允许切弯）
+          * 否则看车到最近剩余路径点的连续距离，超过 off_path_tol 才算明显偏离
+
+        wp_idx **只允许前进**，不做最近点回溯。
+        """
+        if self.path is None:
+            return False
+        rem = self.path[self.wp_idx:]
+        if not rem:
+            return False
+
+        # 最近点只在 [wp_idx, end) 里找，不回头
+        best_i, best_d = self.wp_idx, float("inf")
+        for i in range(self.wp_idx, len(self.path)):
+            px, py = self.path[i]
+            d = math.hypot(px + 0.5 - x, py + 0.5 - y)
+            if d < best_d:
+                best_d, best_i = d, i
+        self.last_offpath_dist = best_d
+        self.max_offpath_dist = max(self.max_offpath_dist, best_d)
+        if best_i > self.wp_idx:                 # 单调向前同步
+            self.wp_idx = best_i
+
+        cx, cy = int(x), int(y)
+        for px, py in self.path[self.wp_idx:]:
+            if abs(cx - px) <= 1 and abs(cy - py) <= 1:
+                return False                     # 拓扑上仍贴着路径
+        return best_d > self.off_path_tol        # 明显离开
+
     def next_target(self, x: float, y: float, lookahead: float | None = None):
         """纯追踪的瞄准点，返回 (tx, ty, dist)；没有目标返回 None。
 
         三个坑：
         * 不能用"到第 N 个路点的方位"——路径拐弯时那个方向会指穿墙。
         * 路径不能每步重规划——相邻步的目标会来回跳，车跟着抖。
-        * **走到路径尽头必须重规划**——否则车会绕着最后一个路点画圈，永远"到不了"。
+        * **走到路径尽头、或明显偏离路径，都必须重规划**——否则车会绕着
+          最后一个路点画圈，或者追着一个越来越远的陈旧路点漂走。
         """
         la = self.lookahead if lookahead is None else float(lookahead)
         gx, gy = int(x), int(y)
 
         if self.path is not None:
-            # 只有"计划中的格子被传感器证实是墙"才废弃路径。
+            # 只有"计划中的格子被传感器证实是墙"才因 stale 失效。
             # UNKNOWN 不能算 stale——否则 Dijkstra 规划出来的穿未知区路径会在
             # 下一帧立刻被判过期，变成每个控制周期都重新规划。
             stale = any(self.known[b, a] == OCCUPIED for a, b in self.path[self.wp_idx:])
             lx, ly = self.path[-1]
             arrived = math.hypot(lx + 0.5 - x, ly + 0.5 - y) < self.arrive_dist
-            if stale or arrived:
+            off_path = self._sync_and_check_offpath(x, y)
+            if off_path:
+                self.off_path_events += 1
+            if stale or arrived or off_path:
                 self.path = None
 
         if self.path is None:
@@ -236,7 +283,7 @@ class OccupancyMemory:
                 # 兜底：终点被彻底围死时退回 frontier 探索
                 self.path = self._bfs(gx, gy, self._is_frontier)
             self.wp_idx = 0
-            self.replans += 1
+            self.replans += 1        # 只在真正执行规划时 +1，invalidation 不重复计数
             if self.path is None:
                 self.exhausted = True
                 self.last_target = None
@@ -254,16 +301,20 @@ class OccupancyMemory:
         for i in range(self.wp_idx, len(self.path)):
             px, py = self.path[i]
             cx, cy = px + 0.5, py + 0.5
-            if math.hypot(cx - x, cy - y) >= la:
+            d = math.hypot(cx - x, cy - y)
+            if d >= la:
                 self.last_target = (cx, cy)
                 self.path_len = len(self.path) - self.wp_idx
-                return cx, cy, math.hypot(cx - x, cy - y)
+                self.max_target_dist = max(self.max_target_dist, d)
+                return cx, cy, d
 
         px, py = self.path[-1]
         cx, cy = px + 0.5, py + 0.5
+        d = math.hypot(cx - x, cy - y)
         self.last_target = (cx, cy)
         self.path_len = len(self.path) - self.wp_idx
-        return cx, cy, math.hypot(cx - x, cy - y)
+        self.max_target_dist = max(self.max_target_dist, d)
+        return cx, cy, d
 
     # ---- 诊断 ----------------------------------------------------------------
     def explored_fraction(self, free_total: int) -> float:
