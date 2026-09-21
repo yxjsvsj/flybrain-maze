@@ -30,8 +30,17 @@ class Encoder:
         self.car_radius = car_radius
         self.angles = np.deg2rad(np.linspace(-cfg.fov_deg / 2, cfg.fov_deg / 2, cfg.n_rays))
         # 相对角逆时针为正。theta=0 时 forward=+x，左侧 = +y = 正角度。
-        self.left = self.angles > 0
-        self.right = self.angles < 0
+        #
+        # 避障只看前向扇区：左后方/右后方的近墙不应该主导转向。
+        # 0° 正前方射线**同时**属于 left 和 right —— 否则正对墙时两条通路都收不到
+        # 信号，转向输出为零，只能靠卡死处理脱困。
+        avoid_half = np.deg2rad(cfg.avoidance_fov_deg / 2)
+        front_half = np.deg2rad(cfg.front_cone_deg / 2)
+        center = np.isclose(self.angles, 0.0, atol=1e-9)
+        forward = np.abs(self.angles) <= avoid_half
+        self.left = forward & ((self.angles > 0) | center)
+        self.right = forward & ((self.angles < 0) | center)
+        self.front = np.abs(self.angles) <= front_half
         self.per_step = 1.0 - np.exp(-brain_dt / tau)
         self.prev_size: dict[str, float] = {"L": 0.0, "R": 0.0}
         self.seen: dict[str, bool] = {"L": False, "R": False}
@@ -93,11 +102,13 @@ class Encoder:
 
         prox_l = 1.0 - dmin_l / self.cfg.max_range
         prox_r = 1.0 - dmin_r / self.cfg.max_range
+        # 正前方锥角内的最近距离：给安全限速层用。建图仍用原始 dists。
+        dmin_f = max(float(dists[self.front].min()) - self.car_radius, 0.05)
         info = {
             "bias": float(prox_r - prox_l),      # >0 表示右侧更危险 -> 往左躲
             "prox_l": float(prox_l), "prox_r": float(prox_r),
             "loom_L": loom_l, "loom_R": loom_r,
             "threat_L": thr_l, "threat_R": thr_r,
-            "dmin_L": dmin_l, "dmin_R": dmin_r,
+            "dmin_L": dmin_l, "dmin_R": dmin_r, "dmin_F": float(dmin_f),
         }
         return inject, info

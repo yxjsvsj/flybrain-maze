@@ -25,8 +25,8 @@ from world.maze import MAPS, Maze, generate
 
 # 两种脑的时间尺度不同：真脑的预设是按 dt=20ms 标的，假脑用 10ms 控制更细。
 DEFAULT_DT = {"fake": 0.01, "real": 0.02}
-# 自检默认跑多久（步数）；覆盖率是随时间涨的，真脑慢所以步数少但 dt 大。
-CHECK_STEPS = {"fake": 12000, "real": 3000}
+# 自检跑多久（**物理秒数**，不是步数）。两种脑的 dt 不同，用秒才能公平比较。
+CHECK_SIM_SECONDS = {"fake": 120.0, "real": 120.0}
 
 
 def make_maze(map_name: str, seed: int = 0, cells: tuple[int, int] = (9, 6),
@@ -44,8 +44,14 @@ def make_setup(brain_kind: str = "fake", map_name: str = "track", dt: float | No
                device: str = "auto", seed: int = 64, preset: str | None = None,
                sensory_input: bool = False, brain=None, verbose: bool = True,
                maze_seed: int = 0, maze_cells: tuple[int, int] = (9, 6),
-               maze_scale: int = 2, maze_loop: float = 0.08):
-    """装配一次仿真的全部部件。传 brain 可以复用已建好的脑（对比脚本用）。"""
+               maze_scale: int = 2, maze_loop: float = 0.08,
+               make_decoder: bool = True):
+    """装配一次仿真的全部部件。传 brain 可以复用已建好的脑（对比脚本用）。
+
+    make_decoder=False 时不创建 Decoder，留给调用方在**应用完所有 CLI 覆盖参数之后**
+    再创建。否则 --mode readout 这类需要在 __init__ 里加载读出头/建 Trace 的配置
+    会来不及生效（Decoder 已经按旧 cfg 建好了）。
+    """
     cfg = Config()
     cfg.brain.kind = brain_kind
     cfg.brain.device = device
@@ -68,34 +74,56 @@ def make_setup(brain_kind: str = "fake", map_name: str = "track", dt: float | No
     dn_idx = np.asarray(brain.cells(["descending_neuron"]))
     enc = Encoder(groups, cfg.encoder, brain.dt, car_max_speed=cfg.car.max_speed,
                   car_radius=cfg.car.radius)
-    dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
+    dec = None
+    if make_decoder:
+        dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
     return cfg, maze, car, brain, groups, enc, dec
 
 
 def build(args):
-    """从命令行参数装配。"""
+    """从命令行参数装配。
+
+    顺序很重要：先建 Config 和应用全部 CLI 覆盖，**最后**才建 Decoder。
+    """
     cells = args.maze_cells.lower().split("x")
     if len(cells) != 2:
         raise SystemExit(f"--maze-cells 要写成 WxH，比如 13x9，收到 {args.maze_cells!r}")
-    cfg, maze, car, brain, groups, enc, dec = make_setup(
+    cfg, maze, car, brain, groups, enc, _ = make_setup(
         brain_kind=args.brain, map_name=args.map, dt=args.dt, device=args.device,
         seed=args.seed, preset=args.preset, sensory_input=args.sensory_input,
         maze_seed=args.maze_seed, maze_cells=(int(cells[0]), int(cells[1])),
         maze_scale=args.maze_scale, maze_loop=args.maze_loop,
+        make_decoder=False,
     )
+
+    cfg.decoder.mode = args.mode
+    cfg.decoder.follow_side = args.follow_side
+    cfg.decoder.memory_gain = args.memory
+    cfg.decoder.brain_gain = args.brain_gain
     if args.turn_sign is not None:
         cfg.decoder.turn_sign = args.turn_sign
     if args.turn_gain is not None:
         cfg.decoder.turn_gain = args.turn_gain
     if args.fwd_gain is not None:
         cfg.decoder.fwd_gain = args.fwd_gain
-    cfg.decoder.mode = args.mode
-    cfg.decoder.follow_side = args.follow_side
-    cfg.decoder.memory_gain = args.memory
-    cfg.decoder.brain_gain = args.brain_gain
-    cfg.decoder.memory_waypoint_gap = args.waypoint_gap
     if args.readout:
         cfg.decoder.readout_path = args.readout
+    if args.no_front_safety:
+        cfg.decoder.front_safety = False
+    if args.unknown_cost is not None:
+        cfg.nav.unknown_cost = args.unknown_cost
+    if args.lookahead is not None:
+        cfg.nav.lookahead = args.lookahead
+    for attr, val in (("range_noise_std", args.range_noise),
+                      ("range_dropout_prob", args.range_dropout),
+                      ("pose_xy_noise_std", args.pose_xy_noise),
+                      ("pose_theta_noise_std", args.pose_theta_noise),
+                      ("motor_tau", args.motor_tau)):
+        if val is not None:
+            setattr(cfg.noise, attr, val)
+
+    dn_idx = np.asarray(brain.cells(["descending_neuron"]))
+    dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
     return cfg, maze, car, brain, groups, enc, dec
 
 
@@ -242,10 +270,15 @@ class Viewer:
 
 
 # --------------------------------------------------------------------------- 主循环
-def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every=5,
-        log_every=None, verbose=True):
+def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float = 5,
+        log_every=None, verbose=True, stop_on_goal=False):
     """render_every 是"每 N 步重绘一次"，可以是小数——录制时传 1/(fps*dt)，
-    内部按时间累加对帧，避免取整让视频时长和仿真时间对不上。"""
+    内部按时间累加对帧，避免取整让视频时长和仿真时间对不上。
+
+    stop_on_goal=True 时一到终点立刻结束，并按**实际跑了多少步**算统计。
+    否则 1200 秒的局里如果 200 秒就到终点，后面 1000 秒的乱跑会污染
+    coverage / distance / collision / stall / explored 全部指标。
+    """
     dt = brain.dt
     log_every = log_every or max(1, int(round(1.0 / dt)))
     render_period = float(render_every) * dt
@@ -254,24 +287,30 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every=5,
     stalled = False
     best_goal = 10 ** 9
     reached_goal = False
+    time_to_goal = -1.0
+    distance_to_goal = -1.0
     t0 = time.perf_counter()
+    steps_done = 0
 
-    # 记忆层：只用射线 + 位姿建图，不偷看真值迷宫
+    # 记忆层：只用射线 + 位姿建图，**不接收 Maze 实例**
     memory = None
     if cfg.decoder.memory_gain > 0:
         from nav.memory import OccupancyMemory
         memory = OccupancyMemory(maze.w, maze.h, cfg.encoder.max_range,
-                                 waypoint_gap=cfg.decoder.memory_waypoint_gap)
+                                 unknown_cost=cfg.nav.unknown_cost,
+                                 lookahead=cfg.nav.lookahead,
+                                 arrive_dist=cfg.nav.arrive_dist)
         if maze.goal is not None:
             memory.set_goal(maze.goal[0], maze.goal[1])
 
     for step in range(steps):
+        steps_done = step + 1
         dists = enc.sense(maze, car)
         inject, info = enc.inject(dists)
 
         if memory is not None:
-            memory.update(maze, car.x, car.y, car.theta + enc.angles)
-            target = memory.next_target(car.x, car.y, memory.lookahead)
+            memory.update(car.x, car.y, car.theta + enc.angles, dists)
+            target = memory.next_target(car.x, car.y)
             if target is not None:
                 tx, ty, dist = target
                 bearing = math.atan2(ty - car.y, tx - car.x)
@@ -291,14 +330,18 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every=5,
         car.set_command(v, omega)
         car.step(maze, dt)
 
-        # 卡死判据：指令上想动，实际却没挪窝
-        stalled = (abs(dec.v) > 0.15 * cfg.car.max_speed
-                   and car.last_move < 0.3 * abs(dec.v) * dt)
+        # 卡死判据：被前方安全层硬停，或者指令上想动实际却没挪窝
+        stalled = (dec.front_blocked
+                   or (abs(dec.v) > 0.15 * cfg.car.max_speed
+                       and car.last_move < 0.3 * abs(dec.v) * dt))
 
         d = maze.dist_to_goal(car.x, car.y)
         if d >= 0:
             best_goal = min(best_goal, d)
-            reached_goal = reached_goal or d == 0
+            if d == 0 and not reached_goal:
+                reached_goal = True
+                time_to_goal = steps_done * dt
+                distance_to_goal = car.distance
 
         if viewer is not None and step * dt >= next_render - 1e-9:
             viewer.update(maze, car, enc, dec, dists, step, dt)
@@ -306,45 +349,67 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every=5,
         elif viewer is None and verbose and step % log_every == 0:
             print(f"t={step * dt:6.2f}s v={dec.v:+.2f} w={dec.omega:+.2f} "
                   f"cov={car.coverage(maze) * 100:4.1f}% hit={car.collision_events} "
-                  f"esc={dec.escapes} stall={dec.stalls}")
+                  f"esc={dec.escapes} stall={dec.stalls} "
+                  f"replan={memory.replans if memory else 0}")
+
+        if stop_on_goal and reached_goal:
+            break
 
     wall = time.perf_counter() - t0
+    sim_time = steps_done * dt
+    optimal = maze.optimal_path()
     stats = {
         "steps": steps,
-        "sim_time": steps * dt,
+        "steps_done": steps_done,
+        "sim_time": sim_time,
         "wall_time": wall,
-        "brain_ms_per_step": brain_ns / steps * 1e3,
+        "brain_ms_per_step": brain_ns / max(1, steps_done) * 1e3,
         "distance": car.distance,
-        "mean_speed": car.distance / (steps * dt),
+        "mean_speed": car.distance / sim_time if sim_time > 0 else 0.0,
         "collisions": car.collisions,
         "collision_events": car.collision_events,
+        "contact_ratio": car.collisions / max(1, steps_done),
         "coverage": car.coverage(maze),
         "escapes": dec.escapes,
         "stalls": dec.stalls,
+        "front_safety_events": dec.front_blocks,
         "best_goal_dist": best_goal if best_goal < 10 ** 9 else -1,
         "reached_goal": reached_goal,
-        "explored": memory.explored_fraction(len(maze.free_cells())) if memory else -1.0,
-        "realtime_factor": (steps * dt) / wall if wall > 0 else float("inf"),
+        "time_to_goal": time_to_goal,
+        "distance_to_goal": distance_to_goal,
+        "optimal_path_cells": optimal,
+        # 路径效率：最优格数 / 实际行驶距离（越接近 1 越好；>1 说明实际比最优短，
+        # 那只能是没到终点，看 time_to_goal 一起判断）
+        "path_efficiency": (optimal / car.distance
+                            if (reached_goal and car.distance > 0 and optimal > 0) else -1.0),
+        "map_explored": memory.explored_fraction(len(maze.free_cells())) if memory else -1.0,
+        "replans": memory.replans if memory else 0,
+        "realtime_factor": sim_time / wall if wall > 0 else float("inf"),
     }
     return stats
 
 
 def print_stats(stats):
-    print("\n" + "=" * 52)
-    print(f"  sim {stats['sim_time']:.1f}s / {stats['steps']} steps")
+    print("\n" + "=" * 60)
+    print(f"  sim {stats['sim_time']:.1f}s / {stats['steps_done']} steps")
     print(f"  distance      {stats['distance']:.2f} cells   mean speed {stats['mean_speed']:.3f} cell/s")
     print(f"  collisions    {stats['collision_events']} events "
-          f"({stats['collisions']} steps in contact)")
+          f"({stats['collisions']} steps in contact, ratio {stats['contact_ratio']:.3f})")
     print(f"  coverage      {stats['coverage'] * 100:.1f}%")
     if stats["best_goal_dist"] >= 0:
         print(f"  goal          closest {stats['best_goal_dist']} cells"
               f"{'   REACHED' if stats['reached_goal'] else ''}")
-    if stats["explored"] >= 0:
-        print(f"  explored map  {stats['explored'] * 100:.1f}%")
-    print(f"  escape events {stats['escapes']}   stall events {stats['stalls']}")
+    if stats["reached_goal"]:
+        print(f"  time to goal  {stats['time_to_goal']:.1f}s   "
+              f"optimal {stats['optimal_path_cells']} cells   "
+              f"path efficiency {stats['path_efficiency']:.3f}")
+    print(f"  escapes {stats['escapes']}   stalls {stats['stalls']}   "
+          f"front-safety {stats['front_safety_events']}   replans {stats['replans']}")
+    if stats["map_explored"] >= 0:
+        print(f"  map explored  {stats['map_explored'] * 100:.1f}%")
     print(f"  brain cost    {stats['brain_ms_per_step']:.2f} ms/step")
     print(f"  realtime x    {stats['realtime_factor']:.2f}")
-    print("=" * 52)
+    print("=" * 60)
 
 
 def main(argv=None):
@@ -360,7 +425,12 @@ def main(argv=None):
     ap.add_argument("--maze-loop", type=float, default=0.08,
                     help="打通的墙的比例，制造环路；0 = 纯树状迷宫（到处死胡同）")
     ap.add_argument("--steps", type=int, default=None,
-                    help=f"脑步数（默认 4000，--check 时 {CHECK_STEPS}）")
+                    help="脑步数。优先用 --sim-seconds（两种脑的 dt 不同，步数没法直接比）")
+    ap.add_argument("--sim-seconds", type=float, default=None,
+                    help="仿真时长（秒）。内部换算 steps = round(sim_seconds/dt)，"
+                         "这样 fake/real 跑的是同一个物理时长，指标才可比")
+    ap.add_argument("--stop-on-goal", action="store_true",
+                    help="一到终点立刻结束，并按实际步数算统计（导航 benchmark 必开）")
     ap.add_argument("--dt", type=float, default=None,
                     help=f"脑步长（秒），默认 fake={DEFAULT_DT['fake']} real={DEFAULT_DT['real']}")
     ap.add_argument("--seed", type=int, default=64, help="随机种子，同种子结果可复现")
@@ -383,31 +453,51 @@ def main(argv=None):
     ap.add_argument("--readout", default="", help="--mode readout 用的 .npz 路径")
     ap.add_argument("--follow-side", choices=["L", "R"], default="R", help="scripted 贴哪侧墙")
     ap.add_argument("--memory", type=float, default=0.0,
-                    help="记忆层权重：>0 开启占用栅格 + frontier 探索（1.0 是正常强度）")
+                    help="记忆层权重：>0 开启占用栅格 + 目标导向规划（1.0 是正常强度）")
     ap.add_argument("--brain-gain", type=float, default=1.0, help="脑转向权重，0 = 不要脑")
-    ap.add_argument("--waypoint-gap", type=int, default=3, help="记忆层前瞻的路点数")
+    ap.add_argument("--unknown-cost", type=float, default=None,
+                    help="未知格通行代价（默认 4.0）。1=很敢穿未知区，越大越保守")
+    ap.add_argument("--lookahead", type=float, default=None, help="纯追踪前瞻距离（格）")
+    ap.add_argument("--no-front-safety", action="store_true",
+                    help="关掉前方安全限速层（消融用；只限速，不决定方向）")
+    # P1-8 仿真噪声，默认全 0
+    ap.add_argument("--range-noise", type=float, default=None, help="测距高斯噪声标准差（格）")
+    ap.add_argument("--range-dropout", type=float, default=None, help="每条射线丢失概率")
+    ap.add_argument("--pose-xy-noise", type=float, default=None, help="位姿 xy 噪声")
+    ap.add_argument("--pose-theta-noise", type=float, default=None, help="位姿朝向噪声")
+    ap.add_argument("--motor-tau", type=float, default=None, help="电机一阶延迟（秒）")
     ap.add_argument("--sensory-input", action="store_true", help="保留感觉神经元上的突触（默认切掉）")
     args = ap.parse_args(argv)
 
     if args.check:
         args.headless = True
         args.video = ""
-    if args.steps is None:
-        args.steps = CHECK_STEPS[args.brain] if args.check else 4000
+    sim_seconds = args.sim_seconds
+    if sim_seconds is None and args.steps is None:
+        sim_seconds = CHECK_SIM_SECONDS[args.brain] if args.check else 400.0
 
     cfg, maze, car, brain, groups, enc, dec = build(args)
+
+    # 步数由物理时长换算（dt 此时才确定）
+    if args.steps is None:
+        if sim_seconds is None:
+            raise SystemExit("内部错误：sim_seconds 未解析")
+        steps = max(2, int(round(sim_seconds / brain.dt)))
+    else:
+        steps = args.steps
+    sim_seconds = steps * brain.dt
 
     viewer, render_every = None, args.render_every
     if args.video:
         viewer = Viewer(maze, video=args.video, fps=args.fps)
         # 录制对帧：--every 显式指定每 N 步一帧（延时摄影），否则按 fps 实时对帧
         render_every = float(args.every) if args.every > 0 else 1.0 / (args.fps * brain.dt)
-        args.steps = max(args.steps, 2)
+        steps = max(steps, 2)
     elif not args.headless:
         viewer = Viewer(maze)
 
-    stats = run(cfg, maze, car, brain, enc, dec, args.steps, viewer=viewer,
-                render_every=render_every)
+    stats = run(cfg, maze, car, brain, enc, dec, steps, viewer=viewer,
+                render_every=render_every, stop_on_goal=args.stop_on_goal)
 
     if viewer is not None:
         viewer.close(args.png)
@@ -420,7 +510,7 @@ def main(argv=None):
 
     if args.check:
         ok = (stats["distance"] > 2.0
-              and stats["collision_events"] < 0.25 * stats["steps"]
+              and stats["collision_events"] < 0.25 * stats["steps_done"]
               and stats["coverage"] > 0.10)
         print(f"\nselfcheck: {'PASS' if ok else 'FAIL'} "
               f"(need distance>2, collision events<25%, coverage>10%)")

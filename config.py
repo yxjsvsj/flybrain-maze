@@ -34,6 +34,10 @@ class EncoderConfig:
     # 所以 size 和 growth 分开给。真脑预设里 loom_size_gain=0 / chase_size_gain=2.0。
     chase_size_gain: float = 0.0    # size -> LC10a
     chase_growth_gain: float = 0.0  # size 变化率 -> LC10a
+    # 避障只用前向扇区，避免左后方/右后方的近墙主导转向。
+    # 240° 全部射线仍保留给建图用。
+    avoidance_fov_deg: float = 120.0  # 参与避障的总张角（±60°）
+    front_cone_deg: float = 40.0      # "正前方"锥角（±20°），用于安全限速
     # 常量注入到前进神经元（DNg100）。模型静息时 DNg100 只有 0.25 Hz，连接组里没有
     # "自发前进"这个指令——Eon 的 embodied fly 同样是手工激活 oDN1 让虚拟果蝇走起来的。
     # 这是全项目唯一一处"凭空加的信号"，别把它当成连接组的产物。
@@ -86,8 +90,13 @@ class DecoderConfig:
     #   brain_gain=1, memory_gain=1  -> 脑管避障，记忆管往哪走
     brain_gain: float = 1.0
     memory_gain: float = 0.0
-    memory_waypoint_gap: int = 3
     turn_slowdown: float = 0.5    # 急转时降速：v *= (1 - k*|turn|)，减少撞墙
+
+    # 前方安全限速层：正前方快撞墙时降速/停车。**只限速，不决定方向**——
+    # 决定方向是果蝇脑的活，不能用手写规则顶替。
+    front_safety: bool = True
+    front_slow_dist: float = 1.0   # 正前方墙距小于它开始线性降速
+    front_stop_dist: float = 0.25  # 小于它禁止继续前进
 
 
 @dataclass
@@ -100,11 +109,32 @@ class BrainConfig:
 
 
 @dataclass
+class NavConfig:
+    """高层导航（nav/memory.py）。"""
+    unknown_cost: float = 4.0     # 未知格通行代价。1=很敢穿未知区，越大越保守
+    lookahead: float = 0.9        # 纯追踪前瞻距离（格）
+    arrive_dist: float = 0.6      # 判定"到达当前路点"的距离，触发重规划
+
+
+@dataclass
+class NoiseConfig:
+    """仿真噪声。默认全 0 —— 先保证无噪声版本稳定，再分阶段加。
+    上实物前至少要把 range_noise_std 打开测一遍。"""
+    range_noise_std: float = 0.0      # 测距高斯噪声标准差（格）
+    range_dropout_prob: float = 0.0   # 每条射线丢失概率（返回 max_range）
+    pose_xy_noise_std: float = 0.0    # 位姿 xy 噪声
+    pose_theta_noise_std: float = 0.0  # 位姿朝向噪声
+    motor_tau: float = 0.0            # 电机一阶延迟时间常数（秒），0 = 无延迟
+
+
+@dataclass
 class Config:
     car: CarConfig = field(default_factory=CarConfig)
     encoder: EncoderConfig = field(default_factory=EncoderConfig)
     decoder: DecoderConfig = field(default_factory=DecoderConfig)
     brain: BrainConfig = field(default_factory=BrainConfig)
+    nav: NavConfig = field(default_factory=NavConfig)
+    noise: NoiseConfig = field(default_factory=NoiseConfig)
 
 
 # 假脑和真脑的发放率量级差很多（真脑静息时下行神经元只有 ~0.25-0.75 Hz），增益不能共用。

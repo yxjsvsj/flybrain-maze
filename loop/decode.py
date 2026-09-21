@@ -50,6 +50,8 @@ class Decoder:
         self.v, self.omega = 0.0, 0.0
         self.escapes = 0
         self.stalls = 0
+        self.front_blocked = False    # 本步是否被前方安全层硬停
+        self.front_blocks = 0         # 累计触发次数
         self.steps = 0
         self.escape_hold = max(1, int(round(cfg.escape_hold_s / dt)))
         self.escape_until = -1
@@ -142,8 +144,26 @@ class Decoder:
         else:
             self.in_stall = False
 
+        # 前方安全限速层：正前方快撞墙时降速/停车。
+        # **只限速，不决定方向**——方向是果蝇脑/规划器的活，手写规则不能顶替它。
+        self.front_blocked = False
+        if cfg.front_safety and v > 0:
+            front = float(info.get("dmin_F", np.inf))
+            if front <= cfg.front_stop_dist:
+                v = 0.0
+                self.front_blocked = True
+                self.front_blocks += 1
+            elif front < cfg.front_slow_dist:
+                ratio = ((front - cfg.front_stop_dist)
+                         / (cfg.front_slow_dist - cfg.front_stop_dist))
+                v *= float(np.clip(ratio, 0.0, 1.0))
+
         a = cfg.smooth
-        self.v = (1 - a) * self.v + a * v
+        if self.front_blocked:
+            # 硬停车不能被输出低通留住旧的正向速度
+            self.v = 0.0
+        else:
+            self.v = (1 - a) * self.v + a * v
         self.omega = (1 - a) * self.omega + a * omega
         self.steps += 1
         return self.v, self.omega
