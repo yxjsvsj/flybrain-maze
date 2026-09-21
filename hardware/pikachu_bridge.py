@@ -115,7 +115,8 @@ class _Mailbox:
 
 LOG_FIELDS = ["t", "sim_x", "sim_y", "sim_theta", "sim_v", "sim_omega",
               "raw_V", "raw_W", "sent_V", "sent_W", "kind",
-              "http_status", "ok", "latency_ms", "note", "state"]
+              "http_status", "ok", "latency_ms", "note", "state",
+              "max_lag_ms", "lag_failures"]
 
 
 class PikachuBridge:
@@ -146,6 +147,9 @@ class PikachuBridge:
         self.slew_events = 0
         self.mailbox_overwrites = 0
         self._put_count = 0
+        # pacer 落后统计（实体运动期间落后是危险信号：实体已经比仿真多执行了旧命令）
+        self.max_lag_ms = 0.0
+        self.lag_failures = 0
 
     # ---- 缩放 + 钳位 --------------------------------------------------------
     def scale(self, sim_v: float, sim_omega: float):
@@ -206,6 +210,16 @@ class PikachuBridge:
             print(f"\n[bridge] *** BLOCKED_GUARD (latched) *** {msg}")
             print("[bridge] Pikachu 处于 guard 模式，/api/drive 被拒绝。"
                   "先关闭 guard 再重新启动 shadow_run。")
+
+    def enter_failsafe(self, reason: str) -> None:
+        """从外部（例如 pacer 落后超限）把 bridge 打进 FAILSAFE。幂等，只从 RUNNING 生效。"""
+        self._latch(BridgeState.FAILSAFE, reason)
+
+    def note_lag(self, lag_s: float) -> None:
+        """记录 pacer 的墙钟落后量（秒）。正数=仿真落后于墙钟。"""
+        ms = max(0.0, lag_s) * 1e3
+        if ms > self.max_lag_ms:
+            self.max_lag_ms = ms
 
     # ---- 启动 ---------------------------------------------------------------
     def start(self) -> bool:
@@ -453,6 +467,8 @@ class PikachuBridge:
             "kind": kind, "http_status": status, "ok": int(bool(ok)),
             "latency_ms": round(latency, 2), "note": note,
             "state": self.state.value,
+            "max_lag_ms": round(self.max_lag_ms, 1),
+            "lag_failures": self.lag_failures,
         }
         with self._log_lock:
             try:
@@ -473,6 +489,8 @@ class PikachuBridge:
             "slew_events": self.slew_events,
             "on_step_calls": self._put_count,
             "last_latency_ms": round(self.last_latency_ms, 2),
+            "max_lag_ms": round(self.max_lag_ms, 1),
+            "lag_failures": self.lag_failures,
             "last_raw": self.last_raw,
             "last_sent": self.last_sent,
             "last_error": self.last_error,

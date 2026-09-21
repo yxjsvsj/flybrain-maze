@@ -38,35 +38,49 @@ class RealTimePacer:
     """让仿真时间跟墙钟对齐：sim 1s ≈ wall 1s。
 
     用绝对目标时间 `t0 + sim_t` 而不是"每次睡一个周期"，避免累计漂移。
-    落后超过 max_lag 时重新对齐，避免"追赶"造成指令突发。
+
+    `allow_resync` 决定落后超限时怎么办：
+      True  （dry-run / 无实体）：静默重对齐，继续跑。
+      False （**实体运动期间**）：不重对齐，把 lag 原样返回给调用方。
+             因为此时实体车已经比仿真多执行了旧命令，静默继续跑是危险的——
+             必须由调用方停车并 latch。
 
     只在 shadow runner 里阻塞；Bridge 本身仍是非阻塞的，冻结的 run() 也不变。
     """
 
-    def __init__(self, max_lag_s: float = 0.5, enabled: bool = True):
+    def __init__(self, max_lag_s: float = 0.5, enabled: bool = True,
+                 allow_resync: bool = True):
         self.enabled = bool(enabled)
         self.max_lag = float(max_lag_s)
+        self.allow_resync = bool(allow_resync)
         self.t0 = time.perf_counter()
         self.resyncs = 0
         self.slept_s = 0.0
         self.max_lag_seen = 0.0
+        self.late_events = 0        # lag > 0 的次数
 
-    def wait(self, sim_t: float) -> None:
+    def wait(self, sim_t: float) -> float:
+        """返回本次的墙钟落后量（秒，正数=仿真落后）。"""
         if not self.enabled:
-            return
+            return 0.0
         now = time.perf_counter()
         target = self.t0 + sim_t
         lag = now - target
         if lag > self.max_lag_seen:
             self.max_lag_seen = lag
-        if lag > self.max_lag:                 # 落后太多：重新对齐，不追赶
-            self.t0 = now - sim_t
-            self.resyncs += 1
-            return
+        if lag > 0:
+            self.late_events += 1
+        if lag > self.max_lag:
+            if self.allow_resync:
+                self.t0 = now - sim_t      # 重新对齐，不追赶
+                self.resyncs += 1
+                return 0.0
+            return lag                      # 交给调用方处理（停车 + latch）
         if lag < 0:
             d = -lag
             self.slept_s += d
             time.sleep(d)
+        return lag
 
 
 def main(argv=None) -> int:
@@ -103,12 +117,17 @@ def main(argv=None) -> int:
     ap.add_argument("--log", default="hardware_log.csv")
     # ---- 节拍 ----
     ap.add_argument("--no-realtime", action="store_true",
-                    help="不按墙钟节拍（干跑用；真跑实体时必须开节拍）")
-    ap.add_argument("--max-lag", type=float, default=0.5)
+                    help="不按墙钟节拍（只允许在 --dry-run 下用；实体运动时必须开节拍）")
+    ap.add_argument("--max-pacer-lag", type=float, default=0.25,
+                    help="墙钟落后超过它（秒）就停车 + FAILSAFE latch。"
+                         "实体模式下不重对齐；dry-run 下只重对齐")
     args = ap.parse_args(argv)
 
     if not args.dry_run and not args.pikachu_url:
         print("需要 --pikachu-url（或先加 --dry-run 干跑）")
+        return 2
+    if not args.dry_run and args.no_realtime:
+        print("实体运动必须开节拍。--no-realtime 只允许配合 --dry-run。")
         return 2
 
     cells = tuple(int(v) for v in args.maze_cells.lower().split("x"))
@@ -135,7 +154,10 @@ def main(argv=None) -> int:
         max_v=args.max_v, max_w=args.max_w, max_motor_mix=args.max_motor_mix,
         slew_rate=args.slew_rate, dry_run=args.dry_run, log_path=args.log)
     bridge = PikachuBridge(pcfg)
-    pacer = RealTimePacer(max_lag_s=args.max_lag, enabled=not args.no_realtime)
+    hardware_mode = not args.dry_run
+    pacer = RealTimePacer(max_lag_s=args.max_pacer_lag,
+                          enabled=not args.no_realtime,
+                          allow_resync=not hardware_mode)
 
     print(f"[shadow] sim {args.sim_seconds:.0f}s = {steps} steps @ dt={brain.dt*1000:.0f}ms")
     print(f"[shadow] 缩放: v/{cfg.car.max_speed:.2f}*{args.v_gain:g} -> |V|<={args.max_v:.2f}   "
@@ -143,9 +165,16 @@ def main(argv=None) -> int:
           f"mix<={args.max_motor_mix:.2f}")
     print(f"[shadow] 发送 {args.rate_hz:g}Hz  timeout {args.timeout*1000:.0f}ms  "
           f"realtime={'off' if args.no_realtime else 'on'}  log={args.log}")
+    print(f"[shadow] pacer: max_lag={args.max_pacer_lag*1000:.0f}ms  "
+          f"超限行为={'重对齐(dry-run)' if not hardware_mode else '停车+FAILSAFE latch'}")
 
     def trace_callback(rec: dict) -> None:
-        pacer.wait(rec["t"])
+        lag = pacer.wait(rec["t"])
+        bridge.note_lag(lag)
+        if hardware_mode and lag > args.max_pacer_lag:
+            bridge.enter_failsafe(
+                f"pacer 落后 {lag*1000:.0f}ms > {args.max_pacer_lag*1000:.0f}ms："
+                f"实体已比仿真多执行旧命令，停车")
         bridge.on_step(rec)
 
     def _on_signal(signum, _frame):
@@ -177,7 +206,8 @@ def main(argv=None) -> int:
         print_stats(stats)
     print("\n[shadow] bridge:", bridge.stats())
     print(f"[shadow] pacer: slept={pacer.slept_s:.1f}s resyncs={pacer.resyncs} "
-          f"max_lag_seen={pacer.max_lag_seen*1000:.0f}ms")
+          f"late={pacer.late_events} max_lag_seen={pacer.max_lag_seen*1000:.0f}ms "
+          f"lag_failures={bridge.lag_failures}")
     return 0
 
 

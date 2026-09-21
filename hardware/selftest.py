@@ -373,6 +373,60 @@ def t14():
     assert 0.07 < elapsed2 < 0.15, f"后续 0.1s 仿真应约等 0.1s 墙钟，实际 {elapsed2:.3f}s"
 
 
+@check("T15 RealTimePacer：实体模式(allow_resync=False) 不重对齐，原样返回 lag")
+def t15():
+    p = RealTimePacer(max_lag_s=0.05, enabled=True, allow_resync=False)
+    time.sleep(0.4)                                # 人为落后 0.4s
+    lag = p.wait(0.0)
+    assert lag > 0.05, f"实体模式应把 lag 返回给调用方，得到 {lag}"
+    assert p.resyncs == 0, f"实体模式不该静默重对齐，resyncs={p.resyncs}"
+    assert p.max_lag_seen >= 0.39, f"应记录 max_lag_seen，得到 {p.max_lag_seen}"
+    # 未超阈值时仍正常按节拍
+    p2 = RealTimePacer(max_lag_s=0.25, enabled=True, allow_resync=False)
+    t0 = time.perf_counter()
+    for k in range(11):
+        p2.wait(k * 0.01)
+    el = time.perf_counter() - t0
+    assert 0.07 < el < 0.16, f"未超阈值应正常节拍，实际 {el:.3f}s"
+    assert p2.resyncs == 0
+    # dry-run 模式（allow_resync=True）才会重对齐
+    p3 = RealTimePacer(max_lag_s=0.05, enabled=True, allow_resync=True)
+    time.sleep(0.3)
+    p3.wait(0.0)
+    assert p3.resyncs == 1, "dry-run 模式应重对齐"
+
+
+@check("T16 pacer 落后超限 -> enter_failsafe，之后只发 STOP 且不自动恢复")
+def t16():
+    srv = MockServer()
+    try:
+        b = PikachuBridge(base_cfg(srv.url, max_failures=99))
+        assert b.start()
+        b.on_step(rec(v=0.5, omega=0.0))
+        time.sleep(0.15)
+        n0 = len(srv.drives())
+        b.note_lag(0.31)
+        b.enter_failsafe("pacer 落后 310ms > 250ms")
+        assert b.state is BridgeState.FAILSAFE, f"得到 {b.state}"
+        st = b.stats()
+        assert abs(st["max_lag_ms"] - 310.0) < 1e-6, st
+        time.sleep(0.4)
+        after = srv.drives()[n0:]
+        assert after, "FAILSAFE 后应仍在发 STOP"
+        bad = [x for x in after
+               if float(x.get("v", 0)) != 0.0 or float(x.get("w", 0)) != 0.0]
+        assert not bad, f"FAILSAFE 后发了非零指令: {bad[:3]}"
+        # 即使一切恢复正常也不自动恢复运动
+        for i in range(10):
+            b.on_step(rec(v=0.9, omega=0.0, t=i * 0.02))
+            time.sleep(0.02)
+        time.sleep(0.15)
+        assert b.state is BridgeState.FAILSAFE, "FAILSAFE 不应自动恢复"
+        b.stop()
+    finally:
+        srv.close()
+
+
 def main() -> int:
     print("\n" + "=" * 70)
     n_pass = sum(1 for _, ok, _ in RESULTS if ok)
