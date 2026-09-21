@@ -271,14 +271,17 @@ class Viewer:
 
 # --------------------------------------------------------------------------- 主循环
 def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float = 5,
-        log_every=None, verbose=True, stop_on_goal=False):
+        log_every=None, verbose=True, stop_on_goal=False, trace_fn=None,
+        trace_every=1):
     """render_every 是"每 N 步重绘一次"，可以是小数——录制时传 1/(fps*dt)，
     内部按时间累加对帧，避免取整让视频时长和仿真时间对不上。
 
     stop_on_goal=True 时一到终点立刻结束，并按**实际跑了多少步**算统计。
     否则 1200 秒的局里如果 200 秒就到终点，后面 1000 秒的乱跑会污染
     coverage / distance / collision / stall / explored 全部指标。
-    """
+
+    trace_fn(rec) 每 trace_every 步被调一次，rec 是一个诊断 dict。只用于分析，
+    不影响控制。"""
     dt = brain.dt
     log_every = log_every or max(1, int(round(1.0 / dt)))
     render_period = float(render_every) * dt
@@ -321,6 +324,9 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                 v_used = max(abs(dec.v), 0.35 * cfg.car.max_speed)
                 turn_pp = 2.0 * v_used * math.sin(err) / (L * cfg.car.max_omega)
                 info["pursuit_turn"] = float(np.clip(turn_pp, -1.0, 1.0))
+                info["bearing_err"] = float(err)
+                info["target"] = (float(tx), float(ty))
+                info["target_dist"] = float(dist)
 
         tb = time.perf_counter()
         fired = brain.step(inject=inject)
@@ -351,6 +357,26 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                   f"cov={car.coverage(maze) * 100:4.1f}% hit={car.collision_events} "
                   f"esc={dec.escapes} stall={dec.stalls} "
                   f"replan={memory.replans if memory else 0}")
+
+        if trace_fn is not None and step % trace_every == 0:
+            trace_fn({
+                "step": step, "t": step * dt,
+                "x": car.x, "y": car.y, "theta": car.theta,
+                "v": dec.v, "omega": dec.omega,
+                "brain_turn": dec.last_brain_turn,
+                "pursuit_turn": dec.last_pursuit_turn,
+                "turn_cmd": dec.last_turn_cmd,
+                "dmin_F": info.get("dmin_F", float("nan")),
+                "dmin_L": info.get("dmin_L", float("nan")),
+                "dmin_R": info.get("dmin_R", float("nan")),
+                "front_blocked": dec.front_blocked,
+                "target": info.get("target"),
+                "target_dist": info.get("target_dist", float("nan")),
+                "bearing_err": info.get("bearing_err", float("nan")),
+                "path_len": memory.path_len if memory else 0,
+                "replans": memory.replans if memory else 0,
+                "goal_dist": d,
+            })
 
         if stop_on_goal and reached_goal:
             break

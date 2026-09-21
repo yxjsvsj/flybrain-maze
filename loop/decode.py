@@ -52,6 +52,10 @@ class Decoder:
         self.stalls = 0
         self.front_blocked = False    # 本步是否被前方安全层硬停
         self.front_blocks = 0         # 累计触发次数
+        # 诊断用：把这一步的各个转向分量暴露出来，便于定位失败原因
+        self.last_brain_turn = 0.0
+        self.last_pursuit_turn = 0.0
+        self.last_turn_cmd = 0.0
         self.steps = 0
         self.escape_hold = max(1, int(round(cfg.escape_hold_s / dt)))
         self.escape_until = -1
@@ -111,9 +115,12 @@ class Decoder:
             v = self.car_cfg.max_speed * float(np.clip(drive, -1, 1))
 
         # 记忆只提供"往哪走"的高层偏置，低层转向仍由脑给出。两者权重可分别消融。
+        self.last_brain_turn = float(brain_turn)
+        self.last_pursuit_turn = float(info.get("pursuit_turn", 0.0))
         turn_cmd = (cfg.brain_gain * brain_turn
-                    + cfg.memory_gain * float(info.get("pursuit_turn", 0.0)))
+                    + cfg.memory_gain * self.last_pursuit_turn)
         turn_cmd = float(np.clip(turn_cmd, -1.0, 1.0))
+        self.last_turn_cmd = turn_cmd
         omega = self.car_cfg.max_omega * turn_cmd
         # 急转降速：不减速的话会带着满舵冲进墙里
         v *= 1.0 - cfg.turn_slowdown * abs(turn_cmd)
