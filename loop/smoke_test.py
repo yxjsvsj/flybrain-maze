@@ -243,6 +243,105 @@ def t7e():
     assert (8, 5) not in mem.path, "新路径不该再穿过已证实是墙的格子"
 
 
+# ---- 地图状态不变量（a-f） ------------------------------------------------------
+def _grazing_ray_on_goal(mem, ox=2.5, oy=5.5, dist=2.5):
+    """从 (ox,oy) 朝 +x 打一条长度 dist 的射线，让 DDA 的命中格正好是 (5,5)。
+
+    DDA 在 t=2.5 进入格 (5,5)，所以 dist=2.5 时命中格就是 (5,5)。
+    """
+    mem.update(ox, oy, np.array([0.0]), np.array([dist]))
+
+
+@check("T8a 终点紧贴墙 + 擦角射线 -> 终点不得被标 OCCUPIED")
+def t8a():
+    mem = OccupancyMemory(10, 10, 6.0)
+    mem.set_goal(5, 5)
+    mem.known[5, 5] = FREE
+    _grazing_ray_on_goal(mem)
+    assert mem.known[5, 5] == FREE, \
+        f"终点被擦角射线写成了 OCCUPIED (known={int(mem.known[5, 5])})"
+
+
+@check("T8b goal_reached_map=True 后 -> known[goal] 不得变 OCCUPIED")
+def t8b():
+    mem = OccupancyMemory(10, 10, 6.0)
+    mem.set_goal(5, 5)
+    mem.known[5, 5] = FREE
+    _grazing_ray_on_goal(mem)
+    assert mem.goal_reached_map, "终点观测为 FREE 后 goal_reached_map 应为 True"
+    _grazing_ray_on_goal(mem)
+    assert mem.known[5, 5] == FREE, "终点仍被写成墙"
+    # 不变量检查器必须不报违规
+    assert not mem.check_invariants(), mem.last_invariant_msg
+    assert mem.invariant_failures == 0
+    # 反过来：人为制造违规，检查器必须抓到
+    mem.known[5, 5] = OCCUPIED
+    assert mem.check_invariants(), "检查器漏掉了 goal_reached_map + OCCUPIED 违规"
+    assert mem.invariant_failures == 1
+
+
+@check("T8c 单次 occupied 冲突不得覆盖已确认的 FREE")
+def t8c():
+    mem = OccupancyMemory(10, 10, 6.0, free_conflict_threshold=3)
+    mem.known[5, 5] = FREE
+    _grazing_ray_on_goal(mem)
+    assert mem.known[5, 5] == FREE, "单次冲突就翻转了 FREE 格"
+    assert mem.conflicts[5, 5] == 1, f"冲突计数应为 1，得到 {int(mem.conflicts[5, 5])}"
+    _grazing_ray_on_goal(mem)
+    assert mem.known[5, 5] == FREE, "两次冲突还不该翻转"
+    _grazing_ray_on_goal(mem)
+    assert mem.known[5, 5] == OCCUPIED, "达到阈值后应允许翻转（不能永不翻转）"
+
+
+def _mem_goal_walled_off():
+    """终点被墙围死、且没有 frontier 可去 -> 规划必然失败。"""
+    mem = OccupancyMemory(10, 10, 6.0)
+    mem.set_goal(8, 8)
+    mem.known[:] = FREE
+    mem.visited[:] = True
+    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        mem.known[8 + dy, 8 + dx] = OCCUPIED
+    mem.known[8, 8] = FREE
+    return mem
+
+
+@check("T8d NO_PATH 且地图/车格/终点都没变 -> 下一 tick 不重复跑 Dijkstra")
+def t8d():
+    mem = _mem_goal_walled_off()
+    r1 = mem.next_target(2.5, 2.5)
+    assert r1 is None, "终点被围死时应返回 None"
+    assert mem.invalidations["NO_PATH"] == 1, f"应记 1 次 NO_PATH，得到 {mem.invalidations['NO_PATH']}"
+    assert mem.replans == 1, f"应跑 1 次规划，得到 {mem.replans}"
+    for _ in range(20):                      # 模拟连续 20 个控制 tick，什么都没变
+        mem.next_target(2.5, 2.5)
+    assert mem.invalidations["NO_PATH"] == 1, \
+        f"同状态重复报了 {mem.invalidations['NO_PATH']} 次 NO_PATH"
+    assert mem.replans == 1, f"同状态重复跑了 {mem.replans} 次规划"
+
+
+@check("T8e map_revision 变化 -> 允许重新规划")
+def t8e():
+    mem = _mem_goal_walled_off()
+    mem.next_target(2.5, 2.5)
+    assert mem.replans == 1
+    rev0 = mem.map_revision
+    mem.known[2, 3] = UNKNOWN                # 留一个未知格，让 update 真的改变地图
+    mem.update(2.5, 2.5, np.array([0.0]), np.array([1.0]))
+    assert mem.map_revision > rev0, "update 改变了地图却没递增 map_revision"
+    mem.next_target(2.5, 2.5)
+    assert mem.replans == 2, "地图变了应允许重新规划"
+    assert mem.invalidations["NO_PATH"] == 2, "地图变了应再记一次 NO_PATH"
+
+
+@check("T8f 车进入新格 -> 允许重新规划")
+def t8f():
+    mem = _mem_goal_walled_off()
+    mem.next_target(2.5, 2.5)
+    assert mem.replans == 1
+    mem.next_target(3.5, 3.5)                # 车格从 (2,2) 变成 (3,3)
+    assert mem.replans == 2, "车格变了应允许重新规划"
+
+
 def main():
     print("\n" + "=" * 66)
     n_pass = sum(1 for _, ok, _ in RESULTS if ok)

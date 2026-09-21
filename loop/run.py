@@ -272,7 +272,7 @@ class Viewer:
 # --------------------------------------------------------------------------- 主循环
 def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float = 5,
         log_every=None, verbose=True, stop_on_goal=False, trace_fn=None,
-        trace_every=1):
+        trace_every=1, event_fn=None):
     """render_every 是"每 N 步重绘一次"，可以是小数——录制时传 1/(fps*dt)，
     内部按时间累加对帧，避免取整让视频时长和仿真时间对不上。
 
@@ -303,7 +303,8 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                                  unknown_cost=cfg.nav.unknown_cost,
                                  lookahead=cfg.nav.lookahead,
                                  arrive_dist=cfg.nav.arrive_dist,
-                                 off_path_tol=cfg.nav.off_path_tol)
+                                 off_path_tol=cfg.nav.off_path_tol,
+                                 free_conflict_threshold=cfg.nav.free_conflict_threshold)
         if maze.goal is not None:
             memory.set_goal(maze.goal[0], maze.goal[1])
 
@@ -314,6 +315,7 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
 
         if memory is not None:
             memory.update(car.x, car.y, car.theta + enc.angles, dists)
+            memory.check_invariants()
             target = memory.next_target(car.x, car.y)
             if target is not None:
                 tx, ty, dist = target
@@ -328,6 +330,20 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
                 info["bearing_err"] = float(err)
                 info["target"] = (float(tx), float(ty))
                 info["target_dist"] = float(dist)
+            # 路径失效事件：补上控制侧的量再交给调用方
+            if event_fn is not None:
+                for ev in memory.drain_events():
+                    ev.update({
+                        "t": step * dt,
+                        "theta": float(car.theta),
+                        "target_dist": info.get("target_dist", float("nan")),
+                        "bearing_err": info.get("bearing_err", float("nan")),
+                        "v": float(dec.v), "omega": float(dec.omega),
+                        "brain_turn": float(dec.last_brain_turn),
+                        "pursuit_turn": float(dec.last_pursuit_turn),
+                        "front_blocked": bool(dec.front_blocked),
+                    })
+                    event_fn(ev)
 
         tb = time.perf_counter()
         fired = brain.step(inject=inject)
@@ -415,7 +431,12 @@ def run(cfg, maze, car, brain, enc, dec, steps, viewer=None, render_every: float
         "replans": memory.replans if memory else 0,
         "off_path_events": memory.off_path_events if memory else 0,
         "max_offpath_dist": memory.max_offpath_dist if memory else -1.0,
+        "max_offpath_polyline": memory.max_offpath_polyline if memory else -1.0,
         "max_target_dist": memory.max_target_dist if memory else -1.0,
+        "invalidations": dict(memory.invalidations) if memory else {},
+        "no_path_events": memory.invalidations["NO_PATH"] if memory else 0,
+        "map_revision": memory.map_revision if memory else 0,
+        "invariant_failures": memory.invariant_failures if memory else 0,
         "realtime_factor": sim_time / wall if wall > 0 else float("inf"),
     }
     return stats
