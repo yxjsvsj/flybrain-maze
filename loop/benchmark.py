@@ -41,15 +41,27 @@ from world.car import DiffDriveCar
 
 # 调参用（可以随便用这些 seed 试参数）
 TUNE_SEEDS = [1, 3, 7, 11, 17]
-# 开发/诊断用。调参和诊断都只能在这批上做，不能碰 HOLDOUT。
+# 开发/诊断用。调参和诊断都只能在这批上做。
+# 注意：这批已经用于诊断 NO_PATH bug 和 path invalidation bug，**不再是干净的测试集**。
 DEV_SEEDS = [23, 42, 5, 31, 61, 71, 83, 97, 109, 127,
              131, 149, 163, 181, 197, 211, 227, 239, 251, 269]
-# 最终测试用。**在参数冻结之前不要生成、不要看、不要跑。**
-HOLDOUT_SEEDS: list[int] = []
+# 最终测试用。固定生成规则 make_holdout_seeds(n=40, base=1000)，一次性确定，
+# 不做任何难度筛选。**在参数冻结（tag P1-mapfix, commit db401f5）之后才生成，
+# 生成后只允许跑一次。**
+HOLDOUT_SEEDS = [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+                 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
+                 1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029,
+                 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039]
+
+FROZEN_TAG = "P1-mapfix"
+FROZEN_COMMIT = "db401f5"
 
 
 def make_holdout_seeds(n: int = 40, base: int = 1000) -> list[int]:
-    """生成一批全新种子，避开 TUNE/DEV。只在参数冻结之后调用一次。"""
+    """固定生成规则：从 base 开始取 n 个连续整数，跳过 TUNE/DEV。
+
+    这条规则一次性确定 HOLDOUT_SEEDS（结果已硬编码在上面），之后不再重跑。
+    """
     used = set(TUNE_SEEDS) | set(DEV_SEEDS)
     out: list[int] = []
     s = base
@@ -100,11 +112,13 @@ def sha256_file(path: str) -> str:
 
 
 def metadata(device: str, brain_seed: int, seeds, reps: int, dt: float,
-             readout: str) -> dict:
+             readout: str, frozen: dict | None = None) -> dict:
     import flybrain
     meta = {
         "git_commit": _run(["git", "rev-parse", "HEAD"]),
         "git_dirty": bool(_run(["git", "status", "--porcelain"])),
+        "frozen_tag": FROZEN_TAG,
+        "frozen_commit": FROZEN_COMMIT,
         "device_requested": device,
         "gpu": _run(["nvidia-smi", "--query-gpu=name,driver_version",
                      "--format=csv,noheader"]),
@@ -120,6 +134,7 @@ def metadata(device: str, brain_seed: int, seeds, reps: int, dt: float,
         "python": platform.python_version(),
         "platform": platform.platform(),
         "cupy_version": "",
+        "frozen_params": frozen or {},
     }
     try:
         import cupy
@@ -128,6 +143,20 @@ def metadata(device: str, brain_seed: int, seeds, reps: int, dt: float,
     except Exception:                                     # noqa: BLE001
         pass
     return meta
+
+
+def frozen_params(cfg, cells, scale, loop_chance, sim_seconds) -> dict:
+    """把冻结的全部导航/感知/控制/迷宫参数记进元数据，便于审计复现。"""
+    return {
+        "maze": {"cells": list(cells), "scale": scale, "loop_chance": loop_chance},
+        "sim_seconds": sim_seconds,
+        "nav": dict(vars(cfg.nav)),
+        "encoder": dict(vars(cfg.encoder)),
+        "decoder": dict(vars(cfg.decoder)),
+        "car": dict(vars(cfg.car)),
+        "noise": dict(vars(cfg.noise)),
+        "brain": dict(vars(cfg.brain)),
+    }
 
 
 # --------------------------------------------------------------------------- 装配
@@ -206,6 +235,9 @@ def main(argv=None):
     ap.add_argument("--controllers", nargs="+", default=["real_nomem", "real_mem"],
                     choices=sorted(CONTROLLERS))
     ap.add_argument("--seeds", nargs="+", type=int, default=DEV_SEEDS)
+    ap.add_argument("--holdout", action="store_true",
+                    help="跑 HOLDOUT_SEEDS（冻结版本的一次性最终测试）。"
+                         "会检查当前 commit/tag 是否与冻结记录一致")
     ap.add_argument("--reps", type=int, default=1,
                     help="每个 maze seed 重复几次（衡量 CUDA 数值非确定性）。"
                          "CPU 逐位确定，reps=1 即可，样本量靠更多 maze seeds")
@@ -222,6 +254,29 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     cells = tuple(int(v) for v in args.cells.lower().split("x"))
+
+    if args.holdout:
+        args.seeds = HOLDOUT_SEEDS
+        head = _run(["git", "rev-parse", "HEAD"])[:7]
+        dirty = bool(_run(["git", "status", "--porcelain"]))
+        # 控制器相关文件是否与冻结 commit 一致。测量工具（本文件、smoke_test）
+        # 的改动不影响控制器，但要单独列出来。
+        ctrl_diff = _run(["git", "diff", "--stat", FROZEN_COMMIT, "--",
+                          "nav", "config.py", "loop/decode.py",
+                          "loop/encode.py", "loop/run.py"])
+        print("=" * 78)
+        print(f"HOLDOUT 最终测试   {len(args.seeds)} 个从未运行过的迷宫")
+        print(f"  冻结版本 tag={FROZEN_TAG} commit={FROZEN_COMMIT}")
+        print(f"  当前 commit={head}{'  (工作树有未提交改动)' if dirty else ''}")
+        if ctrl_diff:
+            print("  !! 控制器相关文件与冻结版本不一致，结果不能当作冻结版本性能：")
+            for line in ctrl_diff.splitlines():
+                print(f"     {line}")
+        else:
+            print("  控制器相关文件（nav/ config.py loop/decode.py loop/encode.py "
+                  "loop/run.py）与冻结版本一致  OK")
+        print("=" * 78)
+        print()
 
     if args.check_repro:
         return check_repro(args, cells)
@@ -246,7 +301,9 @@ def main(argv=None):
 
         if not meta_written:
             meta = metadata(args.device, args.brain_seed, args.seeds, args.reps,
-                            float(static[0].brain.dt), str(spec.get("readout") or ""))
+                            float(static[0].brain.dt), str(spec.get("readout") or ""),
+                            frozen_params(static[0], cells, args.scale,
+                                          args.loop, args.sim_seconds))
             meta["resolved_device"] = resolved_device
             meta["controllers"] = args.controllers
             meta_path = args.meta or (args.csv.replace(".csv", "") + "_meta.json"
