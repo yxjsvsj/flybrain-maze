@@ -11,7 +11,7 @@ dec.v / dec.omega，即这一步真正下发给仿真车的指令）。
   L2 节流       固定 rate_hz + 覆盖式单槽邮箱（latest-wins）
   L3 超时       timeout_s < 1/rate_hz
   L4 熔断       连续失败 >= max_failures -> FAILSAFE（**latch**，只发 STOP，需人工重启）
-  L5 钳位       max_v / max_w / max_motor_mix 三重
+  L5 钳位       max_v / max_w / max_motor_mix 三重 + 死区抬升 min_cmd（抬主导幅度、保比例）
   L6 斜率       slew_rate（第一阶段 0；STOP 永远绕过）
   L7 退出       幂等 stop()：清邮箱 -> 停线程 -> join -> 同步补发 2~3 次 STOP
   L8 guard      /api/drive 返回 409 -> BLOCKED_GUARD（**latch**）
@@ -61,9 +61,17 @@ class PikachuConfig:
     omega_sign: float = 1.0        # 实物左右接反时改 -1
 
     # 钳位
-    max_v: float = 0.30
-    max_w: float = 0.30
-    max_motor_mix: float = 0.30    # Nano: motorA=V+W, motorB=V-W；限制单电机不超过它
+    max_v: float = 1.0
+    max_w: float = 1.0
+    max_motor_mix: float = 1.0     # Nano: motorA=V+W, motorB=V-W；限制单电机不超过它
+
+    # 死区抬升：wheels-up 实测实体在归一化幅度 <0.60 时堵转（drive PWM 42/255）。
+    # 任何**非零**命令的 max(|V|,|W|) 会被抬到 min_cmd，方向比例不变；0 仍为 0。
+    # 注意：这只保证"主导侧"的混合电机量达到 min_cmd，差速时另一侧可以更低、
+    # 仍可能低于单轮起转门槛。设 0 关闭。不要设 >max_v，否则抬升后被 max_v 削回又落回死区。
+    # 0.60 是 wheels-up（空载）门槛；装到地面带负载后的最低启动值需单独重新标定，
+    # 不要把 0.65 当成最终实体参数。
+    min_cmd: float = 0.65
 
     slew_rate: float = 0.0         # 归一化单位/秒，0 = 关闭（第一阶段关闭）
     dry_run: bool = False
@@ -267,6 +275,16 @@ class PikachuBridge:
         raw_w = sim_omega / cfg.sim_max_omega * cfg.w_gain * cfg.omega_sign
         V = min(max(raw_v, -cfg.max_v), cfg.max_v)
         W = min(max(raw_w, -cfg.max_w), cfg.max_w)
+        # 死区抬升（放在 max_v/max_w 钳位之后，避免先抬后削）。只改幅度、不改方向比例。
+        # 边界：max(|V+W|,|V-W|) >= max(|V|,|W|) 只保证"较主导的一侧"混合电机量 >= min_cmd，
+        # 不保证差速时两个轮子都超过单轮起转门槛（另一侧可以更低）。
+        # 抬升后 max(|V|,|W|)==min_cmd<=max_v，不会越界。
+        if cfg.min_cmd > 0.0:
+            mag = max(abs(V), abs(W))
+            if 0.0 < mag < cfg.min_cmd:
+                k = cfg.min_cmd / mag
+                V *= k
+                W *= k
         # Nano 内部 motorA = V + W, motorB = V - W，所以要单独限制电机量
         m = max(abs(V + W), abs(V - W))
         clamped = False

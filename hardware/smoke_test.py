@@ -59,7 +59,7 @@ def main(argv=None) -> int:
                     help="真正发送指令。**必须先把轮子架空**")
     ap.add_argument("--only", default="all",
                     choices=["all", *ACTION_DEFS], help="只测某个方向（找最低可靠命令用）")
-    ap.add_argument("--mag", type=float, default=0.30, help="动作幅值（归一化）")
+    ap.add_argument("--mag", type=float, default=1.0, help="动作幅值（归一化）")
     ap.add_argument("--repeat", type=int, default=1,
                     help="每个方向重复几次（每次之间插 STOP），用于判断'是否每次都可靠起转'")
     ap.add_argument("--hold", type=float, default=1.5, help="每个动作持续秒数")

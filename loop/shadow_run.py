@@ -14,7 +14,7 @@ dec.v / dec.omega，正是这一步真正下发给仿真车的指令。
     python -m loop.shadow_run --pikachu-url http://192.168.1.50:8000 \
         --brain real --mode readout --readout readout_real.npz --memory 1.0 \
         --map gen --maze-seed 1000 --maze-cells 6x4 --sim-seconds 120 \
-        --stop-on-goal --max-v 0.30 --max-w 0.30 --max-motor-mix 0.30 \
+        --stop-on-goal --max-v 1.0 --max-w 1.0 --max-motor-mix 1.0 --min-cmd 0.65 \
         --log hardware_log.csv
 """
 from __future__ import annotations
@@ -105,10 +105,12 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="不发 HTTP，只记录")
     ap.add_argument("--rate-hz", type=float, default=10.0)
     ap.add_argument("--timeout", type=float, default=0.08, help="必须 < 1/rate-hz")
-    ap.add_argument("--max-v", type=float, default=0.30)
-    ap.add_argument("--max-w", type=float, default=0.30)
-    ap.add_argument("--max-motor-mix", type=float, default=0.30,
+    ap.add_argument("--max-v", type=float, default=1.0)
+    ap.add_argument("--max-w", type=float, default=1.0)
+    ap.add_argument("--max-motor-mix", type=float, default=1.0,
                     help="Nano 内部 motorA=V+W / motorB=V-W，限制单电机不超过它")
+    ap.add_argument("--min-cmd", type=float, default=0.65,
+                    help="死区抬升：非零命令的主导幅度不低于它（wheels-up 实测 <0.60 堵转）。0=关闭")
     ap.add_argument("--v-gain", type=float, default=1.0)
     ap.add_argument("--w-gain", type=float, default=1.0)
     ap.add_argument("--omega-sign", type=float, default=1.0, help="实物左右接反时改 -1")
@@ -152,6 +154,7 @@ def main(argv=None) -> int:
         sim_max_speed=cfg.car.max_speed, sim_max_omega=cfg.car.max_omega,
         v_gain=args.v_gain, w_gain=args.w_gain, omega_sign=args.omega_sign,
         max_v=args.max_v, max_w=args.max_w, max_motor_mix=args.max_motor_mix,
+        min_cmd=args.min_cmd,
         slew_rate=args.slew_rate, dry_run=args.dry_run, log_path=args.log)
     bridge = PikachuBridge(pcfg)
     hardware_mode = not args.dry_run
@@ -162,7 +165,7 @@ def main(argv=None) -> int:
     print(f"[shadow] sim {args.sim_seconds:.0f}s = {steps} steps @ dt={brain.dt*1000:.0f}ms")
     print(f"[shadow] 缩放: v/{cfg.car.max_speed:.2f}*{args.v_gain:g} -> |V|<={args.max_v:.2f}   "
           f"omega/{cfg.car.max_omega:.2f}*{args.w_gain:g}*{args.omega_sign:+g} -> |W|<={args.max_w:.2f}   "
-          f"mix<={args.max_motor_mix:.2f}")
+          f"mix<={args.max_motor_mix:.2f}   死区抬升 min_cmd={args.min_cmd:.2f}")
     print(f"[shadow] 发送 {args.rate_hz:g}Hz  timeout {args.timeout*1000:.0f}ms  "
           f"realtime={'off' if args.no_realtime else 'on'}  log={args.log}")
     print(f"[shadow] pacer: max_lag={args.max_pacer_lag*1000:.0f}ms  "

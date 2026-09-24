@@ -141,7 +141,7 @@ def base_cfg(url: str, **kw: Any) -> PikachuConfig:
         base_url=url, rate_hz=20.0, timeout_s=0.2, max_failures=3,
         preflight_timeout_s=2.0, serial_settle_s=0.15,
         sim_max_speed=0.9, sim_max_omega=2.6,
-        max_v=0.30, max_w=0.30, max_motor_mix=0.30, log_path="",
+        max_v=0.30, max_w=0.30, max_motor_mix=0.30, min_cmd=0.0, log_path="",
     )
     d.update(kw)
     return PikachuConfig(**d)
@@ -543,6 +543,35 @@ def t21():
         assert not bad, f"不该发运动指令，实际 {bad}"
     finally:
         srv.close()
+
+
+@check("T22 死区抬升 min_cmd：非零命令幅度不低于它、比例不变、0 仍为 0")
+def t22():
+    b = PikachuBridge(base_cfg("http://127.0.0.1:1", min_cmd=0.6,
+                               max_v=1.0, max_w=1.0, max_motor_mix=1.0))
+    # 前进：小命令被抬到 0.6
+    V, W, *_ = b.scale(0.09, 0.0)                 # 归一化 0.1
+    assert abs(max(abs(V), abs(W)) - 0.6) < 1e-9, (V, W)
+    assert V > 0 and abs(W) < 1e-12, (V, W)
+    # 纯转：同样抬到 0.6，符号保持
+    V, W, *_ = b.scale(0.0, -0.26)                # 归一化 -0.1
+    assert abs(abs(W) - 0.6) < 1e-9 and W < 0, (V, W)
+    # 方向比例不变：v:omega = 0.1:0.05 -> 抬升后仍 2:1
+    V, W, *_ = b.scale(0.09, 0.13)
+    assert abs(V / W - 2.0) < 1e-9, (V, W)
+    assert abs(max(abs(V), abs(W)) - 0.6) < 1e-9, (V, W)
+    assert max(abs(V + W), abs(V - W)) >= 0.6 - 1e-9, \
+        "主导侧电机量应 >= min_cmd（不保证差速时两侧都超过起转门槛）"
+    # 零输入 -> 零输出（抬升不能把 0 抬起来）
+    V, W, *_ = b.scale(0.0, 0.0)
+    assert V == 0.0 and W == 0.0
+    # 已高于 min_cmd 的命令不被改动
+    V, W, *_ = b.scale(0.9, 0.0)                  # 归一化 1.0
+    assert abs(V - 1.0) < 1e-9, V
+    # min_cmd=0 关闭抬升
+    b0 = PikachuBridge(base_cfg("http://127.0.0.1:1", min_cmd=0.0))
+    V, W, *_ = b0.scale(0.09, 0.0)
+    assert abs(V - 0.1) < 1e-9, V
 
 
 def main() -> int:
