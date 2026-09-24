@@ -10,6 +10,7 @@ import json
 import sys
 import threading
 import time
+from typing import Any
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from hardware.pikachu_bridge import (BridgeState, PikachuBridge, PikachuConfig,
@@ -53,7 +54,7 @@ class MockServer:
         state = self.state
 
         class H(BaseHTTPRequestHandler):
-            def log_message(self, *a):        # 静音
+            def log_message(self, fmt, *args):  # type: ignore[override]  静音
                 pass
 
             def _send(self, code, payload):
@@ -135,11 +136,13 @@ class MockServer:
         return [b for p, b in self.state.requests if p == "/api/drive"]
 
 
-def base_cfg(url, **kw):
-    d = dict(base_url=url, rate_hz=20.0, timeout_s=0.2, max_failures=3,
-             preflight_timeout_s=2.0, serial_settle_s=0.15,
-             sim_max_speed=0.9, sim_max_omega=2.6,
-             max_v=0.30, max_w=0.30, max_motor_mix=0.30, log_path="")
+def base_cfg(url: str, **kw: Any) -> PikachuConfig:
+    d: dict[str, Any] = dict(
+        base_url=url, rate_hz=20.0, timeout_s=0.2, max_failures=3,
+        preflight_timeout_s=2.0, serial_settle_s=0.15,
+        sim_max_speed=0.9, sim_max_omega=2.6,
+        max_v=0.30, max_w=0.30, max_motor_mix=0.30, log_path="",
+    )
     d.update(kw)
     return PikachuConfig(**d)
 
