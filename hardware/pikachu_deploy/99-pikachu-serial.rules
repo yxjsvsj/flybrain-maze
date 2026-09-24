@@ -1,0 +1,8 @@
+# CH340 = Pikachu Nano (1a86:7523). 只匹配 usb_device（DEVTYPE），避免 usb_interface 重复触发。
+
+# REMOVE: 仅记录，不碰 app。/api/reconnect 不会被调用；后续串口 write 自然失败，
+# bridge 达到 max_failures 后 FAILSAFE latch；Nano 自己的 400ms command timeout 物理停车。
+ACTION=="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{PRODUCT}=="1a86/7523/*", RUN+="/home/bjlm/pikachu/serial_removed.sh"
+
+# ADD: 触发 oneshot（延迟 1s + 重试 + 校验 ok/open）。只恢复通信，不解除 bridge latch。
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{PRODUCT}=="1a86/7523/*", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pikachu-serial-recover.service"

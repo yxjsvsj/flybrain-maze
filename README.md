@@ -227,6 +227,96 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 
 ---
 
+## Hardware shadow demo（物理影子执行器）
+
+> **与上面的 P1 结果严格分离。** P1 是纯仿真科学结果（tag `P1-mapfix`，commit
+> `db401f5`）；本节把**同一个冻结控制器**接到真实小车上做执行器演示。冻结的 P1
+> 控制器文件（`nav/`、`config.py`、`loop/decode.py`、`loop/encode.py`、`loop/run.py`）
+> 在本节中**未做任何改动**。
+
+**性质声明（务必先读）**
+
+- **virtual sensors / pose 仍在导航闭环里**——真实小车不参与感知或定位；
+- 物理 Pikachu 只是一个 **shadow actuator**：仿真照常闭环运行，同一份 `(v, ω)`
+  被镜像给实体车；
+- 因此这是 **fruit-fly-connectome-in-the-loop 的物理执行器演示**，
+  **不是真实迷宫里的闭环自主导航**（真实传感 + 定位见"已知限制"）；
+- 本节指标（time-to-goal、path efficiency 等）来自**仿真侧的虚拟车**，物理车只跟随执行。
+
+### 已验证结果（frozen HOLDOUT seed 1000）
+
+| 项 | 值 |
+|---|---|
+| maze | frozen HOLDOUT seed 1000, 6x4 |
+| brain | RealFlyBrain / MaleCNS 166,700 neurons |
+| mode | population readout |
+| memory | 1.0 |
+| goal reached | yes |
+| time-to-goal | 61.7 s |
+| optimal | 40 cells |
+| path efficiency | 1.042 |
+| collisions / escapes / stalls | 0 / 0 / 0 |
+| replans | 5 |
+| realtime | 0.99x |
+| brain compute | 5.48 ms/step |
+| max pacer lag | 36 ms |
+| bridge frames | 617 |
+| send failures | 0 |
+| lag failures | 0 |
+| final STOP | 4 |
+
+> seed 1000 取自 **frozen HOLDOUT**（40 个 seeds 1000–1039 之一），不是"当前未见"的新种子。
+
+### 执行器标定（wheels-up 台架）
+
+| 项 | 值 |
+|---|---|
+| 实测 wheels-up 起转门槛 | ≈0.60（PWM 42/255，drivePwm=70） |
+| `min_cmd` | 0.65（死区抬升：非零命令的主导幅度不低于它，保持 V/W 比例） |
+| `max_v` / `max_w` / `max_motor_mix` | 1.0 / 1.0 / 1.0 |
+
+抬升生效示例：`raw (0.520, 0.127) -> sent (0.650, 0.162)`。
+
+**已知保真边界**：差速混控下 `min_cmd` 只保证**主导侧**电机量达标；当 `V ≈ ±W` 时
+内侧轮可以更低。开环（无编码器）下，低于起转门槛的轮子会**堵转**——物理上无法慢转。
+0.60 是 **wheels-up** 门槛；**带负载（落地）的最低启动值需另行标定**。
+
+### 安全层
+
+| 层 | 机制 |
+|---|---|
+| 服务守护 | systemd `Restart=on-failure` |
+| 串口守卫 | 固定 `/dev/serial/by-id/...` + VID:PID 校验，拒绝 Klipper 设备 |
+| 发送节流 | latest-wins 覆盖式单槽邮箱（过期指令不排队） |
+| 实时节拍 | pacer 落后超限 → 停车 |
+| 熔断 | 连续失败 → **latched FAILSAFE**（只发 STOP，需人工重启） |
+| 固件看门狗 | Nano `COMMAND_TIMEOUT_MS=400`，无命令即停车（独立于上位机） |
+| USB 健壮性 | udev：REMOVE 仅记录 / ADD 自动 `POST /api/reconnect` |
+
+**安全语义**：故障时**通信可以自动恢复**（串口重开、服务可由 systemd 拉起），
+但**运动永不自动恢复**——bridge 一旦 FAILSAFE 就 latch，必须人工重新启动 `shadow_run`。
+
+> **物理跟随确认**：本次为 **wheels-up 台架演示**，实体车未落地行驶，因此**未**记录
+> "全程跟随 / 无卡死乱转 / 正常停止" 的现场结论；带负载的地面跟随验证待做。
+
+### 运行方式
+
+```powershell
+# 真脑 + 群体读出 + 记忆，镜像到物理车（先在轮子架空的条件下验证）
+.\.venv\Scripts\python.exe -m loop.shadow_run `
+    --pikachu-url http://192.168.50.57:8000 `
+    --brain real --mode readout --readout readout_real.npz --memory 1.0 `
+    --map gen --maze-seed 1000 --maze-cells 6x4 --sim-seconds 90 `
+    --device cuda --stop-on-goal --log hardware_log.csv
+
+# 只看计划、不动车
+.\.venv\Scripts\python.exe -m loop.shadow_run <同上> --dry-run
+```
+
+部署（systemd / udev / 串口守卫 / 恢复脚本）见 `hardware/pikachu_deploy/`。
+
+---
+
 ## 已知限制
 
 - 传感器是**理想射线**：无噪声、无丢点、无遮挡误差。实物雷达不是这样。

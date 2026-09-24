@@ -1,0 +1,19 @@
+[Unit]
+Description=Pikachu Bot web (Flask + Nano serial)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=60
+
+[Service]
+Type=simple
+User=bjlm
+WorkingDirectory=/home/bjlm/pikachu
+ExecStart=/home/bjlm/pikachu/launch.sh
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/bjlm/pikachu/pikachu_web.log
+StandardError=append:/home/bjlm/pikachu/pikachu_web.log
+
+[Install]
+WantedBy=multi-user.target
