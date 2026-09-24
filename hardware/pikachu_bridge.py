@@ -123,6 +123,48 @@ LOG_FIELDS = ["t", "sim_x", "sim_y", "sim_theta", "sim_v", "sim_omega",
 
 
 # --------------------------------------------------------------------------- 预检
+def _do_reconnect(base: str, cfg: "PikachuConfig", log) -> tuple[bool, str]:
+    """POST /api/reconnect 并用 preflight 超时等它。成功则等 serial_settle_s。"""
+    try:
+        _, body = http_json(base + "/api/reconnect", {}, cfg.preflight_timeout_s)
+    except Exception as exc:                                   # noqa: BLE001
+        return False, f"POST /api/reconnect 失败: {type(exc).__name__}: {exc}"
+    s = body.get("status") or {}
+    if not body.get("ok") or not s.get("open"):
+        return False, (f"reconnect 未成功: ok={body.get('ok')} "
+                       f"open={s.get('open')} err={s.get('last_error')}")
+    log(f"[preflight] reconnect ok  port={s.get('port')}  "
+        f"等串口稳定 {cfg.serial_settle_s:.1f}s（DTR 可能已复位 Nano）")
+    time.sleep(cfg.serial_settle_s)
+    return True, ""
+
+
+def _try_stop(base: str, cfg: "PikachuConfig") -> tuple[bool, str]:
+    """发 STOP(0,0) 做端到端验证。返回 (ok, 最后一次失败原因)。"""
+    last = "n/a"
+    for _ in range(3):
+        try:
+            status, body = http_json(base + cfg.endpoint, {"v": 0.0, "w": 0.0},
+                                     cfg.preflight_timeout_s)
+        except Exception as exc:                               # noqa: BLE001
+            last = f"{type(exc).__name__}: {exc}"
+            time.sleep(0.2)
+            continue
+        s = body.get("status") or {}
+        if status == 409:
+            return False, "HTTP 409 guard mode"
+        if not body.get("ok"):
+            last = f"json ok=false (http {status}) err={s.get('last_error')!r}"
+            time.sleep(0.2)
+            continue
+        if cfg.require_serial_open and not s.get("open"):
+            last = f"serial not open ({s.get('last_error')})"
+            time.sleep(0.2)
+            continue
+        return True, ""
+    return False, last
+
+
 def preflight(base_url: str, cfg: PikachuConfig, log=print):
     """启动预检（Bridge.start() 和 smoke_test 共用，避免两处逻辑跑偏）。
 
@@ -130,20 +172,21 @@ def preflight(base_url: str, cfg: PikachuConfig, log=print):
 
     流程：
       1. GET /api/status（preflight_timeout_s）-> guard_mode 必须 false
-      2. status.open == true  -> **不调用 /api/reconnect**。
-            串口已经开着，再 reconnect 既没必要，又可能因为 DTR 复位把 CH340 卡住。
-         status.open == false -> POST /api/reconnect（preflight_timeout_s），
-            要求 JSON ok=true 且 status.open=true，然后等 serial_settle_s。
-      3. 发一次 STOP 做端到端验证（preflight_timeout_s，重试几次）。
+      2. status.open == true  -> 先**不** reconnect（串口已开着，reconnect 既没必要、
+            又可能因 DTR 复位把 CH340 卡住）
+         status.open == false -> POST /api/reconnect，成功后等 serial_settle_s
+      3. 发一次 STOP 做端到端验证
+      4. **stale fd 兜底**：若第 2 步跳过了 reconnect、但第 3 步写不进去，说明设备掉过
+         USB 而 pyserial 仍认为 is_open=True（实测 CH340 会反复掉线重枚举）。此时补一次
+         reconnect 再验；仍失败才拒绝启动。
 
     实时发送帧仍然用 command_timeout_s（默认 0.08s）；这里不做全局放宽。
     """
     base = base_url.rstrip("/")
-    tp = cfg.preflight_timeout_s
 
     # 1) status
     try:
-        _, body = http_json(base + "/api/status", None, tp)
+        _, body = http_json(base + "/api/status", None, cfg.preflight_timeout_s)
     except Exception as exc:                                   # noqa: BLE001
         return False, f"GET /api/status 失败: {type(exc).__name__}: {exc}"
     if body.get("guard_mode"):
@@ -155,40 +198,28 @@ def preflight(base_url: str, cfg: PikachuConfig, log=print):
     if already_open:
         log("[preflight] 串口已打开 -> 跳过 /api/reconnect")
     else:
-        try:
-            _, body = http_json(base + "/api/reconnect", {}, tp)
-        except Exception as exc:                               # noqa: BLE001
-            return False, f"POST /api/reconnect 失败: {type(exc).__name__}: {exc}"
-        s = body.get("status") or {}
-        if not body.get("ok") or not s.get("open"):
-            return False, (f"reconnect 未成功: ok={body.get('ok')} "
-                           f"open={s.get('open')} err={s.get('last_error')}")
-        log(f"[preflight] reconnect ok  port={s.get('port')}  "
-            f"等串口稳定 {cfg.serial_settle_s:.1f}s（DTR 可能已复位 Nano）")
-        time.sleep(cfg.serial_settle_s)
+        ok, msg = _do_reconnect(base, cfg, log)
+        if not ok:
+            return False, msg
 
     # 3) STOP 端到端验证
-    last = "n/a"
-    for _ in range(3):
-        try:
-            status, body = http_json(base + cfg.endpoint, {"v": 0.0, "w": 0.0}, tp)
-        except Exception as exc:                               # noqa: BLE001
-            last = f"{type(exc).__name__}: {exc}"
-            time.sleep(0.2)
-            continue
-        s = body.get("status") or {}
-        if status == 409:
-            return False, "HTTP 409 guard mode"
-        if not body.get("ok"):
-            last = f"json ok=false (http {status})"
-            time.sleep(0.2)
-            continue
-        if cfg.require_serial_open and not s.get("open"):
-            last = f"serial not open ({s.get('last_error')})"
-            time.sleep(0.2)
-            continue
+    ok, last = _try_stop(base, cfg)
+    if ok:
         log("[preflight] STOP confirmed")
         return True, ""
+
+    # 4) stale fd 兜底：跳过过 reconnect 才需要
+    if already_open:
+        log(f"[preflight] STOP 失败（{last}）且之前跳过了 reconnect -> 补一次 reconnect")
+        ok, msg = _do_reconnect(base, cfg, log)
+        if not ok:
+            return False, f"STOP 失败（{last}）；补 reconnect 也失败: {msg}"
+        ok, last = _try_stop(base, cfg)
+        if ok:
+            log("[preflight] reconnect 后 STOP confirmed（stale fd 已恢复）")
+            return True, ""
+        return False, f"reconnect 后 STOP 仍失败: {last}"
+
     return False, f"STOP 验证失败: {last}"
 
 

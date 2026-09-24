@@ -36,6 +36,9 @@ class MockState:
         self.reconnect_ok = True
         self.reconnect_opens_port = True  # reconnect 成功后端口是否真的打开
         self.reconnect_delay_s = 0.0     # 模拟 CH340 打开串口时的 DTR 复位耗时
+        # 模拟"设备掉过 USB，pyserial 仍认为 is_open=True，真正 write 才失败"
+        self.stale_fd = False
+        self.reconnect_fixes_stale = True  # reconnect 能否治好 stale fd
         self.drive_ok = True
         self.drive_http = 200
         self.latency_s = 0.0
@@ -91,6 +94,8 @@ class MockServer:
                     # 真实行为：reconnect 成功会把串口打开，之后 status.open 变 true
                     if state.reconnect_ok and state.reconnect_opens_port:
                         state.serial_open = True
+                    if state.reconnect_fixes_stale:
+                        state.stale_fd = False
                     self._send(200, {"ok": state.reconnect_ok,
                                      "status": {"open": state.serial_open,
                                                 "port": "/dev/ttyUSB0",
@@ -100,6 +105,12 @@ class MockServer:
                     if state.guard_mode:
                         self._send(409, {"ok": False, "error": "Guard mode enabled",
                                          "status": {"open": state.serial_open}})
+                    elif state.stale_fd:
+                        # HTTP 200 但 ok=false：正是 SerialController.write 失败的样子
+                        self._send(200, {"ok": False,
+                                         "status": {"open": True,
+                                                    "last_error":
+                                                        "write failed: [Errno 19] No such device"}})
                     else:
                         self._send(state.drive_http,
                                    {"ok": state.drive_ok,
@@ -491,6 +502,42 @@ def t19():
         drives = [p for p, _, _ in srv.state.timeline if p == "/api/drive"]
         assert not drives, f"reconnect 失败后不该发任何 drive 指令，实际发了 {len(drives)} 次"
         b.stop()
+    finally:
+        srv.close()
+
+
+@check("T20 stale fd：open=true 但写不进去 -> 自动补一次 reconnect 后恢复")
+def t20():
+    srv = MockServer()
+    try:
+        assert srv.state.serial_open is True
+        srv.state.stale_fd = True        # 设备掉过 USB，但 /api/status 仍说 open=true
+        b = PikachuBridge(base_cfg(srv.url, preflight_timeout_s=2.0,
+                                   serial_settle_s=0.15))
+        assert b.start(), "应通过补一次 reconnect 自我恢复"
+        paths = [p for p, _ in srv.state.requests]
+        assert paths.count("/api/reconnect") == 1, \
+            f"应恰好补一次 reconnect，实际 {paths.count('/api/reconnect')} 次：{paths}"
+        assert srv.state.stale_fd is False, "reconnect 后 stale 应被清除"
+        b.stop()
+    finally:
+        srv.close()
+
+
+@check("T21 stale fd 且 reconnect 也治不好 -> 拒绝启动，不发运动指令")
+def t21():
+    srv = MockServer()
+    try:
+        srv.state.stale_fd = True
+        srv.state.reconnect_fixes_stale = False
+        b = PikachuBridge(base_cfg(srv.url, preflight_timeout_s=2.0,
+                                   serial_settle_s=0.1))
+        assert not b.start(), "补 reconnect 也无效时应拒绝启动"
+        assert b.state is BridgeState.INIT
+        # 只能有 STOP(0,0)，不能有任何非零运动指令
+        bad = [x for x in srv.drives()
+               if float(x.get("v", 0)) != 0.0 or float(x.get("w", 0)) != 0.0]
+        assert not bad, f"不该发运动指令，实际 {bad}"
     finally:
         srv.close()
 
