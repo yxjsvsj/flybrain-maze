@@ -380,18 +380,19 @@ def t13():
 @check("T14 RealTimePacer：落后过多时重对齐而不是追赶")
 def t14():
     p = RealTimePacer(max_lag_s=0.05, enabled=True)
-    time.sleep(0.5)                                # 人为落后 0.5s
-    p.wait(0.0)
+    p.wait(0.0)                                    # 惰性建立 t0（首帧对齐）
+    time.sleep(0.5)                                # 运行中人为落后 0.5s
+    p.wait(0.1)                                    # 落后超限 -> 静默重对齐
     assert p.resyncs == 1, f"应重对齐一次，得到 {p.resyncs}"
     # 重对齐后必须**正常按节拍**（睡满剩余时间），而不是立刻返回去追赶
     t0 = time.perf_counter()
-    p.wait(0.1)
+    p.wait(0.3)                                    # 新基准下目标晚 0.2s -> 应睡 ~0.2s
     elapsed = time.perf_counter() - t0
-    assert 0.07 < elapsed < 0.15, \
-        f"重对齐后 wait(0.1) 应睡约 0.1s（不追赶），实际 {elapsed:.3f}s"
+    assert 0.15 < elapsed < 0.28, \
+        f"重对齐后应睡约 0.2s（不追赶），实际 {elapsed:.3f}s"
     # 再连跑一段，确认没有残留的追赶行为
     t1 = time.perf_counter()
-    for k in range(11, 21):
+    for k in range(31, 41):
         p.wait(k * 0.01)
     elapsed2 = time.perf_counter() - t1
     assert 0.07 < elapsed2 < 0.15, f"后续 0.1s 仿真应约等 0.1s 墙钟，实际 {elapsed2:.3f}s"
@@ -400,8 +401,9 @@ def t14():
 @check("T15 RealTimePacer：实体模式(allow_resync=False) 不重对齐，原样返回 lag")
 def t15():
     p = RealTimePacer(max_lag_s=0.05, enabled=True, allow_resync=False)
-    time.sleep(0.4)                                # 人为落后 0.4s
-    lag = p.wait(0.0)
+    p.wait(0.0)                                    # 惰性建立 t0
+    time.sleep(0.5)                                # 运行中人为落后 0.5s
+    lag = p.wait(0.1)
     assert lag > 0.05, f"实体模式应把 lag 返回给调用方，得到 {lag}"
     assert p.resyncs == 0, f"实体模式不该静默重对齐，resyncs={p.resyncs}"
     assert p.max_lag_seen >= 0.39, f"应记录 max_lag_seen，得到 {p.max_lag_seen}"
@@ -415,8 +417,9 @@ def t15():
     assert p2.resyncs == 0
     # dry-run 模式（allow_resync=True）才会重对齐
     p3 = RealTimePacer(max_lag_s=0.05, enabled=True, allow_resync=True)
+    p3.wait(0.0)                                   # 惰性建立 t0
     time.sleep(0.3)
-    p3.wait(0.0)
+    p3.wait(0.1)
     assert p3.resyncs == 1, "dry-run 模式应重对齐"
 
 

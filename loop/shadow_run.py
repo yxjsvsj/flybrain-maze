@@ -53,7 +53,7 @@ class RealTimePacer:
         self.enabled = bool(enabled)
         self.max_lag = float(max_lag_s)
         self.allow_resync = bool(allow_resync)
-        self.t0 = time.perf_counter()
+        self.t0 = None              # 惰性：首次 wait() 时对齐（见下）
         self.resyncs = 0
         self.slept_s = 0.0
         self.max_lag_seen = 0.0
@@ -64,6 +64,10 @@ class RealTimePacer:
         if not self.enabled:
             return 0.0
         now = time.perf_counter()
+        if self.t0 is None:
+            # 惰性对齐：基准取"首帧产出的时刻"，而不是构造时刻。这样首帧的脑预热 /
+            # CUDA 初始化开销被吸收，不会被误判成"落后"而在实体模式下误触 FAILSAFE。
+            self.t0 = now - sim_t
         target = self.t0 + sim_t
         lag = now - target
         if lag > self.max_lag_seen:
