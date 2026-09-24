@@ -23,7 +23,7 @@ import argparse
 import sys
 import time
 
-from hardware.pikachu_bridge import http_json
+from hardware.pikachu_bridge import PikachuConfig, http_json, preflight
 
 # 方向 -> (V 方向, W 方向, 期望现象)
 ACTION_DEFS = {
@@ -65,7 +65,13 @@ def main(argv=None) -> int:
     ap.add_argument("--hold", type=float, default=1.5, help="每个动作持续秒数")
     ap.add_argument("--gap", type=float, default=1.0, help="动作之间的 STOP 秒数")
     ap.add_argument("--rate-hz", type=float, default=10.0)
-    ap.add_argument("--timeout", type=float, default=0.08)
+    ap.add_argument("--timeout", type=float, default=0.08,
+                    help="**只用于实时控制帧**，必须 < 1/rate-hz")
+    ap.add_argument("--preflight-timeout", type=float, default=2.0,
+                    help="status / reconnect / 验证用 STOP 的超时（CH340 打开串口会 DTR 复位，"
+                         "80ms 远远不够）")
+    ap.add_argument("--serial-settle", type=float, default=1.2,
+                    help="真正 reconnect 之后的等待秒数（等 Nano 复位完）")
     ap.add_argument("--drive-pwm", type=int, default=70, help="固件 drivePwm，用于估算")
     ap.add_argument("--turn-pwm", type=int, default=60, help="固件 turnPwm，用于估算")
     args = ap.parse_args(argv)
@@ -77,7 +83,9 @@ def main(argv=None) -> int:
     print("=" * 78)
     print("Pikachu wheels-up 冒烟测试")
     print(f"  url={base}  mag={args.mag}  only={args.only}  repeat={args.repeat}  "
-          f"rate={args.rate_hz}Hz  timeout={args.timeout}s  confirm={args.confirm}")
+          f"rate={args.rate_hz}Hz  confirm={args.confirm}")
+    print(f"  timeouts: control={args.timeout}s  preflight={args.preflight_timeout}s  "
+          f"serial_settle={args.serial_settle}s")
     print(f"  PWM 参考: drivePwm={args.drive_pwm} turnPwm={args.turn_pwm}  "
           f"(V={args.mag:.2f} -> drive≈{args.mag * args.drive_pwm:.0f}/255, "
           f"W={args.mag:.2f} -> turn≈{args.mag * args.turn_pwm:.0f}/255)")
@@ -92,25 +100,16 @@ def main(argv=None) -> int:
         print("确认轮子已架空了再加 --confirm 真跑。")
         return 0
 
-    # ---- 预检 ----
+    # ---- 预检（与 Bridge 用同一份逻辑，避免两处跑偏）----
     print("\n[preflight]")
-    try:
-        _, st = http_json(base + "/api/status", None, args.timeout)
-    except Exception as exc:                                       # noqa: BLE001
-        print(f"  FAIL GET /api/status -> {type(exc).__name__}: {exc}")
+    pcfg = PikachuConfig(base_url=base, endpoint="/api/drive",
+                         preflight_timeout_s=args.preflight_timeout,
+                         serial_settle_s=args.serial_settle)
+    ok, msg = preflight(base, pcfg, log=lambda s: print(f"  {s}"))
+    if not ok:
+        print(f"  FAIL {msg}")
+        print("  未动车，直接退出。")
         return 1
-    if st.get("guard_mode"):
-        print("  FAIL guard_mode=true，先在网页上关掉 guard 模式")
-        return 1
-    print(f"  /api/status ok  guard_mode=false  serial_open={bool(st.get('open'))}")
-
-    _, rc = http_json(base + "/api/reconnect", {}, args.timeout)
-    rst = rc.get("status") or {}
-    if not rc.get("ok") or not rst.get("open"):
-        print(f"  FAIL /api/reconnect ok={rc.get('ok')} open={rst.get('open')} "
-              f"err={rst.get('last_error')}")
-        return 1
-    print(f"  /api/reconnect ok  port={rst.get('port')} baud={rst.get('baud')}")
 
     def send(v: float, w: float):
         try:

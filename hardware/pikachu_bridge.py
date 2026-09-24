@@ -47,7 +47,10 @@ class PikachuConfig:
     base_url: str = "http://127.0.0.1:8000"
     endpoint: str = "/api/drive"
     rate_hz: float = 10.0          # 第一阶段 10Hz；改 15Hz 时把 timeout_s 降到 0.04~0.05
-    timeout_s: float = 0.08        # 必须 < 1/rate_hz
+    # 三种超时严格分开：
+    timeout_s: float = 0.08            # **只用于实时控制帧**，必须 < 1/rate_hz
+    preflight_timeout_s: float = 2.0   # /api/status、/api/reconnect、验证用 STOP
+    serial_settle_s: float = 1.2       # 真正 reconnect 之后的等待（DTR 会复位 Nano）
     max_failures: int = 5          # 连续失败熔断阈值（10Hz 下约 0.5s）
 
     # 缩放：先按仿真量程归一化，再乘 gain
@@ -117,6 +120,76 @@ LOG_FIELDS = ["t", "sim_x", "sim_y", "sim_theta", "sim_v", "sim_omega",
               "raw_V", "raw_W", "sent_V", "sent_W", "kind",
               "http_status", "ok", "latency_ms", "note", "state",
               "max_lag_ms", "lag_failures"]
+
+
+# --------------------------------------------------------------------------- 预检
+def preflight(base_url: str, cfg: PikachuConfig, log=print):
+    """启动预检（Bridge.start() 和 smoke_test 共用，避免两处逻辑跑偏）。
+
+    返回 (ok: bool, message: str)。除了验证用的 STOP(0,0) 之外不发任何运动指令。
+
+    流程：
+      1. GET /api/status（preflight_timeout_s）-> guard_mode 必须 false
+      2. status.open == true  -> **不调用 /api/reconnect**。
+            串口已经开着，再 reconnect 既没必要，又可能因为 DTR 复位把 CH340 卡住。
+         status.open == false -> POST /api/reconnect（preflight_timeout_s），
+            要求 JSON ok=true 且 status.open=true，然后等 serial_settle_s。
+      3. 发一次 STOP 做端到端验证（preflight_timeout_s，重试几次）。
+
+    实时发送帧仍然用 command_timeout_s（默认 0.08s）；这里不做全局放宽。
+    """
+    base = base_url.rstrip("/")
+    tp = cfg.preflight_timeout_s
+
+    # 1) status
+    try:
+        _, body = http_json(base + "/api/status", None, tp)
+    except Exception as exc:                                   # noqa: BLE001
+        return False, f"GET /api/status 失败: {type(exc).__name__}: {exc}"
+    if body.get("guard_mode"):
+        return False, "guard_mode=true，先在网页上关闭 guard 模式"
+    already_open = bool(body.get("open"))
+    log(f"[preflight] /api/status ok  guard_mode=false  serial_open={already_open}")
+
+    # 2) 只在串口没开时才 reconnect
+    if already_open:
+        log("[preflight] 串口已打开 -> 跳过 /api/reconnect")
+    else:
+        try:
+            _, body = http_json(base + "/api/reconnect", {}, tp)
+        except Exception as exc:                               # noqa: BLE001
+            return False, f"POST /api/reconnect 失败: {type(exc).__name__}: {exc}"
+        s = body.get("status") or {}
+        if not body.get("ok") or not s.get("open"):
+            return False, (f"reconnect 未成功: ok={body.get('ok')} "
+                           f"open={s.get('open')} err={s.get('last_error')}")
+        log(f"[preflight] reconnect ok  port={s.get('port')}  "
+            f"等串口稳定 {cfg.serial_settle_s:.1f}s（DTR 可能已复位 Nano）")
+        time.sleep(cfg.serial_settle_s)
+
+    # 3) STOP 端到端验证
+    last = "n/a"
+    for _ in range(3):
+        try:
+            status, body = http_json(base + cfg.endpoint, {"v": 0.0, "w": 0.0}, tp)
+        except Exception as exc:                               # noqa: BLE001
+            last = f"{type(exc).__name__}: {exc}"
+            time.sleep(0.2)
+            continue
+        s = body.get("status") or {}
+        if status == 409:
+            return False, "HTTP 409 guard mode"
+        if not body.get("ok"):
+            last = f"json ok=false (http {status})"
+            time.sleep(0.2)
+            continue
+        if cfg.require_serial_open and not s.get("open"):
+            last = f"serial not open ({s.get('last_error')})"
+            time.sleep(0.2)
+            continue
+        log("[preflight] STOP confirmed")
+        return True, ""
+    return False, f"STOP 验证失败: {last}"
 
 
 class PikachuBridge:
@@ -232,51 +305,13 @@ class PikachuBridge:
             self._spawn()
             return True
 
-        base = cfg.base_url.rstrip("/")
-        # 1) /api/status：guard_mode 必须 false
-        try:
-            _, body = http_json(base + "/api/status", None, cfg.timeout_s)
-        except Exception as exc:                                   # noqa: BLE001
-            print(f"[bridge] 预检失败 GET /api/status -> {type(exc).__name__}: {exc}")
-            return False
-        if body.get("guard_mode"):
-            print("[bridge] 预检失败：guard_mode=true。先在网页上关闭 guard 模式。")
-            return False
-        print(f"[bridge] preflight: /api/status ok  guard_mode=false  "
-              f"serial_open={bool(body.get('open'))}")
-
-        # 2) /api/reconnect：新起的 Flask 串口默认没开，必须显式 reconnect
-        try:
-            _, body = http_json(base + "/api/reconnect", {}, cfg.timeout_s)
-        except Exception as exc:                                   # noqa: BLE001
-            print(f"[bridge] 预检失败 POST /api/reconnect -> {type(exc).__name__}: {exc}")
-            return False
-        st = body.get("status") or {}
-        if not body.get("ok") or not st.get("open"):
-            print(f"[bridge] 预检失败：reconnect ok={body.get('ok')} "
-                  f"open={st.get('open')} err={st.get('last_error')}")
-            return False
-        print(f"[bridge] preflight: /api/reconnect ok  port={st.get('port')} "
-              f"baud={st.get('baud')}")
-
-        # 3) 发一次 STOP，确认整条链路（HTTP + JSON ok + 串口 open）
-        ok = False
-        status, body = 0, {}
-        for _ in range(3):
-            status, body = http_json(base + cfg.endpoint, {"v": 0.0, "w": 0.0},
-                                     cfg.timeout_s)
-            st = body.get("status") or {}
-            if status != 409 and body.get("ok") and (
-                    not cfg.require_serial_open or st.get("open")):
-                ok = True
-                break
-            time.sleep(0.1)
+        ok, msg = preflight(cfg.base_url, cfg,
+                            log=lambda s: print(f"[bridge] {s}"))
         if not ok:
-            print(f"[bridge] 预检失败：STOP 未被接受 http={status} body={body}")
+            print(f"[bridge] 预检失败：{msg}")
             return False
         self.stops_ok += 1
-        print("[bridge] preflight: STOP confirmed  -> RUNNING")
-
+        print("[bridge] -> RUNNING")
         self._set_state(BridgeState.RUNNING)
         self._spawn()
         return True

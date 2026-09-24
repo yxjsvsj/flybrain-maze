@@ -17,17 +17,13 @@ from hardware.pikachu_bridge import (BridgeState, PikachuBridge, PikachuConfig,
 from loop.shadow_run import RealTimePacer
 
 RESULTS: list[tuple[str, bool, str]] = []
+TESTS: list[tuple[str, object]] = []
 
 
 def check(name):
+    """注册测试（**不在导入时执行**，由 main() 统一跑）。"""
     def deco(fn):
-        try:
-            fn()
-            RESULTS.append((name, True, ""))
-        except Exception as exc:                                   # noqa: BLE001
-            RESULTS.append((name, False, f"{type(exc).__name__}: {exc}"))
-            import traceback
-            traceback.print_exc()
+        TESTS.append((name, fn))
         return fn
     return deco
 
@@ -38,10 +34,13 @@ class MockState:
         self.guard_mode = False
         self.serial_open = True
         self.reconnect_ok = True
+        self.reconnect_opens_port = True  # reconnect 成功后端口是否真的打开
+        self.reconnect_delay_s = 0.0     # 模拟 CH340 打开串口时的 DTR 复位耗时
         self.drive_ok = True
         self.drive_http = 200
         self.latency_s = 0.0
         self.requests: list[tuple[str, dict]] = []
+        self.timeline: list[tuple[str, float, float]] = []   # (path, 到达, 响应完成)
         self.lock = threading.Lock()
 
 
@@ -81,11 +80,17 @@ class MockServer:
 
             def do_POST(self):
                 body = self._read()
+                t_arrive = time.perf_counter()
                 with state.lock:
                     state.requests.append((self.path, body))
                 if state.latency_s:
                     time.sleep(state.latency_s)
                 if self.path == "/api/reconnect":
+                    if state.reconnect_delay_s:
+                        time.sleep(state.reconnect_delay_s)
+                    # 真实行为：reconnect 成功会把串口打开，之后 status.open 变 true
+                    if state.reconnect_ok and state.reconnect_opens_port:
+                        state.serial_open = True
                     self._send(200, {"ok": state.reconnect_ok,
                                      "status": {"open": state.serial_open,
                                                 "port": "/dev/ttyUSB0",
@@ -102,6 +107,8 @@ class MockServer:
                                                "last_error": None}})
                 else:
                     self._send(404, {})
+                with state.lock:
+                    state.timeline.append((self.path, t_arrive, time.perf_counter()))
 
         self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), H)
         self.port = self.httpd.server_address[1]
@@ -119,6 +126,7 @@ class MockServer:
 
 def base_cfg(url, **kw):
     d = dict(base_url=url, rate_hz=20.0, timeout_s=0.2, max_failures=3,
+             preflight_timeout_s=2.0, serial_settle_s=0.15,
              sim_max_speed=0.9, sim_max_omega=2.6,
              max_v=0.30, max_w=0.30, max_motor_mix=0.30, log_path="")
     d.update(kw)
@@ -210,6 +218,7 @@ def t4():
 def t5():
     srv = MockServer()
     try:
+        srv.state.serial_open = False      # 只有串口没开时才会走 reconnect 分支
         srv.state.reconnect_ok = False
         b = PikachuBridge(base_cfg(srv.url))
         assert not b.start(), "reconnect 失败应拒绝启动"
@@ -217,13 +226,14 @@ def t5():
         srv.close()
 
 
-@check("T6 预检失败：串口没打开")
+@check("T6 预检失败：reconnect 报 ok 但串口仍没打开")
 def t6():
     srv = MockServer()
     try:
         srv.state.serial_open = False
+        srv.state.reconnect_opens_port = False   # 假成功：ok=true 但 open 仍是 false
         b = PikachuBridge(base_cfg(srv.url))
-        assert not b.start(), "串口未打开应拒绝启动"
+        assert not b.start(), "串口未真正打开应拒绝启动"
     finally:
         srv.close()
 
@@ -427,7 +437,73 @@ def t16():
         srv.close()
 
 
+@check("T17 status.open=true 时不得调用 /api/reconnect")
+def t17():
+    srv = MockServer()
+    try:
+        assert srv.state.serial_open is True
+        b = PikachuBridge(base_cfg(srv.url, preflight_timeout_s=2.0))
+        assert b.start(), "串口已开时预检应直接通过"
+        paths = [p for p, _ in srv.state.requests]
+        assert "/api/reconnect" not in paths, \
+            f"串口已打开却调用了 reconnect: {paths}"
+        assert "/api/drive" in paths, "仍应发一次 STOP 做验证"
+        b.stop()
+    finally:
+        srv.close()
+
+
+@check("T18 status.open=false -> reconnect 用 preflight 超时，且成功后要 settle")
+def t18():
+    srv = MockServer()
+    try:
+        srv.state.serial_open = False
+        # 关键回归：reconnect 耗时 0.4s，远大于控制帧超时 0.08s，但小于 preflight 超时 2.0s。
+        # 旧实现用 0.08s 会直接 TimeoutError（就是实机 smoke test 失败的原因）。
+        srv.state.reconnect_delay_s = 0.4
+        settle = 0.5
+        b = PikachuBridge(base_cfg(srv.url, timeout_s=0.08,
+                                   preflight_timeout_s=2.0, serial_settle_s=settle))
+        assert b.start(), "用 preflight 超时应当成功（0.4s 延迟 > 0.08s 控制超时）"
+        paths = [p for p, _, _ in srv.state.timeline]
+        assert "/api/reconnect" in paths, "串口没开时必须 reconnect"
+        t_rec_done = next(t1 for p, _, t1 in srv.state.timeline
+                          if p == "/api/reconnect")
+        t_stop = next(t0 for p, t0, _ in srv.state.timeline
+                      if p == "/api/drive" and t0 > t_rec_done)
+        gap = t_stop - t_rec_done
+        assert gap >= settle * 0.8, \
+            f"reconnect 成功后应等 {settle}s 再发 STOP，实际只等了 {gap:.3f}s"
+        b.stop()
+    finally:
+        srv.close()
+
+
+@check("T19 reconnect 超时/失败 -> 不动车，返回失败")
+def t19():
+    srv = MockServer()
+    try:
+        srv.state.serial_open = False
+        srv.state.reconnect_delay_s = 2.0        # 超过下面的 preflight 超时
+        b = PikachuBridge(base_cfg(srv.url, preflight_timeout_s=0.4))
+        assert not b.start(), "reconnect 超时应拒绝启动"
+        assert b.state is BridgeState.INIT, f"不应进入 RUNNING，得到 {b.state}"
+        drives = [p for p, _, _ in srv.state.timeline if p == "/api/drive"]
+        assert not drives, f"reconnect 失败后不该发任何 drive 指令，实际发了 {len(drives)} 次"
+        b.stop()
+    finally:
+        srv.close()
+
+
 def main() -> int:
+    for name, fn in TESTS:
+        try:
+            fn()
+            RESULTS.append((name, True, ""))
+        except Exception as exc:                                   # noqa: BLE001
+            RESULTS.append((name, False, f"{type(exc).__name__}: {exc}"))
+            import traceback
+            traceback.print_exc()
     print("\n" + "=" * 70)
     n_pass = sum(1 for _, ok, _ in RESULTS if ok)
     for name, ok, msg in RESULTS:
