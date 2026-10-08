@@ -78,11 +78,15 @@ class Tof5:
     """5x VL53L0X。start() 分配地址；read() 读；丢地址会自愈。"""
 
     def __init__(self, *, angles_deg: dict | None = None,
+                 sensor_origin_m: dict | None = None,
                  range_bias_mm: float = 0.0, min_mm: int = NEAR_MIN_MM,
                  invalid_mm: int = INVALID_MM, health_every: int = 50,
                  reinit_min_interval_s: float = 2.0):
         self.angles_deg = dict(angles_deg or DEFAULT_ANGLES_DEG)
         self.angles_rad = {k: math.radians(v) for k, v in self.angles_deg.items()}
+        # 传感器相对车体原点的安装位移（米）。初版全部 (0,0)——只做注入/方向验证；
+        # 正式 P2c 前必须实测每个传感器的 (x, y)，不要永久假设共点。
+        self.sensor_origin_m = dict(sensor_origin_m or {n: (0.0, 0.0) for n in ORDER})
         self.range_bias_mm = range_bias_mm
         self.min_mm = min_mm
         self.invalid_mm = invalid_mm
@@ -93,6 +97,8 @@ class Tof5:
         self._pins = {}
         self._sensors = {}
         self._read_n = 0
+        self._seq = 0
+        self._t0 = time.monotonic()
         self._last_reinit_try = 0.0
         self._got_io_error = False
 
@@ -204,25 +210,78 @@ class Tof5:
             self._recover()
         return out
 
+    def frame(self) -> dict:
+        """读一帧并打包成标准遥测 frame（供 UDP 发送 / 环路消费）。
+
+        字段：ver, seq, t, healthy, ranges, status, init_count, read_errors, reinit_count
+        """
+        d = self.read()
+        self._seq += 1
+        return {
+            "ver": 1,
+            "seq": self._seq,
+            "t": round(time.monotonic() - self._t0, 4),
+            "healthy": bool(self.healthy),
+            "ranges": {n: (None if d[n].mm is None else round(d[n].mm, 1)) for n in ORDER},
+            "status": {n: d[n].state.value for n in ORDER},
+            "init_count": self.init_count,
+            "read_errors": self.read_errors,
+            "reinit_count": self.reinit_events,
+        }
+
 
 def _main() -> int:
     import argparse
-    ap = argparse.ArgumentParser(description="5x VL53L0X 驱动自测")
+    import json
+    import socket
+    import sys
+
+    ap = argparse.ArgumentParser(description="5x VL53L0X 驱动自测 / UDP 遥测")
     ap.add_argument("--range-bias-mm", type=float, default=0.0)
+    ap.add_argument("--udp", default="",
+                    help="host:port，10Hz 发 compact JSON（如 192.168.50.123:8889）")
+    ap.add_argument("--udp-hz", type=float, default=10.0)
+    ap.add_argument("--seconds", type=float, default=0.0, help="0 = 一直跑")
     args = ap.parse_args()
+
+    usock = None
+    udp_addr = None
+    if args.udp:
+        host, _, port = args.udp.rpartition(":")
+        udp_addr = (host, int(port))
+        usock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print(f"UDP -> {host}:{port} @ {args.udp_hz:g}Hz")
+
     t = Tof5(range_bias_mm=args.range_bias_mm)
-    print(f"启动 XSHUT={XSHUT_BCM} 角度={t.angles_deg}")
+    print(f"启动 XSHUT={XSHUT_BCM} 角度={t.angles_deg} origin={t.sensor_origin_m}")
     t.start()
-    print(f"初始化 OK（第 {t.init_count} 次）。10Hz 读取（Ctrl-C 结束）")
+    print(f"初始化 OK（第 {t.init_count} 次）。{args.udp_hz:g}Hz 读取（Ctrl-C 结束）")
+
+    t0 = time.monotonic()
+    next_tx = t0
     try:
         while True:
-            d = t.read()
-            line = "  ".join(f"{n}:{d[n].state.value[:4]}:"
-                             f"{'----' if d[n].mm is None else f'{d[n].mm:6.1f}'}"
-                             for n in ORDER)
-            print(f"{line}  [init={t.init_count} rerr={t.read_errors} "
-                  f"reinit={t.reinit_events} healthy={t.healthy}]", flush=True)
-            time.sleep(0.1)
+            f = t.frame()
+            parts = []
+            for n in ORDER:
+                mm = f["ranges"][n]
+                mm_s = "----" if mm is None else f"{mm:6.1f}"
+                parts.append(f"{n}:{f['status'][n][:4]}:{mm_s}")
+            print("  ".join(parts) +
+                  f"   [init={f['init_count']} rerr={f['read_errors']} "
+                  f"reinit={f['reinit_count']} healthy={f['healthy']}]", flush=True)
+
+            now = time.monotonic()
+            if usock is not None and udp_addr is not None and now >= next_tx:
+                try:
+                    usock.sendto(json.dumps(f).encode(), udp_addr)
+                except OSError as exc:
+                    print(f"[udp] send 失败: {exc}", file=sys.stderr)
+                next_tx = now + 1.0 / max(0.1, args.udp_hz)
+
+            if args.seconds > 0 and now - t0 >= args.seconds:
+                break
+            time.sleep(1.0 / max(1.0, args.udp_hz))
     except KeyboardInterrupt:
         print("\n结束")
     finally:
