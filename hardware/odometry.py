@@ -38,6 +38,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import socket
 import sys
 import time
@@ -200,6 +201,8 @@ def main(argv=None) -> int:
     next_udp = t0
     seq = 0
     udp_errs = 0
+    sent_ok = 0
+    session_id = f"{int(time.time())}-{os.getpid()}"
     poll_to = 0.01 if usock is not None else 0.1
     dbg = args.debug_events
     q1 = q2 = None
@@ -243,10 +246,12 @@ def main(argv=None) -> int:
                 if usock is not None and udp_addr is not None and now >= next_udp:
                     try:
                         usock.sendto(json.dumps({
-                            "ver": 1, "seq": seq, "t": round(now - t0, 4),
+                            "ver": 2, "session_id": session_id, "seq": seq,
+                            "t": round(now - t0, 4),
                             "left": q1.count, "right": q2.count,
                             "x": round(x, 5), "y": round(y, 5), "theta": round(th, 6),
                         }).encode(), udp_addr)
+                        sent_ok += 1
                         seq += 1
                     except OSError as exc:
                         udp_errs += 1
