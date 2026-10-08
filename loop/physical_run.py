@@ -51,6 +51,8 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
     best_goal = 10 ** 9
     stalled = False
     steps_done = 0
+    brain_ns = 0.0
+    t_wall0 = time.perf_counter()
 
     memory = None
     if cfg.decoder.memory_gain > 0:
@@ -88,7 +90,9 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                 info["target"] = (float(tx), float(ty))
                 info["target_dist"] = float(dist)
 
+        tb = time.perf_counter()
         fired = brain.step(inject=inject)
+        brain_ns += time.perf_counter() - tb
         v, omega = dec.update(fired, info=info, stalled=stalled)
         car.set_command(v, omega)
         car.step(maze, dt)                          # OdomRealCar -> 真实位姿
@@ -143,7 +147,8 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
         "map_explored": memory.explored_fraction(len(maze.free_cells())) if memory else -1.0,
         "replans": memory.replans if memory else 0,
         "no_path_events": memory.invalidations["NO_PATH"] if memory else 0,
-        "brain_ms_per_step": 0.0,
+        "brain_ms_per_step": brain_ns / max(1, steps_done) * 1e3,
+        "realtime_factor": (sim_time / max(1e-6, time.perf_counter() - t_wall0)),
     }
     return stats
 
@@ -186,7 +191,8 @@ def main(argv=None) -> int:
     ap.add_argument("--meters-per-cell", type=float, required=True)
     # tof
     ap.add_argument("--tof-port", type=int, default=8889)
-    ap.add_argument("--max-tof-age", type=float, default=0.25)
+    ap.add_argument("--tof-warning-age", type=float, default=0.25)
+    ap.add_argument("--tof-hard-stale", type=float, default=0.35)
     ap.add_argument("--odom-wait", type=float, default=5.0)
     ap.add_argument("--tof-wait", type=float, default=5.0)
     args = ap.parse_args(argv)
@@ -225,7 +231,8 @@ def main(argv=None) -> int:
 
     # 客户端
     odom = OdomClient(args.odom_port, max_age=args.max_odom_age, bind=args.odom_bind)
-    tof = Tof5Client(args.tof_port, max_age=args.max_tof_age, bind=args.odom_bind)
+    tof = Tof5Client(args.tof_port, warning_age=args.tof_warning_age,
+                     hard_stale=args.tof_hard_stale, bind=args.odom_bind)
     odom.start(); tof.start()
     for name, cli, wait in (("odom", odom, args.odom_wait), ("tof", tof, args.tof_wait)):
         t0 = time.time()
