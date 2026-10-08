@@ -36,7 +36,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
+import socket
 import sys
 import time
 
@@ -135,9 +137,12 @@ def main(argv=None) -> int:
                     help="E1 前进方向计数符号（+1/-1）")
     ap.add_argument("--right-sign", type=float, default=RIGHT_SIGN,
                     help="E2 前进方向计数符号（+1/-1）")
-    ap.add_argument("--seconds", type=float, default=30.0, help="跑多久")
+    ap.add_argument("--seconds", type=float, default=30.0, help="跑多久（0 = 一直跑，Ctrl-C 结束）")
     ap.add_argument("--print-hz", type=float, default=2.0)
     ap.add_argument("--csv", default="")
+    ap.add_argument("--udp", default="",
+                    help="host:port，按 --udp-hz 发 UDP JSON 遥测（如 <windows-ip>:8888）")
+    ap.add_argument("--udp-hz", type=float, default=50.0)
     ap.add_argument("--wait-motion", action="store_true",
                     help="先等到累计变化 >= --motion-counts；静默 --settle 秒后收尾")
     ap.add_argument("--motion-counts", type=int, default=40,
@@ -179,8 +184,23 @@ def main(argv=None) -> int:
     if writer:
         writer.writerow(["t", "e1", "e2", "x", "y", "theta"])
 
+    usock = None
+    udp_addr = None
+    if args.udp:
+        host, _, port = args.udp.rpartition(":")
+        if not host or not port:
+            print("--udp 需要 host:port", file=sys.stderr)
+            return 2
+        udp_addr = (host, int(port))
+        usock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print(f"UDP -> {host}:{port} @ {args.udp_hz:g}Hz")
+
     t0 = time.time()
     next_print = t0
+    next_udp = t0
+    seq = 0
+    udp_errs = 0
+    poll_to = 0.01 if usock is not None else 0.1
     dbg = args.debug_events
     q1 = q2 = None
     try:
@@ -196,7 +216,7 @@ def main(argv=None) -> int:
                 print(f"[wait-motion] 推车…（需累计 {args.motion_counts} 计数；"
                       f"最多 {args.max_wait:.0f}s）", flush=True)
             while True:
-                if req.wait_edge_events(timeout=0.1):
+                if req.wait_edge_events(timeout=poll_to):
                     for ev in req.read_edge_events():
                         # 取事件自己那一相的当前电平（比 event_type 比较稳）
                         lvl = _bit(req.get_value(ev.line_offset))
@@ -220,6 +240,19 @@ def main(argv=None) -> int:
                         print(f"[wait-motion] 检测到移动（累计 {moved} 计数），记录中…",
                               flush=True)
                 x, y, th = odom.pose()
+                if usock is not None and udp_addr is not None and now >= next_udp:
+                    try:
+                        usock.sendto(json.dumps({
+                            "ver": 1, "seq": seq, "t": round(now - t0, 4),
+                            "left": q1.count, "right": q2.count,
+                            "x": round(x, 5), "y": round(y, 5), "theta": round(th, 6),
+                        }).encode(), udp_addr)
+                        seq += 1
+                    except OSError as exc:
+                        udp_errs += 1
+                        if udp_errs <= 3 or udp_errs % 200 == 0:
+                            print(f"[udp] send 失败 #{udp_errs}: {exc}", file=sys.stderr)
+                    next_udp = now + 1.0 / max(1.0, args.udp_hz)
                 if writer is not None and fh is not None:
                     writer.writerow([f"{now - t0:.3f}", q1.count, q2.count,
                                      f"{x:.4f}", f"{y:.4f}", f"{th:.4f}"])
@@ -236,7 +269,7 @@ def main(argv=None) -> int:
                     continue
                 if last_change is not None and (now - last_change) >= args.settle:
                     break
-                if (now - t0) >= args.seconds:
+                if args.seconds > 0 and (now - t0) >= args.seconds:
                     break
     except KeyboardInterrupt:
         pass
