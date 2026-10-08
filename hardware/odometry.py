@@ -90,11 +90,12 @@ class DifferentialOdometry:
 
     def __init__(self, cpr: float = CPR, wheel_diam: float = WHEEL_DIAM,
                  track: float = TRACK, left_sign: float = LEFT_SIGN,
-                 right_sign: float = RIGHT_SIGN):
+                 right_sign: float = RIGHT_SIGN, swap_lr: bool = False):
         self.m_per_count = math.pi * wheel_diam / cpr
         self.track = track
         self.left_sign = left_sign
         self.right_sign = right_sign
+        self.swap_lr = bool(swap_lr)
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
@@ -112,6 +113,8 @@ class DifferentialOdometry:
 
         ds_left = self.left_sign * d1 * self.m_per_count
         ds_right = self.right_sign * d2 * self.m_per_count
+        if self.swap_lr:                       # 实测 E1/E2 与物理左右相反
+            ds_left, ds_right = ds_right, ds_left
         ds = 0.5 * (ds_left + ds_right)
         dtheta = (ds_right - ds_left) / self.track
 
@@ -138,6 +141,8 @@ def main(argv=None) -> int:
                     help="E1 前进方向计数符号（+1/-1）")
     ap.add_argument("--right-sign", type=float, default=RIGHT_SIGN,
                     help="E2 前进方向计数符号（+1/-1）")
+    ap.add_argument("--swap-lr", action="store_true",
+                    help="交换左右（实测 E1/E2 与物理左右相反时用）")
     ap.add_argument("--seconds", type=float, default=30.0, help="跑多久（0 = 一直跑，Ctrl-C 结束）")
     ap.add_argument("--print-hz", type=float, default=2.0)
     ap.add_argument("--csv", default="")
@@ -173,7 +178,7 @@ def main(argv=None) -> int:
                                    bias=Bias.PULL_UP) for off in offsets}
     odom = DifferentialOdometry(cpr=args.cpr, wheel_diam=args.wheel_diam,
                                 track=args.track, left_sign=args.left_sign,
-                                right_sign=args.right_sign)
+                                right_sign=args.right_sign, swap_lr=args.swap_lr)
 
     print(f"chip={CHIP}  E1(left)=({e1a},{e1b})  E2(right)=({e2a},{e2b})")
     print(f"CPR={args.cpr:g}  D={args.wheel_diam*100:.1f}cm  L={args.track*100:.1f}cm  "
@@ -272,7 +277,8 @@ def main(argv=None) -> int:
                         print("[wait-motion] 超时：没有检测到足够移动。", flush=True)
                         return 1
                     continue
-                if last_change is not None and (now - last_change) >= args.settle:
+                if args.wait_motion and last_change is not None \
+                        and (now - last_change) >= args.settle:
                     break
                 if args.seconds > 0 and (now - t0) >= args.seconds:
                     break
