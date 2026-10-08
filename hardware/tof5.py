@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import math
+import os
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -101,6 +102,10 @@ class Tof5:
         self._t0 = time.monotonic()
         self._last_reinit_try = 0.0
         self._got_io_error = False
+        # continuous 模式：每路的最新原始读数与"最后一次真实更新"时刻
+        self._last_raw: dict[str, int | None] = {n: None for n in ORDER}
+        self._last_upd: dict[str, float | None] = {n: None for n in ORDER}
+        self.session_id = f"{int(time.time())}-{os.getpid()}"
 
         self.init_count = 0
         self.read_errors = 0
@@ -117,6 +122,11 @@ class Tof5:
             raise RuntimeError("ToF 地址初始化失败（检查 VIN/GND/SDA/SCL/XSHUT）")
 
     def stop(self) -> None:
+        for s in self._sensors.values():
+            try:
+                s.stop_continuous()
+            except Exception:                                  # noqa: BLE001
+                pass
         for p in self._pins.values():
             try:
                 p.deinit()
@@ -161,6 +171,16 @@ class Tof5:
             except Exception:                                  # noqa: BLE001
                 self.healthy = False
                 return False
+        # 地址分配完成后，逐路进入 continuous ranging（之后主循环只读最新结果）
+        for n in ORDER:
+            try:
+                self._sensors[n].start_continuous()
+            except Exception:                                  # noqa: BLE001
+                self.healthy = False
+                return False
+        for n in ORDER:
+            self._last_raw[n] = None
+            self._last_upd[n] = None
         self.init_count += 1
         self.healthy = True
         return True
@@ -190,14 +210,26 @@ class Tof5:
 
     # ---- 读取 ----
     def read(self) -> dict:
-        """返回 {L,FL,F,FR,R} -> RangeReading（含显式 state）。"""
+        """返回 {L,FL,F,FR,R} -> RangeReading。
+
+        continuous 模式下**只在 data_ready 时读**（非阻塞），否则沿用上一次的
+        **真实**测量值；首帧前该路视为 NO_TARGET。绝不把旧值当新测量。
+        """
         out = {}
         io_err = False
+        now = time.monotonic()
         for n in ORDER:
             try:
-                out[n] = classify_range(self._sensors[n].range,
-                                        min_mm=self.min_mm, invalid_mm=self.invalid_mm,
-                                        range_bias_mm=self.range_bias_mm)
+                if self._sensors[n].data_ready:
+                    self._last_raw[n] = int(self._sensors[n].read_range())   # 读+清中断
+                    self._last_upd[n] = now
+                raw = self._last_raw[n]
+                if raw is None:
+                    out[n] = RangeReading(RangeState.NO_TARGET, None)
+                else:
+                    out[n] = classify_range(raw, min_mm=self.min_mm,
+                                            invalid_mm=self.invalid_mm,
+                                            range_bias_mm=self.range_bias_mm)
             except Exception:                                  # noqa: BLE001
                 out[n] = RangeReading(RangeState.IO_ERROR, None)
                 io_err = True
@@ -211,19 +243,23 @@ class Tof5:
         return out
 
     def frame(self) -> dict:
-        """读一帧并打包成标准遥测 frame（供 UDP 发送 / 环路消费）。
-
-        字段：ver, seq, t, healthy, ranges, status, init_count, read_errors, reinit_count
-        """
+        """读一帧并打包成标准遥测 frame（供 UDP 发送 / 环路消费）。"""
         d = self.read()
         self._seq += 1
+        now = time.monotonic()
+        ages = {}
+        for n in ORDER:
+            u = self._last_upd[n]
+            ages[n] = None if u is None else round((now - u) * 1000.0, 1)
         return {
-            "ver": 1,
+            "ver": 2,
+            "session_id": self.session_id,
             "seq": self._seq,
-            "t": round(time.monotonic() - self._t0, 4),
+            "t": round(now - self._t0, 4),
             "healthy": bool(self.healthy),
             "ranges": {n: (None if d[n].mm is None else round(d[n].mm, 1)) for n in ORDER},
             "status": {n: d[n].state.value for n in ORDER},
+            "ages_ms": ages,
             "init_count": self.init_count,
             "read_errors": self.read_errors,
             "reinit_count": self.reinit_events,
