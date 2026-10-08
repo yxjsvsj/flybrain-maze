@@ -28,8 +28,9 @@ class PhysicalToFEncoder(Encoder):
     def __init__(self, groups: dict, cfg: EncoderConfig, brain_dt: float,
                  angles_deg: dict, sensor_order=("L", "FL", "F", "FR", "R"),
                  car_max_speed: float = 0.9, car_radius: float = 0.22,
-                 tau: float = 0.100):
+                 tau: float = 0.100, meters_per_cell: float = 1.0):
         super().__init__(groups, cfg, brain_dt, car_max_speed, car_radius, tau)
+        self.m_per_cell = float(meters_per_cell)
         self.names = list(sensor_order)
         self.angles = np.deg2rad(np.array([angles_deg[n] for n in self.names], dtype=float))
         # 掩码由实际 angles 和可配置 avoidance_fov 计算
@@ -49,18 +50,31 @@ class PhysicalToFEncoder(Encoder):
 
     # ---- 输入 ----
     def sense(self, frame) -> np.ndarray:  # type: ignore[override]
-        """ToF 帧 -> 每条射线的距离(米)。"""
+        """ToF 帧 -> 每条射线的距离，**单位 = maze cells**（冻结公式/car_radius/
+        max_range/Memory 都用 cells）。原始 mm/m 只用于日志。
+
+        VALID -> (mm/1000)/meters_per_cell；NO_TARGET -> max_range(cells)；
+        TOO_NEAR -> min distance(cells)。
+        """
+        min_cells = MIN_DIST_M / self.m_per_cell
         d = np.full(len(self.names), self.cfg.max_range, dtype=np.float32)
         for i, n in enumerate(self.names):
             st = frame.status.get(n)
             mm = frame.ranges.get(n)
             if st == "TOO_NEAR":
-                d[i] = MIN_DIST_M                       # 太近 -> min distance
+                d[i] = min_cells
             elif st == "VALID" and mm is not None:
-                d[i] = float(mm) / 1000.0
+                d[i] = (float(mm) / 1000.0) / self.m_per_cell
             else:
                 d[i] = self.cfg.max_range               # NO_TARGET / IO_ERROR
-        return np.clip(d, MIN_DIST_M, self.cfg.max_range)
+        return np.clip(d, min_cells, self.cfg.max_range)
+
+    def valid_mask(self, frame) -> np.ndarray:
+        """建图门控：**只有 VALID / TOO_NEAR 的 ray 才进 memory.update**；
+        NO_TARGET / IO_ERROR 完全跳过（不按 max_range 反复写成整段 FREE）。
+        """
+        return np.array([frame.status.get(n) in ("VALID", "TOO_NEAR")
+                         for n in self.names], dtype=bool)
 
     def update(self, frame, dists: np.ndarray) -> bool:
         """新 tof_seq -> 用真实帧间隔刷新 side 缓存。返回是否消费了新帧。"""

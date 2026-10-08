@@ -577,6 +577,42 @@ def t22():
     assert abs(V - 0.1) < 1e-9, V
 
 
+@check("T23 PhysicalToFEncoder：mm->cells 换算 + NO_TARGET 建图门控")
+def t23():
+    from types import SimpleNamespace
+
+    from config import Config
+    from hardware.tof5 import DEFAULT_ANGLES_DEG, ORDER
+    from loop.encode_tof import PhysicalToFEncoder
+
+    cfg = Config()
+    keys = ["loom_L", "loom_R", "chase_L", "chase_R", "threat_L", "threat_R", "fwd"]
+    groups = {k: [i] for i, k in enumerate(keys)}
+    enc = PhysicalToFEncoder(groups, cfg.encoder, 0.02, DEFAULT_ANGLES_DEG,
+                             sensor_order=ORDER, meters_per_cell=0.40)
+    fi = enc.names.index("F")
+
+    def mk(status, mm):
+        st = {n: "NO_TARGET" for n in ORDER}
+        rg: dict = {n: None for n in ORDER}
+        st["F"] = status
+        rg["F"] = mm
+        return SimpleNamespace(session_id="t", seq=1, t=0.0, healthy=True, ranges=rg,
+                               status=st, ages_ms={}, init_count=1, read_errors=0,
+                               reinit_count=0)
+
+    d = enc.sense(mk("VALID", 400))               # 400mm @ 0.40m/cell -> 1.0 cell
+    assert abs(d[fi] - 1.0) < 1e-6, d
+    d2 = enc.sense(mk("NO_TARGET", None))
+    assert abs(d2[fi] - cfg.encoder.max_range) < 1e-6, d2
+    d3 = enc.sense(mk("TOO_NEAR", None))
+    assert d3[fi] <= 0.05 / 0.40 + 1e-9, d3
+    assert not enc.valid_mask(mk("NO_TARGET", None))[fi]
+    assert not enc.valid_mask(mk("IO_ERROR", None))[fi]
+    assert enc.valid_mask(mk("VALID", 400))[fi]
+    assert enc.valid_mask(mk("TOO_NEAR", None))[fi]
+
+
 def main() -> int:
     for name, fn in TESTS:
         try:

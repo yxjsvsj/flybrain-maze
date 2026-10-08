@@ -75,7 +75,9 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
         if memory is not None:
             if is_new:                             # **只在 ToF 帧变化时 update 一次**
-                memory.update(car.x, car.y, car.theta + enc.angles, dists)
+                vmask = enc.valid_mask(frame)      # NO_TARGET/IO_ERROR 的 ray 完全跳过
+                memory.update(car.x, car.y,
+                              car.theta + enc.angles[vmask], dists[vmask])
                 memory.check_invariants()
             target = memory.next_target(car.x, car.y)
             if target is not None:
@@ -223,7 +225,8 @@ def main(argv=None) -> int:
     # 真实 ToF encoder
     enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
                              sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
-                             car_radius=cfg.car.radius)
+                             car_radius=cfg.car.radius,
+                             meters_per_cell=args.meters_per_cell)
     print(f"[tof] angles={ {n: DEFAULT_ANGLES_DEG[n] for n in ORDER} }  "
           f"left={ [ORDER[i] for i in np.where(enc.left)[0]] } "
           f"right={ [ORDER[i] for i in np.where(enc.right)[0]] } "
