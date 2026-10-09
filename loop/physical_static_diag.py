@@ -67,6 +67,8 @@ def main(argv=None) -> int:
     ap.add_argument("--odom-wait", type=float, default=5.0)
     ap.add_argument("--log", default="static_diag.csv")
     ap.add_argument("--feats-npz", default="static_diag_feats.npz")
+    ap.add_argument("--tof-geometry", default=None,
+                    help="hardware/tof_geometry.json；同时输出每路射线几何 + 占用图")
     args = ap.parse_args(argv)
 
     cfg, _maze, _car, brain, groups, _enc0, _ = make_setup(
@@ -90,6 +92,18 @@ def main(argv=None) -> int:
     print(f"[static] ToF angles={ {n: DEFAULT_ANGLES_DEG[n] for n in ORDER} }  "
           f"meters_per_cell={args.meters_per_cell}  mode={args.mode}  scene={args.scene}")
     print("[static] **NO motor, NO bridge.** Ctrl+C 结束。")
+
+    geometry = None
+    tmem = None
+    if args.tof_geometry:
+        from loop.tof_geometry import load_geometry
+        from loop.memory_tof import ToFMemory
+        geometry = load_geometry(args.tof_geometry)
+        tmem = ToFMemory(60, 60, cfg.encoder.max_range,
+                         unknown_cost=cfg.nav.unknown_cost, lookahead=cfg.nav.lookahead,
+                         arrive_dist=cfg.nav.arrive_dist, off_path_tol=cfg.nav.off_path_tol,
+                         free_conflict_threshold=cfg.nav.free_conflict_threshold)
+        print(f"[static] geometry ON: {args.tof_geometry}  ({len(geometry)} sensors)")
 
     tof = Tof5Client(args.tof_port, warning_age=args.tof_warning_age,
                      hard_stale=args.tof_hard_stale, bind=args.odom_bind)
@@ -122,6 +136,8 @@ def main(argv=None) -> int:
             "brain_turn_raw", "brain_turn_clipped", "DN_fired_count"]
     if odom:
         cols += ["odom_x", "odom_y", "odom_theta_deg"]
+    if geometry is not None:
+        cols += ["geo_rays", "map_occupied"]
 
     fh = open(args.log, "w", newline="", encoding="utf-8")
     writer = csv.writer(fh)
@@ -188,6 +204,25 @@ def main(argv=None) -> int:
                         row += [f"{s.x:.4f}", f"{s.y:.4f}", f"{math.degrees(s.theta):.1f}"]
                     except OdomError:
                         row += ["", "", ""]
+                if tmem is not None and geometry is not None:
+                    from loop.tof_geometry import frame_to_cell_rays, frame_to_world_rays
+                    pose = (0.0, 0.0, 0.0)
+                    if odom:
+                        try:
+                            ss, _a = odom.latest()
+                            pose = (ss.x, ss.y, ss.theta)
+                        except OdomError:
+                            pass
+                    tmem.update_rays(pose[0], pose[1],
+                                     frame_to_cell_rays(frame, pose[0], pose[1], pose[2],
+                                                        geometry, args.meters_per_cell),
+                                     tof_seq=frame.seq)
+                    wrays = frame_to_world_rays(frame, pose[0], pose[1], pose[2], geometry)
+                    geo_s = ";".join(
+                        f"{n}:o=({ox:.2f},{oy:.2f})/a={math.degrees(a):.0f}/"
+                        f"hit=({ox + r * math.cos(a):.2f},{oy + r * math.sin(a):.2f})/{k}"
+                        for (n, ox, oy, a, r, k) in wrays)
+                    row += [geo_s, str(int((tmem.known == 2).sum()))]
                 writer.writerow(row)
                 fh.flush()
                 feats_buf.append(feats.copy())

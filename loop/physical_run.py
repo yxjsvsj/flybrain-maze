@@ -43,8 +43,12 @@ from loop.shadow_run import RealTimePacer
 
 
 def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
-                  trace_fn, trace_every):
-    """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。"""
+                  trace_fn, trace_every, geometry=None):
+    """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。
+
+    geometry 为 None -> 旧建图（所有射线从车中心，冻结 OccupancyMemory.update）。
+    geometry 非 None -> 逐原点建图（ToFMemory.update_rays + 每路真实 sensor origin）。
+    **两种模式下神经注入完全一致**（只影响地图射线 / 命中格 / 占用图 / 规划）。"""
     dt = brain.dt
     reached_goal = False
     time_to_goal = -1.0
@@ -56,13 +60,16 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
     memory = None
     if cfg.decoder.memory_gain > 0:
-        from nav.memory import OccupancyMemory
-        memory = OccupancyMemory(maze.w, maze.h, cfg.encoder.max_range,
-                                 unknown_cost=cfg.nav.unknown_cost,
-                                 lookahead=cfg.nav.lookahead,
-                                 arrive_dist=cfg.nav.arrive_dist,
-                                 off_path_tol=cfg.nav.off_path_tol,
-                                 free_conflict_threshold=cfg.nav.free_conflict_threshold)
+        if geometry is not None:
+            from loop.memory_tof import ToFMemory as _MemCls
+        else:
+            from nav.memory import OccupancyMemory as _MemCls
+        memory = _MemCls(maze.w, maze.h, cfg.encoder.max_range,
+                         unknown_cost=cfg.nav.unknown_cost,
+                         lookahead=cfg.nav.lookahead,
+                         arrive_dist=cfg.nav.arrive_dist,
+                         off_path_tol=cfg.nav.off_path_tol,
+                         free_conflict_threshold=cfg.nav.free_conflict_threshold)
         if maze.goal is not None:
             memory.set_goal(maze.goal[0], maze.goal[1])
 
@@ -75,9 +82,15 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
         if memory is not None:
             if is_new:                             # **只在 ToF 帧变化时 update 一次**
-                vmask = enc.valid_mask(frame)      # NO_TARGET/IO_ERROR 的 ray 完全跳过
-                memory.update(car.x, car.y,
-                              car.theta + enc.angles[vmask], dists[vmask])
+                if geometry is not None:
+                    from loop.tof_geometry import frame_to_cell_rays
+                    rays = frame_to_cell_rays(frame, car.x, car.y, car.theta,
+                                              geometry, enc.m_per_cell)
+                    memory.update_rays(car.x, car.y, rays, tof_seq=frame.seq)  # type: ignore[attr-defined]
+                else:
+                    vmask = enc.valid_mask(frame)  # NO_TARGET/IO_ERROR 的 ray 完全跳过
+                    memory.update(car.x, car.y,
+                                  car.theta + enc.angles[vmask], dists[vmask])
                 memory.check_invariants()
             target = memory.next_target(car.x, car.y)
             if target is not None:
@@ -204,6 +217,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-hard-stale", type=float, default=0.35)
     ap.add_argument("--odom-wait", type=float, default=5.0)
     ap.add_argument("--tof-wait", type=float, default=5.0)
+    ap.add_argument("--tof-geometry", default=None,
+                    help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
     args = ap.parse_args(argv)
 
     if not args.dry_run and not args.pikachu_url:
@@ -212,6 +227,12 @@ def main(argv=None) -> int:
     if not args.dry_run and args.no_realtime:
         print("实体运动必须开节拍。--no-realtime 只允许配合 --dry-run。")
         return 2
+
+    geometry = None
+    if args.tof_geometry:
+        from loop.tof_geometry import load_geometry
+        geometry = load_geometry(args.tof_geometry)
+        print(f"[tof] geometry ON: {args.tof_geometry}  ({len(geometry)} sensors)")
 
     parts = args.maze_cells.lower().split("x")
     cells = (int(parts[0]), int(parts[1]))
@@ -296,7 +317,8 @@ def main(argv=None) -> int:
             print("[physical] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                               stop_on_goal=args.stop_on_goal,
-                              trace_fn=trace_callback, trace_every=1)
+                              trace_fn=trace_callback, trace_every=1,
+                              geometry=geometry)
     except (OdomError, TofError) as exc:
         print(f"\n[physical] *** {type(exc).__name__}: {exc}")
         print("[physical] *** -> FAILSAFE（停车 + latch，不自动恢复）***")

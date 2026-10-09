@@ -104,6 +104,40 @@ def main() -> int:
           abs(ox - 0.15) < 1e-9 and abs(r - 1.031) < 1e-9 and kind == "hit",
           f"origin=({ox:.3f},{oy:.3f}) r={r:.3f} kind={kind}")
 
+    # 7) old (car-centre) vs new (sensor origin) F hit -> delta == F x_m
+    old_x = 0.0 + 1.031
+    _, _, _, new_hx, _ = sensor_world_ray(0.0, 0.0, 0.0, f_ext, 1.031)
+    check("7 old hit x=1.031 vs new x=1.181 (delta = F x_m)",
+          abs(new_hx - old_x - f_ext.x_m) < 1e-9,
+          f"old={old_x:.3f} new={new_hx:.3f} delta={new_hx - old_x:.3f}")
+
+    # 8) wall NOT on a grid boundary -> real hit cell written OCCUPIED
+    fr9 = _Frame({"F": 1031.0}, {"F": "VALID"}, seq=300)
+    mem9 = ToFMemory(20, 20, 6.0)
+    mem9.update_rays(0.0, 0.0, frame_to_cell_rays(fr9, 0.0, 0.0, 0.0, geo, MPC), tof_seq=300)
+    check("8 endpoint-in-cell wall -> OCCUPIED",
+          int((mem9.known == OCCUPIED).sum()) >= 1,
+          f"occupied={int((mem9.known == OCCUPIED).sum())}")
+
+    # 9) TOO_NEAR -> kind 'near', no precise wall
+    frN = _Frame({"F": 20.0}, {"F": "TOO_NEAR"}, seq=400)
+    raysN = frame_to_cell_rays(frN, 0.0, 0.0, 0.0, geo, MPC)
+    memN = ToFMemory(20, 20, 6.0)
+    memN.update_rays(0.0, 0.0, raysN, tof_seq=400)
+    check("9 TOO_NEAR -> near + no OCCUPIED",
+          len(raysN) == 1 and raysN[0][4] == "near"
+          and int((memN.known == OCCUPIED).sum()) == 0,
+          f"kind={raysN[0][4] if raysN else None} occ={int((memN.known == OCCUPIED).sum())}")
+
+    # 10) goal-cell protection + conflict threshold preserved
+    frG = _Frame({"F": 1031.0}, {"F": "VALID"}, seq=500)
+    memG = ToFMemory(20, 20, 6.0)
+    memG.set_goal(2.5, 0.5)              # F hit cell ~ (2,0)
+    memG.update_rays(0.0, 0.0, frame_to_cell_rays(frG, 0.0, 0.0, 0.0, geo, MPC), tof_seq=500)
+    check("10 goal cell protected + conflict thr=3",
+          memG.known[0, 2] != OCCUPIED and memG.free_conflict_threshold == 3,
+          f"goal known={int(memG.known[0, 2])} thr={memG.free_conflict_threshold}")
+
     print(f"\n  {'ALL PASS' if not _fails else 'FAILED: ' + ', '.join(_fails)}")
     return 1 if _fails else 0
 

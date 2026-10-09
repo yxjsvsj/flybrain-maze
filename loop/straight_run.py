@@ -98,6 +98,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-hard-stale", type=float, default=0.35)
     ap.add_argument("--odom-wait", type=float, default=5.0)
     ap.add_argument("--tof-wait", type=float, default=5.0)
+    ap.add_argument("--tof-geometry", default=None,
+                    help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
     ap.add_argument("--tol-long", type=float, default=0.25)
     ap.add_argument("--tol-lat", type=float, default=0.20)
     ap.add_argument("--tol-head-deg", type=float, default=15.0)
@@ -106,6 +108,12 @@ def main(argv=None) -> int:
     if not args.dry_run and not args.pikachu_url:
         print("需要 --pikachu-url（或 --dry-run）")
         return 2
+
+    geometry = None
+    if args.tof_geometry:
+        from loop.tof_geometry import load_geometry
+        geometry = load_geometry(args.tof_geometry)
+        print(f"[tof] geometry ON: {args.tof_geometry}  ({len(geometry)} sensors)")
 
     rows = build_lane_rows(args.length_cells, args.width_cells, args.goal_cells)
     print("[lane] virtual straight corridor:")
@@ -229,7 +237,7 @@ def main(argv=None) -> int:
             print("[straight] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                               stop_on_goal=args.stop_on_goal, trace_fn=trace_callback,
-                              trace_every=1)
+                              trace_every=1, geometry=geometry)
         if stats.get("reached_goal"):
             stop_reason = "goal"
     except (OdomError, TofError) as exc:
