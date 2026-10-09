@@ -3,7 +3,7 @@
 用**果蝇全脑连接组模型**（MaleCNS v1.0，166,700 神经元 / 25.6M 突触）
 参与控制一台**两轮差速移动机器人**，在未知迷宫中导航到给定坐标的终点。
 
-实体平台**不是四驱车**，而是一台 **two-wheel differential drive with a passive
+实体平台是一台 **two-wheel differential drive with a passive
 front caster**（后双驱动轮 + 前被动导向轮）：
 
 - 后部两只 WHEELTEC MG513P30_12V 编码器驱动轮；
