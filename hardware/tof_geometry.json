@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "frame": "origin = rear drive axle midpoint; +x = forward (heading 0); +y = left",
+  "units": "meters",
+  "note": "sensor optical-window positions relative to the axle midpoint. The Pi UDP ranging protocol is unchanged; only the Windows P2 mapping uses these extrinsics.",
+  "robot_footprint": {
+    "front_edge_x_m": null,
+    "half_width_m": null,
+    "comment": "TODO: measure the physical front edge x and max half-width; not needed for mapping-only geometry."
+  },
+  "sensors": {
+    "L":  { "x_m": 0.10, "y_m": 0.06,  "yaw_deg": 70.0 },
+    "FL": { "x_m": 0.14, "y_m": 0.03,  "yaw_deg": 30.0 },
+    "F":  { "x_m": 0.15, "y_m": 0.00,  "yaw_deg": 0.0 },
+    "FR": { "x_m": 0.13, "y_m": -0.04, "yaw_deg": -30.0 },
+    "R":  { "x_m": 0.09, "y_m": -0.07, "yaw_deg": -70.0 }
+  }
+}
