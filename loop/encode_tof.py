@@ -96,14 +96,21 @@ class PhysicalToFEncoder(Encoder):
         finally:
             self.dt = old_dt
 
-        _, _, _, _, dmin_l = self._cache["L"]
-        _, _, _, _, dmin_r = self._cache["R"]
+        _, _, _, size_l, dmin_l = self._cache["L"]
+        _, _, _, size_r, dmin_r = self._cache["R"]
         dmin_f = max(float(dists[self.front].min()) - self.car_radius, MIN_DIST_M)
+        # 诊断专用（不改公式）：相邻帧 size 差 / 真实帧间隔，近似 _side 的 growth。
+        gp = getattr(self, "_diag_prev_size", {"L": float(size_l), "R": float(size_r)})
+        growth_l = (float(size_l) - gp["L"]) / dt_tof
+        growth_r = (float(size_r) - gp["R"]) / dt_tof
+        self._diag_prev_size = {"L": float(size_l), "R": float(size_r)}
         self._info = {
             "bias": float((1.0 - dmin_r / self.cfg.max_range) - (1.0 - dmin_l / self.cfg.max_range)),
             "prox_l": float(1.0 - dmin_l / self.cfg.max_range),
             "prox_r": float(1.0 - dmin_r / self.cfg.max_range),
             "dmin_L": dmin_l, "dmin_R": dmin_r, "dmin_F": float(dmin_f),
+            "size_L": float(size_l), "size_R": float(size_r),
+            "growth_L": float(growth_l), "growth_R": float(growth_r),
         }
         return True
 

@@ -125,6 +125,13 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                 "tof_seq": frame.seq, "tof_new": bool(is_new),
                 "replans": memory.replans if memory else 0,
                 "goal_dist": d,
+                "target": info.get("target"),
+                "tof_ranges": dict(frame.ranges),
+                "tof_status": dict(frame.status),
+                "bearing_err": info.get("bearing_err", float("nan")),
+                "brain_turn": dec.last_brain_turn,
+                "pursuit_turn": dec.last_pursuit_turn,
+                "turn_cmd": dec.last_turn_cmd,
             })
 
         if stop_on_goal and reached_goal:
