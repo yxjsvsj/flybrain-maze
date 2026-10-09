@@ -42,7 +42,7 @@ def _mem(cls, w, h, max_range):
                arrive_dist=0.6, off_path_tol=1.5, free_conflict_threshold=3)
 
 
-def replay(path, geometry, mpc, watch="F", w=60, h=60):
+def replay(path, geometry, mpc, watch="F", w=60, h=60, pose=(30.0, 30.0, 0.0)):
     geo = load_geometry(geometry)
     mem_old = _mem(OccupancyMemory, w, h, 6.0)
     mem_new = _mem(ToFMemory, w, h, 6.0)
@@ -51,16 +51,24 @@ def replay(path, geometry, mpc, watch="F", w=60, h=60):
     old_hit = new_hit = None
     with open(path, "r", encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
-            try:
-                x = float(r["odom_x"]); y = float(r["odom_y"])
-                th = math.radians(float(r["theta_deg"]))
-            except (KeyError, ValueError):
-                continue
+            # 位姿：有 odom 列就用（cells）；静态诊断（--odom-port 0）没有 -> 用固定 pose(cells)
+            if r.get("odom_x") not in (None, ""):
+                try:
+                    x = float(r["odom_x"]); y = float(r["odom_y"])
+                    th = math.radians(float(r["theta_deg"]))
+                except (KeyError, ValueError):
+                    continue
+            else:
+                x, y, th = pose[0], pose[1], math.radians(pose[2])
+
             ranges, status = {}, {}
             for n in ORDER:
-                mm = r.get(f"tof_{n}_mm", "")
+                mm = r.get(f"tof_{n}_mm")
+                if mm in (None, ""):
+                    mm = r.get(f"{n}_mm", "")          # 静态诊断的列名
                 ranges[n] = float(mm) if mm not in ("", None) else None
-                status[n] = r.get(f"tof_{n}_st", "")
+                st = r.get(f"tof_{n}_st") or r.get(f"{n}_status", "")
+                status[n] = st or ""
             fr = _Frame(ranges, status, n_rows + 1)
 
             # --- OLD: 车中心射线 + ToF 距离(cells)，只取 VALID/TOO_NEAR ---
@@ -86,12 +94,15 @@ def replay(path, geometry, mpc, watch="F", w=60, h=60):
                 ext = geo[watch]
                 dx, dy = rotate(ext.x_m, ext.y_m, th)
                 wa = th + ext.yaw_rad
-                o_hx = x * mpc + rng_m * math.cos(wa)          # old: from car centre
-                o_hy = y * mpc + rng_m * math.sin(wa)
-                n_hx = (x + dx / mpc) * mpc + rng_m * math.cos(wa)
-                n_hy = (y + dy / mpc) * mpc + rng_m * math.sin(wa)
-                old_hit = (int(math.floor(o_hx / mpc)), int(math.floor(o_hy / mpc)), o_hx, o_hy)
-                new_hit = (int(math.floor(n_hx / mpc)), int(math.floor(n_hy / mpc)), n_hx, n_hy)
+                # 相对后轴原点（世界轴）的命中坐标，米
+                o_rx, o_ry = rng_m * math.cos(wa), rng_m * math.sin(wa)
+                n_rx, n_ry = dx + rng_m * math.cos(wa), dy + rng_m * math.sin(wa)
+                o_cx = int(math.floor((x + o_rx / mpc)))
+                o_cy = int(math.floor((y + o_ry / mpc)))
+                n_cx = int(math.floor((x + n_rx / mpc)))
+                n_cy = int(math.floor((y + n_ry / mpc)))
+                old_hit = (o_cx, o_cy, o_rx, o_ry)
+                new_hit = (n_cx, n_cy, n_rx, n_ry)
             n_rows += 1
 
     old_occ = set(zip(*[a.tolist() for a in (mem_old.known == OCCUPIED).nonzero()]))
@@ -102,9 +113,9 @@ def replay(path, geometry, mpc, watch="F", w=60, h=60):
     print(f"[replay] only-in-NEW (first 20): {only_new[:20]}")
     print(f"[replay] only-in-OLD (first 20): {only_old[:20]}")
     if old_hit and new_hit:
-        print(f"[replay] {watch} last VALID hit:")
-        print(f"    OLD cell=({old_hit[0]},{old_hit[1]})  world=({old_hit[2]:.3f},{old_hit[3]:.3f}) m")
-        print(f"    NEW cell=({new_hit[0]},{new_hit[1]})  world=({new_hit[2]:.3f},{new_hit[3]:.3f}) m")
+        print(f"[replay] {watch} last VALID hit (relative to rear axle):")
+        print(f"    OLD cell=({old_hit[0]},{old_hit[1]})  rel=(x {old_hit[2]:.3f}, y {old_hit[3]:.3f}) m")
+        print(f"    NEW cell=({new_hit[0]},{new_hit[1]})  rel=(x {new_hit[2]:.3f}, y {new_hit[3]:.3f}) m")
         dxm = new_hit[2] - old_hit[2]; dym = new_hit[3] - old_hit[3]
         print(f"    NEW-OLD delta = ({dxm*100:+.1f}, {dym*100:+.1f}) cm  "
               f"(|d|={math.hypot(dxm, dym)*100:.1f} cm)")
@@ -117,8 +128,12 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-geometry", default="hardware/tof_geometry.json")
     ap.add_argument("--meters-per-cell", type=float, default=0.40)
     ap.add_argument("--watch", default="F", choices=list(ORDER))
+    ap.add_argument("--pose", default="30,30,0",
+                    help="无 odom 列时的固定地图位姿 X,Y,THETA_DEG (cells)")
     args = ap.parse_args(argv)
-    return replay(args.csv_path, args.tof_geometry, args.meters_per_cell, args.watch)
+    px, py, pth = (float(v) for v in args.pose.split(","))
+    return replay(args.csv_path, args.tof_geometry, args.meters_per_cell, args.watch,
+                  pose=(px, py, pth))
 
 
 if __name__ == "__main__":
