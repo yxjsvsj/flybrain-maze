@@ -33,10 +33,12 @@ const bool RELAY_ACTIVE_HIGH = true;
 const int STBY = -1;
 
 // PWM limits for speed modes. H selects fast mode, N selects normal/slow mode.
-const int PWM_SPEED_FAST = 70;   // 0-255, straight drive limit in fast mode
-const int TURN_SPEED_FAST = 60;  // 0-255, turn limit in fast mode
-const int PWM_SPEED_SLOW = 30;   // 0-255, straight drive limit in normal mode
-const int TURN_SPEED_SLOW = 30;  // 0-255, turn limit in normal mode
+// Raised for ground running: the old fast cap (70/255 ~= 27% duty) had enough
+// torque wheels-up but stalled under ground friction. Tune from here.
+const int PWM_SPEED_FAST = 200;  // 0-255, straight drive limit in fast mode
+const int TURN_SPEED_FAST = 180; // 0-255, turn limit in fast mode
+const int PWM_SPEED_SLOW = 120;  // 0-255, straight drive limit in normal mode
+const int TURN_SPEED_SLOW = 120; // 0-255, turn limit in normal mode
 
 // Safety stop: if V/W or control commands stop arriving, motor targets go to zero.
 const unsigned long COMMAND_TIMEOUT_MS = 400;
