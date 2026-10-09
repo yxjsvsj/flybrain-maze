@@ -3,13 +3,20 @@
 标定结果（wheels-up 实测）
 -------------------------
   CPR (x4)   = 1560   （MG513P30_12V，13 PPR Hall，减速 30:1，x4 解码）
-  左轮 = E1（GPIO22/23），**前进 = 负计数**
-  右轮 = E2（GPIO17/27），**前进 = 正计数**
   轮径 D     = 0.070 m
   轮距 L     = 0.160 m（左右轮接地点中心距）
 
-  （注意：早先"手转一圈"时记录的符号与此相反——那次手转其实转反了。
-   以**车头方向推车**的实测为准。符号可用 --left-sign/--right-sign 覆盖。）
+编码器通道 vs 物理左右（重要）
+------------------------------
+  原始通道：
+    E1 = GPIO22/23
+    E2 = GPIO17/27
+
+  **实体车实测：E1/E2 与物理 left/right 相反**，所以当前生产启动必须用 --swap-lr。
+  不要把 E1/E2 的名字本身等同于 left/right——左右轮定义以 swap 之后的物理轮映射为准。
+
+  （各通道前进方向：E1 前进 = 负计数，E2 前进 = 正计数；符号可用
+   --left-sign/--right-sign 覆盖，这里的 left/right 指原始通道。）
 
 坐标约定
 --------
@@ -30,7 +37,7 @@
 
 用法
 ----
-    python3 hardware/odometry.py --e1 22 23 --e2 17 27 --wait-motion --settle 4
+    python3 hardware/odometry.py --e1 22 23 --e2 17 27 --swap-lr --wait-motion --settle 4
 """
 from __future__ import annotations
 
@@ -97,7 +104,7 @@ class Quad:
 
 
 class DifferentialOdometry:
-    """差速里程计积分器。左=E1(+)，右=E2(-)。"""
+    """差速里程计积分器。E1/E2 为原始通道；物理左右由 swap_lr 决定。"""
 
     def __init__(self, cpr: float = CPR, wheel_diam: float = WHEEL_DIAM,
                  track: float = TRACK, left_sign: float = LEFT_SIGN,
@@ -142,9 +149,9 @@ class DifferentialOdometry:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="P2a 差速里程计")
     ap.add_argument("--e1", nargs=2, type=int, metavar=("A", "B"), required=True,
-                    help="左轮 A/B GPIO（BCM）")
+                    help="原始通道 E1 的 A/B GPIO（BCM）—— 非物理左轮")
     ap.add_argument("--e2", nargs=2, type=int, metavar=("A", "B"), required=True,
-                    help="右轮 A/B GPIO（BCM）")
+                    help="原始通道 E2 的 A/B GPIO（BCM）—— 非物理右轮")
     ap.add_argument("--wheel-diam", type=float, default=WHEEL_DIAM, help="轮径 m")
     ap.add_argument("--track", type=float, default=TRACK, help="轮距 m")
     ap.add_argument("--cpr", type=float, default=CPR, help="每输出轴圈计数 x4")
@@ -194,7 +201,7 @@ def main(argv=None) -> int:
                                 track=args.track, left_sign=args.left_sign,
                                 right_sign=args.right_sign, swap_lr=args.swap_lr)
 
-    print(f"chip={CHIP}  E1(left)=({e1a},{e1b})  E2(right)=({e2a},{e2b})")
+    print(f"chip={CHIP}  raw E1=({e1a},{e1b})  raw E2=({e2a},{e2b})  swap_lr={args.swap_lr}")
     print(f"CPR={args.cpr:g}  D={args.wheel_diam*100:.1f}cm  L={args.track*100:.1f}cm  "
           f"({odom.m_per_count*1e3:.4f} mm/count)")
     print("坐标 x前 y左 theta逆时针。Ctrl-C 结束。\n")
@@ -217,10 +224,15 @@ def main(argv=None) -> int:
 
     state_file = args.state_file or None
     if state_file:
-        d = os.path.dirname(state_file)
-        if d:
-            os.makedirs(d, exist_ok=True)
-        print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+        try:
+            d = os.path.dirname(state_file)
+            if d:
+                os.makedirs(d, exist_ok=True)
+            print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+        except OSError as exc:
+            print(f"[state] 无法使用 {state_file}: {exc} —— 关闭 state 输出，继续运行",
+                  file=sys.stderr)
+            state_file = None
 
     t0 = time.time()
     next_print = t0

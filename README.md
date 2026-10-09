@@ -1,11 +1,39 @@
 # flybrain-maze
 
-用**果蝇全脑连接组**（MaleCNS v1.0，166,700 神经元 / 25.6M 突触）驱动一辆四驱差速小车，
-在未知迷宫里自主导航到给定坐标的终点。
+用**果蝇全脑连接组模型**（MaleCNS v1.0，166,700 神经元 / 25.6M 突触）
+参与控制一台**两轮差速移动机器人**，在未知迷宫中导航到给定坐标的终点。
+
+实体平台**不是四驱车**，而是一台 **two-wheel differential drive with a passive
+front caster**（后双驱动轮 + 前被动导向轮）：
+
+- 后部两只 WHEELTEC MG513P30_12V 编码器驱动轮；
+- 前部一个被动导向轮（caster，**不驱动**）；
+- D153C / TB6612FNG 双路电机驱动；
+- Arduino Nano 负责底层 V/W 电机控制；
+- Raspberry Pi 5 负责传感器、里程计、串口/HTTP 桥接；
+- 5 × VL53L0X 提供真实距离感知；
+- RealFlyBrain 在 Windows / RTX 4060 上实时运行。
 
 脑是固定的——权重直接来自电子显微镜重建，不做任何训练。可训练的只有出口处的
 **线性读出头**（从 1314 个下行神经元读转向指令）。低层转向由连接组负责，高层
 "往哪走"由占用栅格 + 目标导向规划负责。
+
+项目严格区分：**P1 = 冻结的纯仿真科学实验**；**P2 = 实体机器人硬件在环与真实传感闭环实验**。
+
+## 当前状态
+
+| 阶段 | 状态 | 说明 |
+|---|---|---|
+| P1 simulation | ✅ 完成并冻结 | tag `P1-mapfix`, commit `db401f5` |
+| P2a wheel odometry | ✅ | MG513 AB 编码器 + Pi 里程计 |
+| P2a.5 odometry-in-loop | ✅ | 实体编码器位姿反馈进入控制环 |
+| P2b five-ToF sensing | ✅ | 5 × VL53L0X continuous ranging，tag `P2b-tof5-bringup` |
+| P2b hardware closed-loop | ✅ | 真 ToF → RealFlyBrain → 真电机 → 真 odom，wheels-up 验证，tag `P2b-hil-wheelsup` |
+| P2c-0 ground tools | ✅ | Ground Control 网页 + 地面标定工具，tag `P2c-0-ground-tools` |
+| P2c ground commissioning | 🚧 | 正在做动力/供电/里程计地面标定 |
+| Full physical maze | ⏳ | 尚未宣称完成 |
+
+> 硬件拓扑、引脚、端口与安全语义见 [`hardware/README.md`](hardware/README.md)。
 
 ## 快速开始
 
@@ -227,8 +255,12 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 
 ---
 
-## Hardware shadow demo（物理影子执行器）
+## P2-early: Hardware shadow demo（历史阶段）
 
+> **历史里程碑，非当前状态。** 本节记录的是 P2 早期（shadow actuator 阶段）的结果；
+> 后续 P2 已加入**真实 MG513 编码器里程计**与**真实 5-ToF 感知**（见下一节
+> "P2: Physical sensing and odometry"）。
+>
 > **与上面的 P1 结果严格分离。** P1 是纯仿真科学结果（tag `P1-mapfix`，commit
 > `db401f5`）；本节把**同一个冻结控制器**接到真实小车上做执行器演示。冻结的 P1
 > 控制器文件（`nav/`、`config.py`、`loop/decode.py`、`loop/encode.py`、`loop/run.py`）
@@ -267,11 +299,14 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 
 > seed 1000 取自 **frozen HOLDOUT**（40 个 seeds 1000–1039 之一），不是"当前未见"的新种子。
 
-### 执行器标定（wheels-up 台架）
+### 执行器标定（wheels-up 台架，历史旧固件）
+
+> 以下是 **旧固件（`drivePwm=70` / `turnPwm=60`）** 的历史数据。当前固件 PWM cap 已提高，
+> 见 "P2: Physical sensing and odometry" 一节。
 
 | 项 | 值 |
 |---|---|
-| 实测 wheels-up 起转门槛 | ≈0.60（PWM 42/255，drivePwm=70） |
+| 实测 wheels-up 起转门槛 | ≈0.60（PWM 42/255，drivePwm=70，**旧固件**） |
 | `min_cmd` | 0.65（死区抬升：非零命令的主导幅度不低于它，保持 V/W 比例） |
 | `max_v` / `max_w` / `max_motor_mix` | 1.0 / 1.0 / 1.0 |
 
@@ -304,7 +339,7 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 ```powershell
 # 真脑 + 群体读出 + 记忆，镜像到物理车（先在轮子架空的条件下验证）
 .\.venv\Scripts\python.exe -m loop.shadow_run `
-    --pikachu-url http://192.168.50.57:8000 `
+    --pikachu-url http://<pi-ip>:8000 `
     --brain real --mode readout --readout readout_real.npz --memory 1.0 `
     --map gen --maze-seed 1000 --maze-cells 6x4 --sim-seconds 90 `
     --device cuda --stop-on-goal --log hardware_log.csv
@@ -317,11 +352,84 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 
 ---
 
+## P2: Physical sensing and odometry
+
+实体平台把 P1 的"理想射线 + 真值位姿"替换为**真实传感器 + 真实里程计**。
+
+```
+5× VL53L0X
+      ↓
+Raspberry Pi 5
+      ↓ UDP 8889
+PhysicalToFEncoder
+      ↓
+RealFlyBrain / readout
+      +
+Memory / Dijkstra
+      ↓
+(v, ω)
+      ↓ HTTP
+Raspberry Pi 5
+      ↓ USB serial
+Arduino Nano
+      ↓
+D153C / TB6612FNG
+      ↓
+2× rear MG513 drive wheels
+      ↓
+AB encoders
+      ↓
+Raspberry Pi 5
+      ↓ UDP 8888
+real odometry
+      └──────────────→ control loop
+
+front caster = passive, no drive
+```
+
+- **感知**：`loop/encode_tof.py` 的 `PhysicalToFEncoder` 把 5 路真实 mm 转成 maze cells 注入果蝇脑；
+- **控制**：`loop/physical_run.py`（复刻冻结 `loop/run.py` 的逻辑，但用真实 ToF 帧门控 + 真实 odom 位姿）；
+- **定位**：MG513 AB 编码器经 Pi GPIO（libgpiod）积分 → metres → cells（**非 SLAM**）；
+- **通信**：Windows → Pi HTTP → Nano（V/W）；Pi → Windows UDP 遥测（odom 8888 / ToF 8889）；
+- **安全**：stale/unhealthy → 禁止运动；E-STOP latch 最高优先级；Nano 看门狗 400 ms 独立停车。
+
+### 当前固件（`hardware/firmware/nano_car/nano_car.ino`）
+
+```text
+PWM_SPEED_FAST  = 200     (straight, fast)
+TURN_SPEED_FAST = 180     (turn, fast)
+PWM_SPEED_SLOW  = 120
+TURN_SPEED_SLOW = 120
+RAMP_STEP = 5 / RAMP_INTERVAL_MS = 20     (~250 PWM/s)
+```
+
+> 旧的 `drivePwm=70` / `turnPwm=60`（见上一节）是**历史固件**；cap 已上调，
+> 否则落地摩擦下起转扭矩不足（满速只有 ~27% 占空比）。
+
+### 地面调试（preliminary，未冻结）
+
+初步地面实测（在 VM 电池欠压 ~10V 条件下取得）：
+
+| 项 | 值 |
+|---|---|
+| forward reliable threshold | ≈ 0.30 |
+| turn reliable threshold | ≈ 0.40–0.45（右转更弱，需 ≥0.60 才稳） |
+| 满速速度 | ≈ 0.15 m/s（@1.0，明显低于 MG513 12V 应有量级） |
+| 左右轮不对称 | 存在（右转时左轮"后退"方向偏弱，硬件层面） |
+| 当前 ramp | 对短命令响应偏慢（~250 PWM/s） |
+
+> 以上是 **commissioning 数据，不是最终控制参数**。VM 电池充满（~12.6V）后需重标定；
+> `min_cmd` / `max_*` 与 ramp 的最终值在 step 6（真脑地面闭环）前才冻结。
+
+---
+
 ## 已知限制
 
-- 传感器是**理想射线**：无噪声、无丢点、无遮挡误差。实物雷达不是这样。
-  噪声参数（`NoiseConfig`）已预留但默认全 0，未做鲁棒性测试。
-- 里程计是**真值**。实物上需要 SLAM，位姿会漂移，而建图层与规划层都依赖位姿。
+### P1 仿真
+
+- 传感器是**理想射线**：无噪声、无丢点、无遮挡误差（`NoiseConfig` 已预留但默认全 0，
+  未做鲁棒性测试）。
+- 里程计是**仿真真值**位姿。
 - 记忆层假设**终点坐标已知**。这是实验设定，不是探索未知终点。
 - 果蝇脑的 `DNg100` 静息时只有 0.25 Hz，模型里**没有"自发前进"指令**，
   所以前进速度靠手工注入 `forward_drive_dv`。这是全项目唯一一处凭空加的信号。
@@ -329,6 +437,23 @@ config.py          全部参数 + fake/real 预设 + 噪声配置
 - 迷宫规模有限（6×4 单元 / 26×18 栅格，最优路径约 30–60 格）。更大迷宫的
   规划开销与失败模式未测试。
 - 实时倍率约 8x（RTX 4060 Laptop，dt=20 ms）。未在 Jetson 等车载平台上验证。
+- **`P1-mapfix` 保持冻结**，不因 P2 硬件开发重新调参。
+
+### P2 实体平台
+
+- 使用 **5 × VL53L0X**，而不是 P1 的 15 条理想射线；量程/偏置/FOV 有真实误差。
+- 位姿来自 **MG513 轮编码器里程计**，不是 SLAM；**轮胎打滑会累积 x/y/yaw 漂移**，
+  而建图层与规划层都依赖位姿。
+- 当前 `meters_per_cell = 0.40` 仍属实体标定阶段，未冻结。
+- ToF sensor origin 相对车体中心的位置仍需最终几何标定。
+- **完整真实迷宫自主导航尚未完成最终验收。**
+- 目标坐标仍预先给定。
+
+### 仿真 ≠ 实体
+
+P1 的 `world/car.py` 是抽象的 differential-drive 运动学模型，**不对应实体的轮数**
+（实体是后双轮差速 + 前被动导向轮）。为保持 P1 冻结历史的完整性，仿真世界模型代码
+不做改动；实体结构以 [`hardware/README.md`](hardware/README.md) 为准。
 
 ## 引用
 

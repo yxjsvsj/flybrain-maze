@@ -12,9 +12,9 @@
   t, V, W, F_mm, F_status, left, right, x, y, theta, stop_reason, age_odom_ms, age_tof_ms
 
 用法：
-  python -m hardware.ground_commission --url http://192.168.50.57:8000 \
+  python -m hardware.ground_commission --url http://<pi-ip>:8000 \
       --mode pulse --only forward --mag 0.80 --repeat 5 --duration 0.5 --stop-dur 2
-  python -m hardware.ground_commission --url http://192.168.50.57:8000 \
+  python -m hardware.ground_commission --url http://<pi-ip>:8000 \
       --mode wall --wall-v 0.5 --stop-mm 450 --max-run-s 2
 """
 from __future__ import annotations
@@ -166,7 +166,7 @@ def run_wall(r):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="P2c-0 地面调试工具")
-    ap.add_argument("--url", required=True, help="Pikachu Flask，如 http://192.168.50.57:8000")
+    ap.add_argument("--url", required=True, help="Pikachu Flask，如 http://<pi-ip>:8000")
     ap.add_argument("--mode", choices=["pulse", "wall"], required=True)
     ap.add_argument("--only", default="all", choices=["all", "forward", "left", "right"])
     ap.add_argument("--mag", type=float, default=0.80)

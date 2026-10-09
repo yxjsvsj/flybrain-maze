@@ -305,10 +305,15 @@ def _main() -> int:
 
     state_file = args.state_file or None
     if state_file:
-        d = os.path.dirname(state_file)
-        if d:
-            os.makedirs(d, exist_ok=True)
-        print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+        try:
+            d = os.path.dirname(state_file)
+            if d:
+                os.makedirs(d, exist_ok=True)
+            print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+        except OSError as exc:
+            print(f"[state] 无法使用 {state_file}: {exc} —— 关闭 state 输出，继续运行",
+                  file=sys.stderr)
+            state_file = None
 
     t = Tof5(range_bias_mm=args.range_bias_mm)
     print(f"启动 XSHUT={XSHUT_BCM} 角度={t.angles_deg} origin={t.sensor_origin_m}")
