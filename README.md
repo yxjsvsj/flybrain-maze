@@ -31,7 +31,7 @@ front caster**（后双驱动轮 + 前被动导向轮）：
 | P2b hardware closed-loop | ✅ | 真 ToF → RealFlyBrain → 真电机 → 真 odom，wheels-up 验证，tag `P2b-hil-wheelsup` |
 | P2c-0 ground tools | ✅ | Ground Control 网页 + 地面标定工具，tag `P2c-0-ground-tools` |
 | P2c ground commissioning | 🚧 | 正在做动力/供电/里程计地面标定 |
-| Full physical maze | ⏳ | 尚未宣称完成 |
+| Full physical maze | ⏳ | 尚未完成 |
 
 > 硬件拓扑、引脚、端口与安全语义见 [`hardware/README.md`](hardware/README.md)。
 
