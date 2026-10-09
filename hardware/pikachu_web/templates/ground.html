@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pikachu Ground Control</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/ground.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <div>
+          <h1>Ground Control</h1>
+          <p class="subtitle">地面机械标定 / ToF 观察 / 短脉冲 / 单墙停车 —— 人工调试与监视（非最终控制链）</p>
+        </div>
+        <div class="status" id="conn">
+          <div class="status-row">
+            <span class="status-dot" id="connDot"></span>
+            <span id="connText">连接中…</span>
+          </div>
+          <div class="status-meta" id="connMeta">--</div>
+        </div>
+      </header>
+
+      <section class="gc-bar">
+        <div class="gc-auth">
+          <span class="pill auto" id="modePill">AUTO</span>
+          <button id="takeBtn" class="danger" type="button">接管 MANUAL</button>
+          <button id="releaseBtn" class="ghost" type="button">放开 → AUTO</button>
+          <span class="gc-estop" id="estopState">E-STOP: OFF</span>
+          <button id="clearEstopBtn" class="ghost" type="button">清除 E-STOP</button>
+        </div>
+        <button id="estopBtn" class="gc-emergency" type="button">EMERGENCY STOP</button>
+      </section>
+      <p class="gc-banner" id="banner">只读监视中。点“接管 MANUAL”后才能手动驱动。</p>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>手动控制</h2>
+          <div class="gc-speed">
+            <label for="speed">speed <b id="speedVal">0.60</b></label>
+            <input type="range" id="speed" min="0" max="1" step="0.05" value="0.6" />
+          </div>
+          <div class="gc-pad">
+            <button class="gc-dir up" data-dir="forward" type="button">FWD</button>
+            <button class="gc-dir left" data-dir="left" type="button">LEFT</button>
+            <button class="gc-dir stop" id="stopBtn" type="button">STOP</button>
+            <button class="gc-dir right" data-dir="right" type="button">RIGHT</button>
+            <button class="gc-dir down" data-dir="backward" type="button">BWD</button>
+          </div>
+          <div class="gc-pulse">
+            <label><input type="checkbox" id="pulseMode" /> 脉冲模式</label>
+            <span>时长</span>
+            <label><input type="radio" name="pdur" value="0.2" />0.2s</label>
+            <label><input type="radio" name="pdur" value="0.5" checked />0.5s</label>
+            <label><input type="radio" name="pdur" value="1.0" />1.0s</label>
+          </div>
+          <p class="gc-hint">按住方向键移动，松开立即 STOP（不会“点一下一直动”）。</p>
+        </div>
+
+        <div class="panel">
+          <h2>ToF 五路</h2>
+          <table class="gc-table">
+            <thead><tr><th>方位</th><th>mm</th><th>status</th><th>age ms</th></tr></thead>
+            <tbody id="tofBody"></tbody>
+          </table>
+          <p class="gc-meta" id="tofMeta">--</p>
+        </div>
+
+        <div class="panel">
+          <h2>里程计</h2>
+          <table class="gc-table">
+            <tbody id="odomBody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h2>单墙停车测试</h2>
+          <div class="gc-wall">
+            <label>前进速度 <input type="number" id="wallMag" value="0.5" min="0" max="1" step="0.05" /></label>
+            <label>stop_mm <input type="number" id="wallStop" value="450" step="10" /></label>
+            <label>max 时长 s <input type="number" id="wallMax" value="2" step="0.5" /></label>
+          </div>
+          <div class="gc-wall">
+            <button id="wallStart" type="button">开始</button>
+            <button id="wallAbort" class="ghost" type="button">中止</button>
+          </div>
+          <p class="gc-meta" id="wallState">idle</p>
+        </div>
+
+        <div class="panel">
+          <h2>链路状态</h2>
+          <table class="gc-table"><tbody id="linkBody"></tbody></table>
+        </div>
+      </section>
+    </main>
+    <script src="/static/ground.js"></script>
+  </body>
+</html>

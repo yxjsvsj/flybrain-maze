@@ -62,6 +62,17 @@ def _bit(value) -> int:
     return 1 if int(v) == 1 else 0
 
 
+def _publish_state(path: str, obj: dict) -> None:
+    """原子写共享状态（本机 web 读）。失败静默——绝不拖累主循环。"""
+    try:
+        tmp = f"{path}.tmp.{os.getpid()}"
+        with open(tmp, "w") as fh:
+            json.dump(obj, fh, separators=(",", ":"))
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
 class Quad:
     """单个电机的 x4 正交解码器。事件驱动：只改事件对应的那一相。"""
 
@@ -149,6 +160,9 @@ def main(argv=None) -> int:
     ap.add_argument("--udp", default="",
                     help="host:port，按 --udp-hz 发 UDP JSON 遥测（如 <windows-ip>:8888）")
     ap.add_argument("--udp-hz", type=float, default=50.0)
+    ap.add_argument("--state-file", default="",
+                    help="把最新遥测原子写入该 JSON（供本机 web 读共享状态）")
+    ap.add_argument("--state-hz", type=float, default=20.0)
     ap.add_argument("--wait-motion", action="store_true",
                     help="先等到累计变化 >= --motion-counts；静默 --settle 秒后收尾")
     ap.add_argument("--motion-counts", type=int, default=40,
@@ -201,9 +215,17 @@ def main(argv=None) -> int:
         usock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         print(f"UDP -> {host}:{port} @ {args.udp_hz:g}Hz")
 
+    state_file = args.state_file or None
+    if state_file:
+        d = os.path.dirname(state_file)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+
     t0 = time.time()
     next_print = t0
     next_udp = t0
+    next_state = t0
     seq = 0
     udp_errs = 0
     sent_ok = 0
@@ -248,21 +270,28 @@ def main(argv=None) -> int:
                         print(f"[wait-motion] 检测到移动（累计 {moved} 计数），记录中…",
                               flush=True)
                 x, y, th = odom.pose()
-                if usock is not None and udp_addr is not None and now >= next_udp:
-                    try:
-                        usock.sendto(json.dumps({
-                            "ver": 2, "session_id": session_id, "seq": seq,
-                            "t": round(now - t0, 4),
-                            "left": q1.count, "right": q2.count,
-                            "x": round(x, 5), "y": round(y, 5), "theta": round(th, 6),
-                        }).encode(), udp_addr)
-                        sent_ok += 1
-                        seq += 1
-                    except OSError as exc:
-                        udp_errs += 1
-                        if udp_errs <= 3 or udp_errs % 200 == 0:
-                            print(f"[udp] send 失败 #{udp_errs}: {exc}", file=sys.stderr)
-                    next_udp = now + 1.0 / max(1.0, args.udp_hz)
+                send_udp = usock is not None and udp_addr is not None and now >= next_udp
+                send_state = state_file is not None and now >= next_state
+                if send_udp or send_state:
+                    msg = {
+                        "ver": 2, "session_id": session_id, "seq": seq,
+                        "t": round(now - t0, 4), "wall": round(now, 3),
+                        "left": q1.count, "right": q2.count,
+                        "x": round(x, 5), "y": round(y, 5), "theta": round(th, 6),
+                    }
+                    seq += 1
+                    if send_udp and usock is not None and udp_addr is not None:
+                        try:
+                            usock.sendto(json.dumps(msg).encode(), udp_addr)
+                            sent_ok += 1
+                        except OSError as exc:
+                            udp_errs += 1
+                            if udp_errs <= 3 or udp_errs % 200 == 0:
+                                print(f"[udp] send 失败 #{udp_errs}: {exc}", file=sys.stderr)
+                        next_udp = now + 1.0 / max(1.0, args.udp_hz)
+                    if send_state and state_file is not None:
+                        _publish_state(state_file, msg)
+                        next_state = now + 1.0 / max(0.5, args.state_hz)
                 if writer is not None and fh is not None:
                     writer.writerow([f"{now - t0:.3f}", q1.count, q2.count,
                                      f"{x:.4f}", f"{y:.4f}", f"{th:.4f}"])

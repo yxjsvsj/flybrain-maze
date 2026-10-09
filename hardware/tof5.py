@@ -266,6 +266,18 @@ class Tof5:
         }
 
 
+def _publish_state(path: str, obj: dict) -> None:
+    """原子写共享状态（本机 web 读）。失败静默——绝不拖累主循环。"""
+    import json
+    try:
+        tmp = f"{path}.tmp.{os.getpid()}"
+        with open(tmp, "w") as fh:
+            json.dump(obj, fh, separators=(",", ":"))
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
 def _main() -> int:
     import argparse
     import json
@@ -277,6 +289,9 @@ def _main() -> int:
     ap.add_argument("--udp", default="",
                     help="host:port，10Hz 发 compact JSON（如 192.168.50.123:8889）")
     ap.add_argument("--udp-hz", type=float, default=10.0)
+    ap.add_argument("--state-file", default="",
+                    help="把最新 frame 原子写入该 JSON（供本机 web 读共享状态）")
+    ap.add_argument("--state-hz", type=float, default=10.0)
     ap.add_argument("--seconds", type=float, default=0.0, help="0 = 一直跑")
     args = ap.parse_args()
 
@@ -288,6 +303,13 @@ def _main() -> int:
         usock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         print(f"UDP -> {host}:{port} @ {args.udp_hz:g}Hz")
 
+    state_file = args.state_file or None
+    if state_file:
+        d = os.path.dirname(state_file)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        print(f"state -> {state_file} @ {args.state_hz:g}Hz")
+
     t = Tof5(range_bias_mm=args.range_bias_mm)
     print(f"启动 XSHUT={XSHUT_BCM} 角度={t.angles_deg} origin={t.sensor_origin_m}")
     t.start()
@@ -295,6 +317,7 @@ def _main() -> int:
 
     t0 = time.monotonic()
     next_tx = t0
+    next_state = t0
     try:
         while True:
             f = t.frame()
@@ -314,6 +337,10 @@ def _main() -> int:
                 except OSError as exc:
                     print(f"[udp] send 失败: {exc}", file=sys.stderr)
                 next_tx = now + 1.0 / max(0.1, args.udp_hz)
+
+            if state_file is not None and now >= next_state:
+                _publish_state(state_file, dict(f, wall=round(time.time(), 3)))
+                next_state = now + 1.0 / max(0.5, args.state_hz)
 
             if args.seconds > 0 and now - t0 >= args.seconds:
                 break
