@@ -20,6 +20,7 @@
 """
 from __future__ import annotations
 
+import collections
 import json
 import os
 import threading
@@ -36,6 +37,7 @@ ODOM_STALE_S = float(os.environ.get("GROUND_ODOM_STALE", "0.35"))
 TOF_STALE_S = float(os.environ.get("GROUND_TOF_STALE", "0.45"))
 HEARTBEAT_TIMEOUT_S = float(os.environ.get("GROUND_HB_TIMEOUT", "6.0"))
 WALL_RATE_HZ = 20.0
+BRAIN_WINDOW_S = 1.5     # 最近这么久内有 /api/drive 流量 = 大脑在控
 
 
 def _read_json(path):
@@ -58,6 +60,7 @@ class GroundControl:
         self._hb = 0.0
         self._wall_stop = None
         self._wall_state = {"running": False, "reason": "", "stop_mm": None}
+        self._drive_times = collections.deque(maxlen=120)   # 最近的 /api/drive 时刻
         threading.Thread(target=self._watch, daemon=True).start()
 
     # ------------------------------------------------------------------ 权限
@@ -114,6 +117,22 @@ class GroundControl:
                         and (time.monotonic() - self._hb) > HEARTBEAT_TIMEOUT_S):
                     self._mode = AUTO
 
+    # --------------------------------------------------------------- 大脑状态
+    def note_drive(self) -> None:
+        """每条 /api/drive 记录时刻（用于推断 RealFlyBrain 是否在控）。"""
+        with self._lock:
+            self._drive_times.append(time.monotonic())
+
+    def brain_status(self) -> dict:
+        now = time.monotonic()
+        with self._lock:
+            times = [t for t in self._drive_times if now - t <= BRAIN_WINDOW_S]
+            active = (self._mode == AUTO) and not self._estop and bool(times)
+            mode, estop = self._mode, self._estop
+        age = None if not self._drive_times else round(now - self._drive_times[-1], 3)
+        return {"active": active, "rate_hz": round(len(times) / BRAIN_WINDOW_S, 1),
+                "drive_age": age, "mode": mode, "estop": estop}
+
     # ------------------------------------------------------------------ 状态
     def snapshot(self) -> dict:
         now = time.time()
@@ -133,6 +152,7 @@ class GroundControl:
             "tof": {"ok": t_ok, "age": t_age, "io_error": t_io, **(tf or {})},
             "streams_ok": bool(o_ok and t_ok),
             "wall_run": dict(self._wall_state),
+            "brain": self.brain_status(),
         }
 
     # ------------------------------------------------------------------ 驱动
@@ -292,9 +312,11 @@ def register_ground_routes(app, gc: GroundControl) -> None:
 
     @app.before_request
     def _drive_interlock():
-        if request.method == "POST" and request.path == "/api/drive" and gc.drive_blocked():
-            a = gc.authority()
-            err = "estop_latched" if a["estop"] else "manual_mode_active"
-            return jsonify({"ok": False, "error": err, "mode": a["mode"],
-                            "estop": a["estop"], "status": gc.ctrl.status()}), 403
+        if request.method == "POST" and request.path == "/api/drive":
+            gc.note_drive()
+            if gc.drive_blocked():
+                a = gc.authority()
+                err = "estop_latched" if a["estop"] else "manual_mode_active"
+                return jsonify({"ok": False, "error": err, "mode": a["mode"],
+                                "estop": a["estop"], "status": gc.ctrl.status()}), 403
         return None

@@ -84,3 +84,18 @@
 .gc-wall { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; font-size: 13px; }
 .gc-wall input[type="number"] { width: 80px; padding: 4px 6px; }
 .gc-meta { font-size: 12px; color: #90a4ae; margin-top: 6px; }
+
+/* 果蝇大脑面板 */
+.gc-brain-panel canvas {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 6px auto 0;
+  border-radius: 10px;
+  background: #0b0f14;
+  border: 1px solid #22313a;
+}
+.gc-brain-panel.paused canvas { opacity: 0.55; filter: grayscale(0.7); }
+.gc-brain-panel.active canvas { box-shadow: 0 0 14px rgba(46, 190, 175, 0.25) inset; }
+.gc-brain-panel #brainBadge { float: right; font-weight: 600; }

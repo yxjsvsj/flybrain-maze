@@ -112,6 +112,7 @@ async function poll() {
     streamsOk = !!s.streams_ok;
     renderConn(s); renderLink(s);
     renderTof(s.tof || {}); renderOdom(s.odom || {}); renderWall(s.wall_run);
+    renderBrain(s.brain);
     applyAuth(s.authority);
   } catch (e) {
     $("connText").textContent = "服务器离线";
@@ -221,6 +222,159 @@ function bind() {
   window.addEventListener("beforeunload", stopAndRelease);
 }
 
+// ---------------- 果蝇大脑（canvas，纯前端） ----------------
+// active（大脑在控）时放电脉冲流动；MANUAL 接管 / E-STOP / 无指令 时冻结。
+const Brain = (() => {
+  const W = 360, H = 260;
+  let cv, ctx, dpr = 1;
+  let nodes = [], edges = [], adj = [], pulses = [];
+  let active = false, rate = 0, spawnAcc = 0;
+
+  const rng = (a) => () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  function build() {
+    nodes = []; edges = []; adj = []; pulses = [];
+    const R = rng(20261009);
+    const lobe = (cx, cy, rx, ry, n) => {
+      for (let i = 0; i < n; i++) {
+        const a = R() * Math.PI * 2, r = Math.sqrt(R());
+        nodes.push({ x: cx + Math.cos(a) * rx * r, y: cy + Math.sin(a) * ry * r, fx: 0 });
+      }
+    };
+    lobe(W * 0.34, H * 0.50, W * 0.20, H * 0.30, 46);   // 左半脑
+    lobe(W * 0.66, H * 0.50, W * 0.20, H * 0.30, 46);   // 右半脑
+    lobe(W * 0.50, H * 0.56, W * 0.045, H * 0.10, 14);  // 中央复合体
+    const N = nodes.length, seen = new Set();
+    for (let i = 0; i < N; i++) {
+      const near = [];
+      for (let j = 0; j < N; j++) {
+        if (i === j) continue;
+        near.push([(nodes[i].x - nodes[j].x) ** 2 + (nodes[i].y - nodes[j].y) ** 2, j]);
+      }
+      near.sort((a, b) => a[0] - b[0]);
+      const k = 3 + Math.floor(R() * 2);
+      for (let m = 0; m < k; m++) {
+        const j = near[m][1], key = i < j ? i + ":" + j : j + ":" + i;
+        if (seen.has(key)) continue;
+        seen.add(key); edges.push({ a: i, b: j });
+      }
+    }
+    adj = nodes.map(() => []);
+    edges.forEach((e, idx) => { adj[e.a].push(idx); adj[e.b].push(idx); });
+  }
+
+  function spawn() {
+    if (!edges.length) return;
+    pulses.push({ e: Math.floor(Math.random() * edges.length), p: 0,
+                  sp: 0.35 + Math.random() * 0.55, trail: [] });
+  }
+
+  function step(dt) {
+    const target = active ? Math.min(30, 5 + rate * 1.6) : 0;  // 每秒脉冲数
+    spawnAcc += target * dt;
+    while (spawnAcc >= 1) { spawn(); spawnAcc -= 1; }
+    const alive = [];
+    for (const p of pulses) {
+      p.trail.push(p.p);
+      if (p.trail.length > 6) p.trail.shift();
+      p.p += p.sp * dt;
+      if (p.p >= 1) {
+        const e = edges[p.e];
+        const end = (Math.random() < 0.5) ? e.a : e.b;
+        const opts = adj[end];
+        if (opts.length && Math.random() < 0.75) {
+          alive.push({ e: opts[Math.floor(Math.random() * opts.length)], p: 0,
+                       sp: p.sp * (0.9 + Math.random() * 0.2), trail: [] });
+        }
+      } else {
+        alive.push(p);
+      }
+    }
+    pulses = alive.slice(0, 400);
+    for (const n of nodes) n.fx *= 0.9;
+    for (const p of pulses) { const e = edges[p.e]; nodes[e.a].fx = Math.min(1, nodes[e.a].fx + 0.05); }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#0b0f14"; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalAlpha = active ? 0.9 : 0.4;
+    ctx.strokeStyle = active ? "#1f6f6f" : "#37474f"; ctx.lineWidth = 1.2;
+    for (const l of [[W * 0.34, H * 0.50, W * 0.205, H * 0.305],
+                     [W * 0.66, H * 0.50, W * 0.205, H * 0.305]]) {
+      ctx.beginPath(); ctx.ellipse(l[0], l[1], l[2], l[3], 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = active ? "rgba(38,135,135,0.35)" : "rgba(55,71,79,0.30)";
+    ctx.lineWidth = 0.7; ctx.beginPath();
+    for (const e of edges) { ctx.moveTo(nodes[e.a].x, nodes[e.a].y); ctx.lineTo(nodes[e.b].x, nodes[e.b].y); }
+    ctx.stroke();
+    ctx.restore();
+    for (const n of nodes) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 1.1 + n.fx * 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = active ? `rgba(120,235,220,${0.25 + n.fx * 0.75})`
+                             : `rgba(90,110,120,${0.15 + n.fx * 0.4})`;
+      ctx.fill();
+    }
+    for (const p of pulses) {
+      const e = edges[p.e];
+      const x = nodes[e.a].x + (nodes[e.b].x - nodes[e.a].x) * p.p;
+      const y = nodes[e.a].y + (nodes[e.b].y - nodes[e.a].y) * p.p;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
+      g.addColorStop(0, "rgba(180,255,240,0.95)");
+      g.addColorStop(1, "rgba(180,255,240,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+    }
+    if (!active) { ctx.fillStyle = "rgba(3,6,10,0.35)"; ctx.fillRect(0, 0, W, H); }
+  }
+
+  let last = 0;
+  function loop(ts) {
+    const dt = Math.min(0.05, (ts - last) / 1000 || 0); last = ts;
+    if (active) step(dt);   // 暂停 = 不推进仿真（画面冻结）
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  return {
+    setup() {
+      cv = document.getElementById("brainCanvas");
+      if (!cv) return;
+      dpr = window.devicePixelRatio || 1;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+      build(); requestAnimationFrame(loop);
+    },
+    set(b) { active = !!(b && b.active); rate = (b && b.rate_hz) || 0; },
+  };
+})();
+
+function renderBrain(b) {
+  if (!b) return;
+  Brain.set(b);
+  const panel = document.querySelector(".gc-brain-panel");
+  if (!panel) return;
+  const badge = $("brainBadge");
+  panel.classList.toggle("active", !!b.active);
+  panel.classList.toggle("paused", !b.active);
+  if (badge) badge.textContent = b.active ? "ACTIVE" : "PAUSED";
+  let msg;
+  if (b.active) msg = `RealFlyBrain: ACTIVE · ${b.rate_hz} Hz · drive ${b.drive_age}s`;
+  else if (b.estop) msg = "RealFlyBrain: PAUSED (E-STOP)";
+  else if (b.mode === "MANUAL") msg = "RealFlyBrain: PAUSED (MANUAL 接管)";
+  else msg = "RealFlyBrain: idle（无运动指令）";
+  $("brainState").textContent = msg;
+}
+
+Brain.setup();
 bind();
 poll();
 pollTimer = setInterval(poll, 200);
