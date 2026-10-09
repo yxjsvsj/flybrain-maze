@@ -3,8 +3,12 @@
 标定结果（wheels-up 实测）
 -------------------------
   CPR (x4)   = 1560   （MG513P30_12V，13 PPR Hall，减速 30:1，x4 解码）
-  轮径 D     = 0.070 m
+  轮径 D     = 0.070 m（名义/几何值）
   轮距 L     = 0.160 m（左右轮接地点中心距）
+
+  落地（P2c ground commissioning）**有效值**（含打滑，生产用；由
+  pikachu_deploy/start_both_inner.sh 以 --wheel-diam/--track 传入）：
+    有效 D = 0.067 m     有效 L = 0.194 m
 
 编码器通道 vs 物理左右（重要）
 ------------------------------

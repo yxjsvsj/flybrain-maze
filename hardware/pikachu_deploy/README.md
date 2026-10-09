@@ -1,4 +1,4 @@
-# Pikachu Bot 部署（HW-shadow-v1 快照）
+# Pikachu Bot 部署（HW-shadow-v1 + P2c commissioning 快照）
 
 从树莓派实机抓取的部署快照，供 `HW-shadow-v1` tag 复现。目标机：MainsailOS 3.0.0
 （Debian 13 trixie, aarch64）。Pikachu 应用装在 `/home/bjlm/pikachu/`，
@@ -14,6 +14,7 @@
 | `serial_recover.py` | `/home/bjlm/pikachu/` | 恢复逻辑：延迟 1s + 重试 + 校验 `ok`/`open` |
 | `serial_removed.sh` | `/home/bjlm/pikachu/` | udev REMOVE 回调：仅记录，不做任何操作 |
 | `usb_watch.py` | `/home/bjlm/pikachu/` | pyudev 只读监视器（诊断 add/remove） |
+| `start_both_inner.sh` | `/home/bjlm/pikachu/` | 启动 odom（`--swap-lr --wheel-diam 0.067 --track 0.194`）+ ToF 遥测发送端 |
 | `99-pikachu-serial.rules` | `/etc/udev/rules.d/` | REMOVE 记录 / ADD 触发恢复 |
 
 ## 依赖
@@ -28,12 +29,19 @@
 ```bash
 sudo cp pikachu-web.service pikachu-serial-recover.service /etc/systemd/system/
 sudo cp 99-pikachu-serial.rules /etc/udev/rules.d/
-sudo cp launch.sh serial_recover.py serial_removed.sh usb_watch.py /home/bjlm/pikachu/
-sudo chmod +x /home/bjlm/pikachu/{launch.sh,serial_removed.sh,serial_recover.py,usb_watch.py}
+sudo cp launch.sh serial_recover.py serial_removed.sh usb_watch.py start_both_inner.sh /home/bjlm/pikachu/
+sudo chmod +x /home/bjlm/pikachu/{launch.sh,serial_removed.sh,serial_recover.py,usb_watch.py,start_both_inner.sh}
+# 共享状态目录（odom/tof state.json 供网页读），开机自建属 bjlm：
+echo 'd /run/pikachu 0775 bjlm bjlm -' | sudo tee /etc/tmpfiles.d/pikachu.conf
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/pikachu.conf
 sudo systemctl daemon-reload
 sudo systemctl enable --now pikachu-web
 sudo udevadm control --reload-rules
 ```
+
+`start_both_inner.sh` 的里程计用 **P2c 落地标定的有效参数**（`D=0.067 m`、
+`L=0.194 m`）；Windows 脑主机 IP 用 `PIKACHU_WIN_IP` 覆盖。in-place 启动（无参数）
+之前必须先 `systemd-tmpfiles --create`，否则 sender 写不了 `/run/pikachu`。
 
 `launch.sh` 的串口守卫：只接受 `/dev/serial/by-id/...`；拒绝 `*Klipper_*` 设备；
 设备必须存在；VID:PID 必须是 `1a86:7523`（`PIKACHU_SKIP_VIDPID=1` 可跳过）；HTTP

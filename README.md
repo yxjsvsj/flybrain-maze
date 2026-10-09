@@ -30,7 +30,8 @@ front caster**（后双驱动轮 + 前被动导向轮）：
 | P2b five-ToF sensing | ✅ | 5 × VL53L0X continuous ranging，tag `P2b-tof5-bringup` |
 | P2b hardware closed-loop | ✅ | 真 ToF → RealFlyBrain → 真电机 → 真 odom，wheels-up 验证，tag `P2b-hil-wheelsup` |
 | P2c-0 ground tools | ✅ | Ground Control 网页 + 地面标定工具，tag `P2c-0-ground-tools` |
-| P2c ground commissioning | 🚧 | 正在做动力/供电/里程计地面标定 |
+| P2c ground commissioning | ✅ | 供电/驱动/里程计/ToF/单墙停车 + 3s 真脑地面闭环 全部通过，tag `P2c-ground-commissioning` |
+| P2d physical-maze navigation | ⏳ | 短直道 → 单拐角 → L 形 → 小型分叉 → 正式迷宫（尚未开始）|
 | Full physical maze | ⏳ | 尚未完成 |
 
 > 硬件拓扑、引脚、端口与安全语义见 [`hardware/README.md`](hardware/README.md)。
@@ -406,20 +407,25 @@ RAMP_STEP = 5 / RAMP_INTERVAL_MS = 20     (~250 PWM/s)
 > 旧的 `drivePwm=70` / `turnPwm=60`（见上一节）是**历史固件**；cap 已上调，
 > 否则落地摩擦下起转扭矩不足（满速只有 ~27% 占空比）。
 
-### 地面调试（preliminary，未冻结）
+### P2c 地面 commissioning（已通过，tag `P2c-ground-commissioning`）
 
-初步地面实测（在 VM 电池欠压 ~10V 条件下取得）：
+六步全部通过（12 V 满电、落地）：
 
-| 项 | 值 |
+| 步 | 结果 |
 |---|---|
-| forward reliable threshold | ≈ 0.30 |
-| turn reliable threshold | ≈ 0.40–0.45（右转更弱，需 ≥0.60 才稳） |
-| 满速速度 | ≈ 0.15 m/s（@1.0，明显低于 MG513 12V 应有量级） |
-| 左右轮不对称 | 存在（右转时左轮"后退"方向偏弱，硬件层面） |
-| 当前 ramp | 对短命令响应偏慢（~250 PWM/s） |
+| ① 负载供电检查 | ✅ 带载电压稳定、Pi 不欠压 |
+| ② ground minimum command | forward ≈0.30 / left ≈0.40 / **right ≈0.50**（综合地板 0.50）|
+| ③ 动力里程计标定 | **D = 0.067 m / L = 0.194 m**（含打滑的有效值）|
+| ④ ToF 落地静态检查 | ✅ 读数正常（F / FL 有效）|
+| ⑤ 单墙停车 | ✅ F 到 **447 mm** 触停、STOP 后不动 |
+| ⑥ 真脑地面闭环（3 s）| ✅ frames_ok=29 failed=0 lag_failures=0，odom/tof 0 丢包，0 碰撞，自动 STOP |
 
-> 以上是 **commissioning 数据，不是最终控制参数**。VM 电池充满（~12.6V）后需重标定；
-> `min_cmd` / `max_*` 与 ramp 的最终值在 step 6（真脑地面闭环）前才冻结。
+- 固件 cap：straight 200 / turn 180（`RAMP_STEP=5` / 20 ms）。
+- 满速约 0.13–0.15 m/s（明显低于 MG513 12V 应有量级）；左右轮有残余不对称（右转时左轮后退偏弱）。
+- 里程计有效参数 D/L 由 `hardware/pikachu_deploy/start_both_inner.sh` 传给 `odometry.py`。
+- `min_cmd` / `max_*` / ramp 的最终值在 P2d 的前进过程中再定。
+
+> 第 ⑥ 步是**闭环 + 停止**验收（`memory=0`，不追目标），**不是导航成绩**——不报告 pathEff / 到达率。
 
 ---
 

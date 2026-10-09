@@ -151,16 +151,22 @@ bridge 一旦 FAILSAFE 就 latch，必须人工重启。
 | `hardware/encoder_calib.py` | 编码器标定 |
 | `hardware/selftest.py` | 纯逻辑自检（不连硬件）|
 
-## 当前标定状态（preliminary，未冻结）
+## 地面 commissioning 状态（tag `P2c-ground-commissioning`）
+
+六步全部通过（12 V 满电、落地）：
 
 | 项 | 值 |
 |---|---|
 | 固件 PWM cap | straight 200 / turn 180（fast）；slow 120 |
 | 固件 ramp | 5 PWM / 20 ms（~250 PWM/s）|
 | wheels-up 起转门槛 | ≈0.60（**旧固件** drivePwm=70 时）|
-| 落地 forward reliable | ≈0.30（1.5s 稳态）|
-| 落地 turn reliable | ≈0.40–0.45（右转更弱，≥0.60 才稳）|
+| 落地 forward reliable | ≈0.30（1.5 s 稳态）|
+| 落地 turn reliable | **right ≈0.50**（综合地板 0.50）|
+| **有效轮径 D** | **0.067 m**（名义 0.070；带载打滑 −4.5%）|
+| **有效轮距 L** | **0.194 m**（名义 0.160；原地转打滑 +21%）|
+| 单墙停车 | F 到 447 mm 触停（`stop_mm=450`）|
+| 3 s 真脑地面闭环 | ✅ frames_ok=29 failed=0 lag_failures=0，0 丢包，0 碰撞 |
 | `meters_per_cell` | 0.40（provisional）|
-| 已知问题 | VM 电池欠压（~10V）→ 慢且门槛高；右转左轮后退偏弱；短命令受 ramp 拖慢 |
+| 已知问题 | 满速仅 ~0.13–0.15 m/s；右转左轮后退偏弱；短命令受 ramp 拖慢 |
 
-> 以上均为 **commissioning 数据，不是最终控制参数**；step 6（真脑地面闭环）前才冻结。
+> D/L 由 `pikachu_deploy/start_both_inner.sh` 传给 `odometry.py`。以上为 P2c 验收值；P2d 前进过程中再精修。
