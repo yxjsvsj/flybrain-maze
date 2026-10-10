@@ -66,6 +66,8 @@ class OdomRealCar(DiffDriveCar):
         self._alpha = 0.0
         self._pl = self._pr = None
         self.origin_captured = False
+        self.last_sample = None            # 最近一帧 OdomSample（供 stall detector 复用）
+        self.last_age = None
 
     def _ensure_origin(self, s) -> None:
         if not self._have_origin:
@@ -76,6 +78,8 @@ class OdomRealCar(DiffDriveCar):
 
     def step(self, maze, dt: float) -> bool:
         s, _age = self.client.latest()          # stale / reset -> 抛 OdomError
+        self.last_sample = s
+        self.last_age = _age
         self._ensure_origin(s)
 
         dx, dy = s.x - self._ox0, s.y - self._oy0

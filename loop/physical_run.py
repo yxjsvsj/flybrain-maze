@@ -43,7 +43,7 @@ from loop.shadow_run import RealTimePacer
 
 
 def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
-                  trace_fn, trace_every, geometry=None):
+                  trace_fn, trace_every, geometry=None, stall_policy="legacy"):
     """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。
 
     geometry 为 None -> 旧建图（所有射线从车中心，冻结 OccupancyMemory.update）。
@@ -53,7 +53,7 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
     reached_goal = False
     time_to_goal = -1.0
     best_goal = 10 ** 9
-    stalled = False
+    stalled_in = False
     steps_done = 0
     brain_ns = 0.0
     t_wall0 = time.perf_counter()
@@ -72,6 +72,12 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                          free_conflict_threshold=cfg.nav.free_conflict_threshold)
         if maze.goal is not None:
             memory.set_goal(maze.goal[0], maze.goal[1])
+
+    det = None
+    if stall_policy != "legacy":
+        from loop.physical_stall import WindowedStallDetector
+        det = WindowedStallDetector(meters_per_cell=enc.m_per_cell,
+                                    max_speed=cfg.car.max_speed, max_omega=cfg.car.max_omega)
 
     for step in range(steps):
         steps_done = step + 1
@@ -108,13 +114,35 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
         tb = time.perf_counter()
         fired = brain.step(inject=inject)
         brain_ns += time.perf_counter() - tb
-        v, omega = dec.update(fired, info=info, stalled=stalled)
+        v, omega = dec.update(fired, info=info, stalled=stalled_in)
         car.set_command(v, omega)
         car.step(maze, dt)                          # OdomRealCar -> 真实位姿
 
-        stalled = (dec.front_blocked
-                   or (abs(dec.v) > 0.15 * cfg.car.max_speed
-                       and car.last_move < 0.3 * abs(dec.v) * dt))
+        # legacy 判定（冻结语义）
+        legacy_stalled = (dec.front_blocked
+                          or (abs(dec.v) > 0.15 * cfg.car.max_speed
+                              and car.last_move < 0.3 * abs(dec.v) * dt))
+        # windowed 检测器：消费同一份 OdomSample，用本地 monotonic
+        wall_t = time.monotonic()
+        win_stalled, win_reason, grace, sustain = False, "", False, 0.0
+        odom_seq = odom_age_ms = odom_dx_m = odom_dtheta = None
+        odom_new = False
+        if det is not None and car.last_sample is not None:
+            s = car.last_sample
+            odom_new = det.observe(wall_t, s.left, s.right, seq=s.seq, theta=s.theta)
+            det.note_command(wall_t, dec.v, dec.omega)
+            win_stalled, win_reason = det.stalled(wall_t, dec.v, dec.omega, dec.front_blocked)
+            grace, sustain = det.grace_active, det.sustain_duration
+            odom_seq = s.seq
+            odom_age_ms = None if car.last_age is None else car.last_age * 1e3
+            odom_dx_m = det.last_moved_cells * enc.m_per_cell
+            odom_dtheta = det.last_turned_rad
+        stalled_in = win_stalled if stall_policy == "windowed" else legacy_stalled
+        # 安全：windowed 确认机械堵转 -> 不自动倒车，STOP + 需人工（首轮现场验收）
+        mech_stop = stall_policy == "windowed" and win_stalled and win_reason == "mechanical"
+        if mech_stop:
+            car.set_command(0.0, 0.0)
+            stalled_in = False
 
         d = maze.dist_to_goal(car.x, car.y)
         if d >= 0:
@@ -145,6 +173,16 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                 "brain_turn": dec.last_brain_turn,
                 "pursuit_turn": dec.last_pursuit_turn,
                 "turn_cmd": dec.last_turn_cmd,
+                "odom_seq": odom_seq, "odom_age_ms": odom_age_ms,
+                "odom_frame_new": bool(odom_new),
+                "odom_dx_m": odom_dx_m, "odom_dtheta": odom_dtheta,
+                "requested_v": dec.v, "requested_w": dec.omega,
+                "legacy_stalled": bool(legacy_stalled),
+                "windowed_stalled": bool(win_stalled), "windowed_reason": win_reason,
+                "startup_grace_active": bool(grace),
+                "stall_sustain_s": round(float(sustain), 3),
+                "decoder_in_stall": bool(getattr(dec, "in_stall", False)),
+                "decoder_v": dec.v, "front_blocked": bool(dec.front_blocked),
             })
 
         if stop_on_goal and reached_goal:
@@ -219,6 +257,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-wait", type=float, default=5.0)
     ap.add_argument("--tof-geometry", default=None,
                     help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
+    ap.add_argument("--stall-policy", choices=["legacy", "observe", "windowed"], default="legacy",
+                    help="stall 判定来源：legacy(冻结原逻辑) / observe(只算+记录) / windowed(P2 检测器)")
     args = ap.parse_args(argv)
 
     if not args.dry_run and not args.pikachu_url:
@@ -318,7 +358,7 @@ def main(argv=None) -> int:
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                               stop_on_goal=args.stop_on_goal,
                               trace_fn=trace_callback, trace_every=1,
-                              geometry=geometry)
+                              geometry=geometry, stall_policy=args.stall_policy)
     except (OdomError, TofError) as exc:
         print(f"\n[physical] *** {type(exc).__name__}: {exc}")
         print("[physical] *** -> FAILSAFE（停车 + latch，不自动恢复）***")

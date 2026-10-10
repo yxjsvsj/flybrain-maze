@@ -100,6 +100,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-wait", type=float, default=5.0)
     ap.add_argument("--tof-geometry", default=None,
                     help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
+    ap.add_argument("--stall-policy", choices=["legacy", "observe", "windowed"], default="legacy",
+                    help="stall 判定来源：legacy/observe/windowed")
     ap.add_argument("--tol-long", type=float, default=0.25)
     ap.add_argument("--tol-lat", type=float, default=0.20)
     ap.add_argument("--tol-head-deg", type=float, default=15.0)
@@ -184,7 +186,11 @@ def main(argv=None) -> int:
 
     cols = ["t", "target_x", "target_y", "odom_x", "odom_y", "theta_deg",
             "v", "w", "goal_dist", "cross_track",
-            "bearing_err", "brain_turn", "pursuit_turn", "turn_cmd"]
+            "bearing_err", "brain_turn", "pursuit_turn", "turn_cmd",
+            "odom_seq", "odom_age_ms", "odom_frame_new", "odom_dx_m", "odom_dtheta",
+            "requested_v", "requested_w", "legacy_stalled", "windowed_stalled",
+            "windowed_reason", "startup_grace_active", "stall_sustain_s",
+            "decoder_in_stall", "decoder_v", "front_blocked"]
     for n in SENSORS:
         cols += [f"tof_{n}_mm", f"tof_{n}_st"]
     cols += ["stop_reason"]
@@ -211,6 +217,12 @@ def main(argv=None) -> int:
                f"{rec.get('brain_turn', 0.0):.3f}",
                f"{rec.get('pursuit_turn', 0.0):.3f}",
                f"{rec.get('turn_cmd', 0.0):.3f}"]
+        for k in ("odom_seq", "odom_age_ms", "odom_frame_new", "odom_dx_m", "odom_dtheta",
+                  "requested_v", "requested_w", "legacy_stalled", "windowed_stalled",
+                  "windowed_reason", "startup_grace_active", "stall_sustain_s",
+                  "decoder_in_stall", "decoder_v", "front_blocked"):
+            vv = rec.get(k)
+            row.append("" if vv is None else vv)
         for n in SENSORS:
             mm = ranges.get(n)
             row += ["" if mm is None else f"{mm:.0f}", status.get(n, "")]
@@ -237,7 +249,7 @@ def main(argv=None) -> int:
             print("[straight] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                               stop_on_goal=args.stop_on_goal, trace_fn=trace_callback,
-                              trace_every=1, geometry=geometry)
+                              trace_every=1, geometry=geometry, stall_policy=args.stall_policy)
         if stats.get("reached_goal"):
             stop_reason = "goal"
     except (OdomError, TofError) as exc:
