@@ -42,8 +42,8 @@ class WindowedStallDetector:
                  left_sign: float = -1.0, right_sign: float = 1.0,
                  max_speed: float = 0.9, max_omega: float = 3.0,
                  window_s: float = 0.40, trans_move_frac: float = 0.05,
-                 rot_move_frac: float = 0.05, stall_sustain_s: float = 0.35,
-                 startup_grace_s: float = 0.30, cmd_change_thresh: float = 0.35,
+                 rot_move_frac: float = 0.05, stall_sustain_s: float = 0.50,
+                 startup_grace_s: float = 0.70, cmd_change_thresh: float = 0.35,
                  min_cmd_frac: float = 0.10, odom_stale_s: float = 0.35) -> None:
         self.m_per_count_cells = (math.pi * float(wheel_diam) / float(cpr)) / float(meters_per_cell)
         self.track_cells = float(track) / float(meters_per_cell)
