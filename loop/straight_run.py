@@ -112,6 +112,10 @@ def main(argv=None) -> int:
     if not args.dry_run and not args.pikachu_url:
         print("需要 --pikachu-url（或 --dry-run）")
         return 2
+    if args.stall_policy == "observe" and not args.dry_run:
+        print("--stall-policy observe 在真实硬件模式下被拒绝：控制仍由 legacy 驱动 Decoder，"
+              "可能触发旧式自动倒车。实体测试请用 windowed；observe 仅允许配合 --dry-run 或离线回放。")
+        return 2
 
     geometry = None
     if args.tof_geometry:
