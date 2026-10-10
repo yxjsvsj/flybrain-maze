@@ -32,6 +32,7 @@ from loop.decode import Decoder
 from loop.encode_tof import PhysicalToFEncoder
 from loop.odom_shadow_run import OdomRealCar
 from loop.physical_run import _run_physical
+from loop.physical_stall import MechanicalStallError
 from loop.run import make_setup
 from loop.shadow_run import RealTimePacer
 
@@ -101,7 +102,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-geometry", default=None,
                     help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
     ap.add_argument("--stall-policy", choices=["legacy", "observe", "windowed"], default="legacy",
-                    help="stall 判定来源：legacy/observe/windowed")
+                    help="stall 判定来源：legacy / observe(只记录，控制仍由 legacy 驱动 Decoder，"
+                         "可能倒车；仅限离线/dry-run) / windowed(确认机械堵转 -> STOP+FAILSAFE，不自动倒车)")
     ap.add_argument("--tol-long", type=float, default=0.25)
     ap.add_argument("--tol-lat", type=float, default=0.20)
     ap.add_argument("--tol-head-deg", type=float, default=15.0)
@@ -244,6 +246,7 @@ def main(argv=None) -> int:
     print(f"[straight] sim {args.sim_seconds:.0f}s = {steps} steps @ {brain.dt*1000:.0f}ms；stop-on-goal")
     stats = None
     stop_reason = "timeout"
+    mech_exc = None
     try:
         if not bridge.start():
             print("[straight] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
@@ -252,6 +255,12 @@ def main(argv=None) -> int:
                               trace_every=1, geometry=geometry, stall_policy=args.stall_policy)
         if stats.get("reached_goal"):
             stop_reason = "goal"
+    except MechanicalStallError as exc:
+        mech_exc = exc
+        stop_reason = "mechanical_stall"
+        print(f"\n[straight] *** 机械堵转（windowed 确认）: {exc}")
+        print("[straight] *** -> 立即 STOP + latched FAILSAFE；禁止自动倒车 / 自动恢复 ***")
+        bridge.enter_failsafe(f"mechanical stall: {exc}")
     except (OdomError, TofError) as exc:
         stop_reason = f"failsafe:{type(exc).__name__}"
         print(f"\n[straight] *** {type(exc).__name__}: {exc} -> FAILSAFE（停车 + latch）")
@@ -266,6 +275,15 @@ def main(argv=None) -> int:
             writer.writerow(state["last_row"])
         fh.close()
         bridge.stop(reason="finally"); odom.stop(); tof.stop()
+
+    if mech_exc is not None:
+        c = bridge.last_stop_confirmed
+        if c is True:
+            print("[straight] **机械堵转 STOP 已获串口确认** -> 实体停车已确认")
+        elif c is False:
+            print(f"[straight] !!! {bridge.last_stop_note} —— 不能声称实体已安全停止 !!!")
+        else:
+            print(f"[straight] 机械堵转 STOP 状态未知：{bridge.last_stop_note or 'N/A'}")
 
     fx, fy, fth = float(real_car.x), float(real_car.y), float(real_car.theta)
     long_err = abs(fx - gx) * args.meters_per_cell

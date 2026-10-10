@@ -38,6 +38,7 @@ from hardware.tof5_client import Tof5Client, TofError
 from loop.decode import Decoder
 from loop.encode_tof import PhysicalToFEncoder
 from loop.odom_shadow_run import OdomRealCar
+from loop.physical_stall import MechanicalStallError, WindowedStallDetector
 from loop.run import make_setup, print_stats
 from loop.shadow_run import RealTimePacer
 
@@ -75,7 +76,6 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
     det = None
     if stall_policy != "legacy":
-        from loop.physical_stall import WindowedStallDetector
         det = WindowedStallDetector(meters_per_cell=enc.m_per_cell,
                                     max_speed=cfg.car.max_speed, max_omega=cfg.car.max_omega)
 
@@ -138,11 +138,14 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
             odom_dx_m = det.last_moved_cells * enc.m_per_cell
             odom_dtheta = det.last_turned_rad
         stalled_in = win_stalled if stall_policy == "windowed" else legacy_stalled
-        # 安全：windowed 确认机械堵转 -> 不自动倒车，STOP + 需人工（首轮现场验收）
-        mech_stop = stall_policy == "windowed" and win_stalled and win_reason == "mechanical"
-        if mech_stop:
-            car.set_command(0.0, 0.0)
-            stalled_in = False
+        # 安全：windowed 确认机械堵转 -> **当前周期立即 raise**，跳过本周期 trace，
+        # 禁止再向 bridge 提交任何非零 motor 命令。由 main 转成 latched FAILSAFE + STOP；
+        # 绝不自动倒车，也绝不自动恢复。car.set_command(0,0) 只改本地仿真态，**不是**执行器 STOP。
+        if stall_policy == "windowed" and det is not None and win_stalled and win_reason == "mechanical":
+            raise MechanicalStallError(
+                t=wall_t, odom_seq=odom_seq,
+                window_move_m=det.last_window_move_cells * enc.m_per_cell,
+                requested_v=dec.v, requested_w=dec.omega, reason=win_reason)
 
         d = maze.dist_to_goal(car.x, car.y)
         if d >= 0:
@@ -258,7 +261,9 @@ def main(argv=None) -> int:
     ap.add_argument("--tof-geometry", default=None,
                     help="hardware/tof_geometry.json；启用逐原点射线建图（默认 OFF=旧行为）")
     ap.add_argument("--stall-policy", choices=["legacy", "observe", "windowed"], default="legacy",
-                    help="stall 判定来源：legacy(冻结原逻辑) / observe(只算+记录) / windowed(P2 检测器)")
+                    help="stall 判定来源：legacy(冻结原逻辑) / observe(只算+记录，控制仍由 legacy 驱动 "
+                         "Decoder，可能倒车；仅限离线回放或 --dry-run，不是安全的实体观察模式) / "
+                         "windowed(P2 检测器：确认机械堵转 -> STOP+FAILSAFE，不自动倒车)")
     args = ap.parse_args(argv)
 
     if not args.dry_run and not args.pikachu_url:
@@ -352,6 +357,7 @@ def main(argv=None) -> int:
     print(f"[physical] sim {args.sim_seconds:.0f}s = {steps} steps @ {brain.dt*1000:.0f}ms；"
           f"ToF 10Hz。collisions/contact_ratio 不是物理碰撞。")
     stats = None
+    mech_exc = None
     try:
         if not bridge.start():
             print("[physical] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
@@ -359,6 +365,11 @@ def main(argv=None) -> int:
                               stop_on_goal=args.stop_on_goal,
                               trace_fn=trace_callback, trace_every=1,
                               geometry=geometry, stall_policy=args.stall_policy)
+    except MechanicalStallError as exc:
+        mech_exc = exc
+        print(f"\n[physical] *** 机械堵转（windowed 确认）: {exc}")
+        print("[physical] *** -> 立即 STOP + latched FAILSAFE；禁止自动倒车 / 自动恢复 ***")
+        bridge.enter_failsafe(f"mechanical stall: {exc}")
     except (OdomError, TofError) as exc:
         print(f"\n[physical] *** {type(exc).__name__}: {exc}")
         print("[physical] *** -> FAILSAFE（停车 + latch，不自动恢复）***")
@@ -367,6 +378,19 @@ def main(argv=None) -> int:
         print("[physical] 中断")
     finally:
         bridge.stop(reason="finally"); odom.stop(); tof.stop()
+
+    if mech_exc is not None:
+        c = bridge.last_stop_confirmed
+        if c is True:
+            print("[physical] **机械堵转 STOP 已获串口确认** -> 实体停车已确认")
+        elif c is False:
+            print(f"[physical] !!! {bridge.last_stop_note} —— 不能声称实体已安全停止 !!!")
+        else:
+            print(f"[physical] 机械堵转 STOP 状态未知：{bridge.last_stop_note or 'N/A'}")
+        print(f"[physical] 堵转记录：t={mech_exc.t:.2f}s seq={mech_exc.odom_seq} "
+              f"window_move={mech_exc.window_move_m:.4f}m "
+              f"req_v={mech_exc.requested_v:.2f} req_w={mech_exc.requested_w:.2f} "
+              f"reason={mech_exc.reason}")
 
     if stats is not None:
         print_stats(stats)

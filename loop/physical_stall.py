@@ -20,6 +20,22 @@ import math
 from collections import deque
 
 
+class MechanicalStallError(RuntimeError):
+    """确认机械堵转。**必须**由调用方转成 latched FAILSAFE + STOP；禁止自动倒车。"""
+
+    def __init__(self, *, t: float, odom_seq, window_move_m: float,
+                 requested_v: float, requested_w: float, reason: str = "mechanical") -> None:
+        self.t = float(t)
+        self.odom_seq = odom_seq
+        self.window_move_m = float(window_move_m)
+        self.requested_v = float(requested_v)
+        self.requested_w = float(requested_w)
+        self.reason = reason
+        super().__init__(f"mechanical stall t={self.t:.2f}s seq={odom_seq} "
+                         f"window_move={self.window_move_m:.4f}m "
+                         f"req_v={requested_v:.2f} req_w={requested_w:.2f}")
+
+
 class WindowedStallDetector:
     def __init__(self, *, wheel_diam: float = 0.067, track: float = 0.194,
                  cpr: float = 1560.0, meters_per_cell: float = 0.40,
@@ -55,14 +71,18 @@ class WindowedStallDetector:
         self.grace_active = False
         self.last_moved_cells = 0.0
         self.last_turned_rad = 0.0
+        self.last_window_move_cells = 0.0
+        self.last_window_turn_rad = 0.0
+        self._last_theta = None
 
     # ---- 输入 ----
     def note_command(self, t: float, v: float, w: float) -> None:
-        """只在**显著**变化时重置宽限（避免脑的逐周期抖动）。"""
+        """只在**逐步**（per-cycle）显著变化时重置宽限；参考值每步更新，
+        避免缓慢漂移累积后误触发，也不被脑的逐周期抖动反复重置。"""
         if (abs(v - self._last_cmd[0]) > self.cmd_change_thresh
                 or abs(w - self._last_cmd[1]) > self.cmd_change_thresh):
             self._cmd_change_t = t
-            self._last_cmd = (v, w)
+        self._last_cmd = (v, w)
 
     def observe(self, t: float, left: int, right: int, seq=None,
                 theta: float | None = None) -> bool:
@@ -82,11 +102,17 @@ class WindowedStallDetector:
             dl = self.left_sign * (left - pl)
             dr = self.right_sign * (right - pr)
             moved = 0.5 * (dl + dr) * self.m_per_count_cells            # cells
-            turned = (dr - dl) * self.m_per_count_cells / self.track_cells  # rad (轮差)
+            if theta is not None and self._last_theta is not None:
+                # 优先用同一份 odom 的角度差（±π wrap 安全）：与冻结 Decoder / 脑同源
+                turned = (theta - self._last_theta + math.pi) % (2 * math.pi) - math.pi
+            else:
+                turned = (dr - dl) * self.m_per_count_cells / self.track_cells  # 轮差回退
             self.last_moved_cells = moved
             self.last_turned_rad = turned
             self._win.append((t, abs(moved), abs(turned)))
         self._last = (left, right)
+        if theta is not None:
+            self._last_theta = theta
         self._new_frame_t = t
         return True
 
@@ -125,6 +151,8 @@ class WindowedStallDetector:
         horizon = max(1e-3, min(self.window_s, t - (self._win[0][0] if self._win else t)))
         moved = sum(m for _, m, _ in self._win)
         turned = sum(r for _, _, r in self._win)
+        self.last_window_move_cells = moved
+        self.last_window_turn_rad = turned
         # 独立判断平移 / 旋转（用归一化后的主导通道）
         if vn >= wn:
             moving = moved >= self.trans_move_frac * abs(v_cmd) * horizon

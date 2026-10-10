@@ -239,6 +239,9 @@ class PikachuBridge:
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._state_lock = threading.Lock()
+        # 串行化“发送 / latch / stop 的最终 STOP”，杜绝 FAILSAFE 与在途非零 DRIVE 交错。
+        # 可重入：_send 内部发生失败时会调用 _latch（同一发送线程）。
+        self._send_lock = threading.RLock()
         self._slew_lock = threading.Lock()
         self._log_lock = threading.Lock()
         self._log_fh = None
@@ -255,6 +258,10 @@ class PikachuBridge:
         self.last_error = ""
         self.last_raw = (0.0, 0.0)
         self.last_sent = (0.0, 0.0)
+        # 最近一次 stop() 的 STOP 是否**已被串口确认**（None=未尝试/dry_run；
+        # True=至少一次 ok 且 serial open；False=全部失败或串口未开）
+        self.last_stop_confirmed: bool | None = None
+        self.last_stop_note = ""
         self.mix_clamp_events = 0
         self.slew_events = 0
         self.mailbox_overwrites = 0
@@ -319,11 +326,14 @@ class PikachuBridge:
             return True
 
     def _latch(self, st: BridgeState, msg: str) -> None:
-        with self._state_lock:
-            if self.state != BridgeState.RUNNING:
-                return
-            self.state = st
-        self._mailbox.clear()
+        # 与在途发送串行：等在途 DRIVE 发送完成后再切状态并清邮箱，避免 latch 后还有
+        # 已取出的过期 DRIVE 被发出；清邮箱与 take 互斥。
+        with self._send_lock:
+            with self._state_lock:
+                if self.state != BridgeState.RUNNING:
+                    return
+                self.state = st
+            self._mailbox.clear()
         if st is BridgeState.FAILSAFE:
             print(f"\n[bridge] *** FAILSAFE (latched) *** {msg}")
             print("[bridge] 只发送 STOP，不再接受运动指令。"
@@ -410,17 +420,27 @@ class PikachuBridge:
             if next_t < now:                    # 落后了，重新对齐，避免突发追赶
                 next_t = now + period
 
-            with self._state_lock:
-                st = self.state
-            if st in (BridgeState.FAILSAFE, BridgeState.BLOCKED_GUARD):
-                self._send(0.0, 0.0, kind="STOP", item=None)
-                continue
-            if st is not BridgeState.RUNNING:
-                continue
-            item = self._mailbox.take()
-            if item is None:
-                continue
-            self._send(item["V"], item["W"], kind="DRIVE", item=item)
+            with self._send_lock:                       # 一次只发一条；与 latch/stop 串行
+                with self._state_lock:
+                    st = self.state
+                if st in (BridgeState.FAILSAFE, BridgeState.BLOCKED_GUARD):
+                    self._send(0.0, 0.0, kind="STOP", item=None)
+                    continue
+                if st is not BridgeState.RUNNING:
+                    continue
+                item = self._mailbox.take()
+                if item is None:
+                    continue
+                # take 之后再确认一次状态：latch 可能发生在“读状态”与“取指令”之间
+                # （同线程重入路径尤其如此）。此刻已 latch 则丢弃过期 DRIVE，只发 STOP。
+                with self._state_lock:
+                    st2 = self.state
+                if st2 in (BridgeState.FAILSAFE, BridgeState.BLOCKED_GUARD):
+                    self._send(0.0, 0.0, kind="STOP", item=None)
+                    continue
+                if st2 is not BridgeState.RUNNING:
+                    continue
+                self._send(item["V"], item["W"], kind="DRIVE", item=item)
 
     def _send(self, V: float, W: float, kind: str, item: dict | None) -> None:
         cfg = self.cfg
@@ -493,15 +513,32 @@ class PikachuBridge:
             self._thread.join(timeout=2.0)
         if not self.cfg.dry_run:
             base = self.cfg.base_url.rstrip("/")
-            for _ in range(3):
-                try:
-                    _, body = http_json(base + self.cfg.endpoint,
-                                        {"v": 0.0, "w": 0.0}, self.cfg.timeout_s)
-                    if body.get("ok"):
-                        self.stops_ok += 1
-                except Exception:                                  # noqa: BLE001
-                    pass
-                time.sleep(0.05)
+            stop_ok, stop_seen_open, stop_err = 0, False, ""
+            with self._send_lock:                       # 双保险：与发送线程串行（通常已 join）
+                for _ in range(3):
+                    try:
+                        _, body = http_json(base + self.cfg.endpoint,
+                                            {"v": 0.0, "w": 0.0}, self.cfg.timeout_s)
+                        st = body.get("status") or {}
+                        if body.get("ok"):
+                            stop_ok += 1
+                            self.stops_ok += 1
+                            if st.get("open"):
+                                stop_seen_open = True
+                        else:
+                            stop_err = f"json ok=false status={st}"
+                    except Exception as exc:                       # noqa: BLE001
+                        stop_err = f"{type(exc).__name__}: {exc}"
+                    time.sleep(0.05)
+            # 明确区分"已确认停车"与"仅 state=STOPPED"
+            self.last_stop_confirmed = bool(stop_ok >= 1 and (stop_seen_open or not self.cfg.require_serial_open))
+            if not self.last_stop_confirmed:
+                self.last_stop_note = (f"STOP 未获串口确认 (ok={stop_ok}/3 "
+                                       f"serial_open={stop_seen_open} err={stop_err})")
+                print(f"[bridge] *** 警告：{self.last_stop_note} —— 不能声称实体已安全停止 ***")
+        else:
+            self.last_stop_confirmed = None
+            self.last_stop_note = "dry_run：未发送真实 STOP"
         with self._state_lock:
             self.state = BridgeState.STOPPED
         self._close_log()
@@ -568,6 +605,8 @@ class PikachuBridge:
             "frames_ok": self.frames_ok,
             "frames_failed": self.frames_failed,
             "stops_ok": self.stops_ok,
+            "last_stop_confirmed": self.last_stop_confirmed,
+            "last_stop_note": self.last_stop_note,
             "fails_now": self.fails_now,
             "mix_clamp_events": self.mix_clamp_events,
             "slew_events": self.slew_events,
