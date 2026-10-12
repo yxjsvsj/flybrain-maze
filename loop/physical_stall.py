@@ -40,6 +40,7 @@ class WindowedStallDetector:
     def __init__(self, *, wheel_diam: float = 0.067, track: float = 0.194,
                  cpr: float = 1560.0, meters_per_cell: float = 0.40,
                  left_sign: float = -1.0, right_sign: float = 1.0,
+                 swap_lr: bool = True,
                  max_speed: float = 0.9, max_omega: float = 3.0,
                  window_s: float = 0.40, trans_move_frac: float = 0.05,
                  rot_move_frac: float = 0.05, stall_sustain_s: float = 0.50,
@@ -49,6 +50,7 @@ class WindowedStallDetector:
         self.track_cells = float(track) / float(meters_per_cell)
         self.left_sign = float(left_sign)
         self.right_sign = float(right_sign)
+        self.swap_lr = bool(swap_lr)
         self.max_speed = float(max_speed)
         self.max_omega = float(max_omega)
         self.window_s = float(window_s)
@@ -112,6 +114,8 @@ class WindowedStallDetector:
             pl, pr = self._last
             dl = self.left_sign * (left - pl)
             dr = self.right_sign * (right - pr)
+            if self.swap_lr:                    # 与生产一致：physical L<-E2, R<-E1
+                dl, dr = dr, dl
             moved = 0.5 * (dl + dr) * self.m_per_count_cells            # cells
             if theta is not None and self._last_theta is not None:
                 # 优先用同一份 odom 的角度差（±π wrap 安全）：与冻结 Decoder / 脑同源
