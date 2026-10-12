@@ -44,7 +44,7 @@ from loop.shadow_run import RealTimePacer
 
 
 def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
-                  trace_fn, trace_every, geometry=None, stall_policy="legacy"):
+                  trace_fn, trace_every, geometry=None, stall_policy="legacy", timing=None):
     """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。
 
     geometry 为 None -> 旧建图（所有射线从车中心，冻结 OccupancyMemory.update）。
@@ -114,9 +114,13 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
         tb = time.perf_counter()
         fired = brain.step(inject=inject)
         brain_ns += time.perf_counter() - tb
+        if timing is not None and step == 0:
+            timing["first_formal_brain_step_s"] = time.perf_counter() - tb
         v, omega = dec.update(fired, info=info, stalled=stalled_in)
         car.set_command(v, omega)
         car.step(maze, dt)                          # OdomRealCar -> 真实位姿
+        if timing is not None and "first_odom_move_t" not in timing and car.distance > 0.0:
+            timing["first_odom_move_t"] = time.monotonic()
 
         # legacy 判定（冻结语义）
         legacy_stalled = (dec.front_blocked
@@ -254,6 +258,8 @@ def main(argv=None) -> int:
     ap.add_argument("--meters-per-cell", type=float, required=True)
     ap.add_argument("--odom-wheel-diam", type=float, default=ODOM_WHEEL_DIAM,
                     help="runner 统计里程用的有效轮径 m；须与生产 Pi 里程计一致（默认 0.067）")
+    ap.add_argument("--warmup-steps", type=int, default=0,
+                    help="Bridge 启动前预热 brain/encoder/Decoder 计算链的步数（默认 0；实体建议 1）")
     # tof
     ap.add_argument("--tof-port", type=int, default=8889)
     ap.add_argument("--tof-warning-age", type=float, default=0.25)
@@ -311,6 +317,36 @@ def main(argv=None) -> int:
           f"right={ [ORDER[i] for i in np.where(enc.right)[0]] } "
           f"front={ [ORDER[i] for i in np.where(enc.front)[0]] }")
 
+    # ---- P2 预热：Bridge 启动前把 brain/encoder/Decoder 计算链跑热（RealFlyBrain CUDA 首调 ~1s）----
+    timing = {}
+    if args.warmup_steps > 0:
+        from loop.p2_warmup import WarmupError, reset_after_warmup, run_warmup
+
+        def _rebuild_enc_dec():
+            e = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                                   sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                                   car_radius=cfg.car.radius,
+                                   meters_per_cell=args.meters_per_cell)
+            d = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
+            return e, d
+
+        timing["brain_constructed_t"] = time.monotonic()
+        try:
+            wt = run_warmup(brain=brain, enc=enc, dec=dec, steps=args.warmup_steps)
+            reset_after_warmup(brain=brain, seed=args.seed)
+            enc, dec = _rebuild_enc_dec()          # 清掉预热缓存/Trace/历史
+        except WarmupError as exc:
+            print(f"\n[physical] *** 预热/复位失败：{exc}")
+            print("[physical] *** -> 拒绝启动 Bridge；绝不继续实体运动 ***")
+            return 2
+        timing["warmup_begin_t"] = timing["brain_constructed_t"]
+        timing["warmup_end_t"] = time.monotonic()
+        timing["reset_rebuild_t"] = time.monotonic()
+        timing.update(wt)
+        print(f"[physical] warmup: steps={wt['warmup_steps']} "
+              f"first_step={0.0 if wt['warmup_first_step_ms'] is None else wt['warmup_first_step_ms']:.1f}ms "
+              f"total={wt['warmup_total_s']:.2f}s -> brain.reset(seed={args.seed}) + enc/dec rebuilt")
+
     # 客户端
     odom = OdomClient(args.odom_port, max_age=args.max_odom_age, bind=args.odom_bind)
     tof = Tof5Client(args.tof_port, warning_age=args.tof_warning_age,
@@ -343,6 +379,11 @@ def main(argv=None) -> int:
                           allow_resync=not hardware_mode)
 
     def trace_callback(rec: dict) -> None:
+        if "first_on_step_t" not in timing:
+            timing["first_on_step_t"] = time.monotonic()
+        if ("first_drive_cmd_t" not in timing
+                and (abs(rec.get("v", 0.0)) > 1e-6 or abs(rec.get("omega", 0.0)) > 1e-6)):
+            timing["first_drive_cmd_t"] = time.monotonic()
         lag = pacer.wait(rec["t"])
         bridge.note_lag(lag)
         if hardware_mode and lag > args.max_pacer_lag:
@@ -368,10 +409,12 @@ def main(argv=None) -> int:
     try:
         if not bridge.start():
             print("[physical] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
+        timing["bridge_running_t"] = time.monotonic()
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                               stop_on_goal=args.stop_on_goal,
                               trace_fn=trace_callback, trace_every=1,
-                              geometry=geometry, stall_policy=args.stall_policy)
+                              geometry=geometry, stall_policy=args.stall_policy,
+                              timing=timing)
     except MechanicalStallError as exc:
         mech_exc = exc
         print(f"\n[physical] *** 机械堵转（windowed 确认）: {exc}")
@@ -401,7 +444,31 @@ def main(argv=None) -> int:
 
     if stats is not None:
         print_stats(stats)
-    print("\n[physical] bridge:", bridge.stats())
+
+    # ---- P2 timing（Windows monotonic）----
+    def _since(key):
+        t = timing.get(key)
+        return None if t is None else t
+
+    def _delta_ms(a, b):
+        ta, tb = _since(a), _since(b)
+        return None if (ta is None or tb is None) else (tb - ta) * 1e3
+
+    fs = timing.get("first_formal_brain_step_s")
+    print("\n[physical] ---- timing ----")
+    print(f"  brain_constructed -> warmup_end  : "
+          f"{_delta_ms('brain_constructed_t','warmup_end_t')} ms")
+    print(f"  warmup first brain.step         : {timing.get('warmup_first_step_ms')} ms "
+          f"(steps={timing.get('warmup_steps', 0)})")
+    print(f"  first FORMAL brain.step          : "
+          f"{None if fs is None else round(fs*1e3, 1)} ms")
+    print(f"  bridge RUNNING -> first on_step  : "
+          f"{_delta_ms('bridge_running_t','first_on_step_t')} ms")
+    print(f"  bridge RUNNING -> first DRIVE cmd: "
+          f"{_delta_ms('bridge_running_t','first_drive_cmd_t')} ms")
+    print(f"  bridge RUNNING -> first odom move: "
+          f"{_delta_ms('bridge_running_t','first_odom_move_t')} ms")
+    print("[physical] bridge:", bridge.stats())
     print("[physical] odom:", odom.stats())
     print("[physical] tof:", tof.stats())
     return 0
