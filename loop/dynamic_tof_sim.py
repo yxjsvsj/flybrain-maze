@@ -51,6 +51,11 @@ def frame_from_pose(maze, x, y, th, t, seq, *, rig, meters_per_cell,
         sx, sy, yaw = rig.get(n, _DEFAULT_RIG[n])
         px = x + (sx * math.cos(th) - sy * math.sin(th)) / meters_per_cell
         py = y + (sx * math.sin(th) + sy * math.cos(th)) / meters_per_cell
+        # P2-only 一致性约定：F 等前伸传感器原点(可达 0.15m>碰撞半径0.22cells=88mm)可能落在
+        # 虚拟墙格内。此时该路不可信：记 TOO_NEAR（近，非精确命中），不当作精确墙距。
+        if maze.is_wall(px, py):
+            status[n], ranges[n] = "TOO_NEAR", too_near_mm
+            continue
         d_cells = maze.raycast(px, py, th + math.radians(yaw), max_cells)
         mm = d_cells * meters_per_cell * 1000.0
         if dropout_p > 0 and rng.random() < dropout_p:
@@ -104,7 +109,8 @@ def _pursuit(memory, cfg, dec, x, y, th, info):
 
 def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=10.0,
                 rig=None, max_valid_mm=1200.0, too_near_mm=40.0, noise_mm=0.0,
-                dropout_p=0.0, seed=0, stop_on_goal=True, geometry=None):
+                dropout_p=0.0, seed=0, stop_on_goal=True, geometry=None,
+                gain_fn=None, omega_fn=None):
     """动态闭环仿真。返回 (traj, summary)。不接触硬件。"""
     dt = brain.dt
     mpc = enc.m_per_cell
@@ -141,7 +147,13 @@ def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=1
                 memory.check_invariants()
             _pursuit(memory, cfg, dec, car.x, car.y, car.theta, info)
         fired = brain.step(inject=inject)
+        if gain_fn is not None:                     # P2 控制适配层：逐步设定冻结 Decoder 的增益
+            bg_e, mg_e = gain_fn(k, dec)
+            dec.cfg.brain_gain = bg_e
+            dec.cfg.memory_gain = mg_e
         v, omega = dec.update(fired, info=info, stalled=False)
+        if omega_fn is not None:                    # P2 适配层：输出 omega 后的校正（不改 readout）
+            omega = float(omega_fn(k, dec, info, v, omega))
         car.set_command(v, omega)
         car.step(maze, dt)
         d = maze.dist_to_goal(car.x, car.y)
@@ -167,6 +179,10 @@ def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=1
             "map_revision": (getattr(memory, "map_revision", 0) if memory else 0),
             "optimal_path_cells": optimal,
             "min_time_lower_bound_s": (optimal / cfg.car.max_speed if optimal > 0 else -1.0),
+            # 注意：分子是 BFS 栅格步数(格)，分母是连续行驶距离(格)，**可能 >1**（抄近路）。
+            # 保留旧键 path_efficiency 以便追溯；报告用统一口径名 bfs_cells_over_driven_cells。
+            "bfs_cells_over_driven_cells": (optimal / car.distance
+                                            if (reached and car.distance > 0 and optimal > 0) else -1.0),
             "path_efficiency": (optimal / car.distance
                                 if (reached and car.distance > 0 and optimal > 0) else -1.0),
             "steps": len(traj)}

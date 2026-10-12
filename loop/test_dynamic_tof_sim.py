@@ -53,6 +53,13 @@ def main() -> int:
     check("behind R/FR likely NO_TARGET (range cap)",
           fr.status["R"] in ("NO_TARGET", "VALID"))
 
+    # P2-only 一致性：前伸 F 传感器原点可能落入虚拟墙格 -> 记为 TOO_NEAR（非精确命中）
+    m_wall = Maze(["####", "#..#", "#..#", "####"])
+    fr2 = frame_from_pose(m_wall, 2.9, 1.5, 0.0, 0.0, 0, rig=rig,
+                          meters_per_cell=0.40, max_valid_mm=1200.0)
+    check("sensor origin inside wall -> TOO_NEAR (not exact hit)",
+          fr2.status["F"] == "TOO_NEAR")
+
     # run_dynamic 在直道里（dn 模式）应向前推进并记录
     maze2 = Maze(["########", "#S....G#", "#......#", "########"])
     brain.reset(64)
@@ -68,7 +75,7 @@ def main() -> int:
     check("run_dynamic produced steps", s["steps"] == len(traj) and s["steps"] > 0)
     for k in ("reached_goal", "path_len_cells", "collision_steps", "collision_events",
               "path_efficiency", "replans", "timeout", "best_goal_dist",
-              "min_time_lower_bound_s"):
+              "min_time_lower_bound_s", "bfs_cells_over_driven_cells"):
         check(f"summary has {k}", k in s)
     check("tracks cells not metres (path_len_cells)", "path_len_cells" in s and "path_len_m" not in s)
 
