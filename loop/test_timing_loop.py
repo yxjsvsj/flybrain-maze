@@ -71,16 +71,32 @@ def main() -> int:
         time.sleep(0.02)          # 让墙钟越过 grace(0.7)+sustain(0.5)，使“运动不误判”有意义
 
     steps = 75
+    st = []
     exc = None
     try:
         _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
                       stop_on_goal=False, trace_fn=trace, trace_every=1,
-                      geometry=None, stall_policy="windowed", timing=timing)
+                      geometry=None, stall_policy="windowed", timing=timing, step_trace=st)
     except Exception as e:                                     # noqa: BLE001
         exc = e
         import traceback
         traceback.print_exc()
     bridge.stop(reason="test")
+
+    # step-trace CSV（内存缓存 -> 落盘）
+    import csv
+    import os
+    import tempfile
+    from loop.physical_run import _STEP_TRACE_COLS, write_step_trace
+    p = os.path.join(tempfile.gettempdir(), "opencode_step_trace_test.csv")
+    write_step_trace(p, st)
+    with open(p, encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    os.remove(p)
+    check(f"step_trace collected ({len(st)}) == steps", len(st) == steps)
+    check("step_trace header correct", list(rows[0].keys()) == _STEP_TRACE_COLS)
+    check("step_trace has brain_turn/turn_cmd/omega/grace",
+          all(k in rows[0] for k in ("brain_turn", "turn_cmd", "omega", "startup_grace_active")))
 
     check("full loop ran with no MechanicalStallError (moving past grace)", exc is None)
     if exc is not None:

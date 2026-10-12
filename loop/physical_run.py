@@ -43,6 +43,22 @@ from loop.run import make_setup, print_stats
 from loop.shadow_run import RealTimePacer
 
 
+_STEP_TRACE_COLS = ["step", "t", "brain_turn", "turn_cmd", "omega", "v",
+                    "odom_theta", "odom_left", "odom_right",
+                    "tof_L", "tof_FL", "tof_F", "tof_FR", "tof_R",
+                    "startup_grace_active", "decoder_in_stall"]
+
+
+def write_step_trace(path, rows):
+    """把内存缓存的逐步 trace 落盘为 CSV（不替换 Bridge CSV）。"""
+    import csv
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=_STEP_TRACE_COLS, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+
+
 def evaluate_run_status(*, start_ok: bool, mech_exc, comms_exc, interrupted: bool,
                         latches, stop_confirmed, dry_run: bool):
     """决定 physical_run 退出码。0=正常；否则 (1, reasons)。
@@ -69,7 +85,8 @@ def evaluate_run_status(*, start_ok: bool, mech_exc, comms_exc, interrupted: boo
 
 
 def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
-                  trace_fn, trace_every, geometry=None, stall_policy="legacy", timing=None):
+                  trace_fn, trace_every, geometry=None, stall_policy="legacy", timing=None,
+                  step_trace=None):
     """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。
 
     geometry 为 None -> 旧建图（所有射线从车中心，冻结 OccupancyMemory.update）。
@@ -198,6 +215,22 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                 reached_goal = True
                 time_to_goal = steps_done * dt
 
+        if step_trace is not None:
+            _s = car.last_sample
+            step_trace.append({
+                "step": step, "t": step * dt,
+                "brain_turn": dec.last_brain_turn, "turn_cmd": dec.last_turn_cmd,
+                "omega": dec.omega, "v": dec.v,
+                "odom_theta": (None if _s is None else _s.theta),
+                "odom_left": (None if _s is None else _s.left),
+                "odom_right": (None if _s is None else _s.right),
+                "tof_L": frame.status.get("L"), "tof_FL": frame.status.get("FL"),
+                "tof_F": frame.status.get("F"), "tof_FR": frame.status.get("FR"),
+                "tof_R": frame.status.get("R"),
+                "startup_grace_active": bool(grace),
+                "decoder_in_stall": bool(getattr(dec, "in_stall", False)),
+            })
+
         if trace_fn is not None and step % trace_every == 0:
             if timing is not None:
                 timing.add("stall_decision_ms", (time.perf_counter() - _t_stall) * 1e3)
@@ -316,6 +349,9 @@ def main(argv=None) -> int:
                     help="stall 判定来源：legacy(冻结原逻辑) / observe(只算+记录，控制仍由 legacy 驱动 "
                          "Decoder，可能倒车；仅限离线回放或 --dry-run，不是安全的实体观察模式) / "
                          "windowed(P2 检测器：确认机械堵转 -> STOP+FAILSAFE，不自动倒车)")
+    ap.add_argument("--trace-csv", default=None,
+                    help="可选：P2 逐步 trace CSV（brain_turn/turn_cmd/omega/odom/tof/grace 等）；"
+                         "内存缓存，结束后落盘；与 Bridge CSV 分开")
     args = ap.parse_args(argv)
 
     if not args.dry_run and not args.pikachu_url:
@@ -464,6 +500,7 @@ def main(argv=None) -> int:
     comms_exc = None
     interrupted = False
     start_ok = False
+    step_trace = [] if args.trace_csv else None
     try:
         start_ok = bridge.start()
         if not start_ok:
@@ -473,7 +510,7 @@ def main(argv=None) -> int:
                               stop_on_goal=args.stop_on_goal,
                               trace_fn=trace_callback, trace_every=1,
                               geometry=geometry, stall_policy=args.stall_policy,
-                              timing=timing)
+                              timing=timing, step_trace=step_trace)
     except MechanicalStallError as exc:
         mech_exc = exc
         print(f"\n[physical] *** 机械堵转（windowed 确认）: {exc}")
@@ -489,6 +526,13 @@ def main(argv=None) -> int:
         print("[physical] 中断")
     finally:
         bridge.stop(reason="finally"); odom.stop(); tof.stop()
+
+    if step_trace is not None and args.trace_csv:
+        try:
+            write_step_trace(args.trace_csv, step_trace)
+            print(f"[physical] step trace -> {args.trace_csv} ({len(step_trace)} rows)")
+        except Exception as _exc:                                  # noqa: BLE001
+            print(f"[physical] step trace dump failed: {_exc}")
 
     if mech_exc is not None:
         c = bridge.last_stop_confirmed
