@@ -33,12 +33,12 @@ class P2Fusion:
         cfg = self.dcfg
         bg = cfg.brain_gain if bg is None else bg
         mg = cfg.memory_gain if mg is None else mg
-        bt = brain_turn
+        bt = float(np.clip(brain_turn, -1.0, 1.0))   # 与冻结一致：先裁剪 brain_turn
         if mode == "bias":                       # 去常驻偏置，保留时变
-            bt = brain_turn - bias
+            bt = bt - bias
         elif mode == "sham":                      # 去掉时变，只留静息常数
             bt = bias
-        if mode == "cond" and (brain_turn * pursuit_turn < 0) and abs(pursuit_turn) > gate_thresh:
+        if mode == "cond" and (bt * pursuit_turn < 0) and abs(pursuit_turn) > gate_thresh:
             bg = bg * gate_reduce                 # 神经与规划器显著反向 -> 降神经权重
 
         turn_cmd = float(np.clip(bg * bt + mg * pursuit_turn, -1.0, 1.0))
@@ -56,10 +56,11 @@ class P2Fusion:
                          / (cfg.front_slow_dist - cfg.front_stop_dist))
                 v *= float(np.clip(ratio, 0.0, 1.0))
 
+        # 与冻结 loop/decode.py 一致：front_block 只硬停 **v**；omega 每步都做低通
         a = cfg.smooth
         if front_blocked:
             self.v = 0.0
         else:
             self.v = (1 - a) * self.v + a * v
-            self.omega = (1 - a) * self.omega + a * omega
+        self.omega = (1 - a) * self.omega + a * omega
         return self.v, self.omega

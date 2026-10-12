@@ -16,6 +16,53 @@ def check(label, ok):
     print(f"  [{'PASS' if ok else 'FAIL'}] {label}")
 
 
+def t_sequence_vs_frozen():
+    """多步序列级：P2Fusion 必须与冻结 Decoder(readout) 逐步一致（含 front-block 与恢复）。"""
+    import numpy as np
+    from loop.decode import Decoder
+    from loop.run import make_setup
+    cfg, _m, _c, brain, groups, _e, _ = make_setup(
+        brain_kind="fake", map_name="gen", device="cpu", make_decoder=False, verbose=False)
+    cfg.decoder.mode = "readout"
+    cfg.decoder.brain_gain = 0.15
+    cfg.decoder.memory_gain = 1.0
+    cfg.decoder.readout_path = "readout_real.npz"
+    dn = np.asarray(brain.cells(["descending_neuron"]))
+    dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn)
+
+    seq = [(0.3, 0.1, 5.0), (0.5, -0.2, 5.0), (-0.4, 0.3, 5.0),
+           (0.0, 0.0, cfg.decoder.front_stop_dist - 1e-3),      # front hard stop
+           (0.2, 0.0, 5.0), (0.1, 0.1, 0.9), (0.0, 0.0, 5.0)]   # recovery
+
+    class Stub:
+        def __init__(self, vals):
+            self.vals, self.i = vals, 0
+
+        def predict(self, feats):
+            v = self.vals[min(self.i, len(self.vals) - 1)]
+            self.i += 1
+            return v
+
+    dec.readout = Stub([s[0] for s in seq])
+    fuse = P2Fusion(cfg.decoder, cfg.car)
+    empty = np.empty(0, int)
+    ok, bad = True, None
+    for bt, pu, df in seq:
+        vd, od = dec.update(empty, info={"pursuit_turn": pu, "dmin_F": df})
+        vf, of = fuse.step(brain_turn=bt, pursuit_turn=pu, dmin_F=df)
+        if abs(vd - vf) > 1e-9 or abs(od - of) > 1e-9:
+            ok, bad = False, (bt, pu, df, (vd, od), (vf, of))
+    check("sequence: P2Fusion == frozen Decoder (v,omega) incl front-block+recovery", ok)
+    if bad:
+        print("    mismatch:", bad)
+
+    # bias/sham/gate 经 P2Fusion 输出应有限且符号合理
+    fuse.reset()
+    fb = P2Fusion(cfg.decoder, cfg.car)
+    _, om_bias = fb.step(brain_turn=-0.267, pursuit_turn=0.0, mode="bias", bias=-0.267, bg=0.15, mg=0.0)
+    check("bias mode at bt==bias -> omega ~0", abs(om_bias) < 1e-9)
+
+
 def _fuse():
     cfg = Config()
     cfg.decoder.mode = "readout"
@@ -88,6 +135,8 @@ def main() -> int:
     v8, om8 = f.step(brain_turn=0.4, pursuit_turn=0.2, bg=0.15, mg=1.0)
     turn8 = float(np.clip(0.15 * 0.4 + 1.0 * 0.2, -1, 1))
     check("first step == smooth*a*omega", abs(om8 - cfg.car.max_omega * a * turn8) < 1e-12)
+
+    t_sequence_vs_frozen()
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))

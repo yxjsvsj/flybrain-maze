@@ -33,9 +33,12 @@ def teacher_turn(info, k=3.0):
 
 
 def rollout(cfg, brain, groups, dn_idx, enc_proto, seeds, seconds, dt, rig, mpc,
-            drive_fn, cells=(6, 4), scale=2, loop=0.08, seed0=64):
+            drive_fn, cells=(6, 4), scale=2, loop=0.08, seed0=64, tof_hz=10.0):
+    """时间正确：~tof_hz 新 ToF 帧 + 50Hz 脑步 + 帧间 ZOH；Trace 每脑步更新。"""
     from flybrain import Trace
     X, Y = [], []
+    meta = {"tof_frames": 0, "brain_steps": 0}
+    period = 1.0 / tof_hz
     for s in seeds:
         maze = Maze(generate(cells[0], cells[1], seed=s, scale=scale, loop_chance=loop))
         sx, sy, sth = maze.start
@@ -46,21 +49,28 @@ def rollout(cfg, brain, groups, dn_idx, enc_proto, seeds, seconds, dt, rig, mpc,
         trace = Trace(brain, idx=dn_idx, tau=cfg.decoder.readout_tau)
         brain.reset(seed0)
         n = int(round(seconds / dt))
+        frame, seq, last_t = None, 0, -1e9
         for step in range(n):
-            fr = frame_from_pose(maze, car.x, car.y, car.theta, step * dt, step,
-                                 rig=rig, meters_per_cell=mpc)
-            d = enc.sense(fr)
-            enc.update(fr, d)
+            t = step * dt
+            if frame is None or (t - last_t) >= period - 1e-9:      # ~10Hz 新帧
+                seq += 1
+                frame = frame_from_pose(maze, car.x, car.y, car.theta, t, seq, rig=rig,
+                                        meters_per_cell=mpc)
+                last_t = t
+            d = enc.sense(frame)
+            enc.update(frame, d)                                    # 同 seq 不重复 update（ZOH）
             inj, info = enc.inject()
             fired = brain.step(inject=inj)
-            feats = trace.observe(fired)
+            feats = trace.observe(fired)                            # Trace 每脑步更新
             turn_t = teacher_turn(info)
             X.append(feats)
             Y.append(turn_t)
             v, omega = drive_fn(info, feats, turn_t, cfg)
             car.set_command(v, omega)
             car.step(maze, dt)
-    return np.asarray(X, np.float32), np.asarray(Y, np.float32)
+        meta["tof_frames"] += enc.frames_consumed
+        meta["brain_steps"] += n
+    return np.asarray(X, np.float32), np.asarray(Y, np.float32), meta
 
 
 def main(argv=None) -> int:
@@ -74,6 +84,7 @@ def main(argv=None) -> int:
     ap.add_argument("--train-seeds", nargs="+", type=int, default=[3001, 3002, 3003])
     ap.add_argument("--val-seeds", nargs="+", type=int, default=[3051, 3052])
     ap.add_argument("--seconds", type=float, default=30.0)
+    ap.add_argument("--tof-hz", type=float, default=10.0)
     ap.add_argument("--dagger", type=int, default=0)
     ap.add_argument("--stride", type=int, default=4)
     ap.add_argument("--components", nargs="+", type=int, default=[10, 40, 120])
@@ -94,14 +105,25 @@ def main(argv=None) -> int:
     def drive_teacher(info, feats, turn_t, cfg):
         v = cfg.car.max_speed * cfg.decoder.readout_fwd_frac
         v *= 1.0 - cfg.decoder.turn_slowdown * abs(turn_t)
+        # 与冻结 readout 模式一致的前方停车（避免车头顶墙反复产生近重复样本）
+        df = float(info.get("dmin_F", float("inf")))
+        if cfg.decoder.front_safety and v > 0:
+            if df <= cfg.decoder.front_stop_dist:
+                v = 0.0
+            elif df < cfg.decoder.front_slow_dist:
+                v *= float(np.clip((df - cfg.decoder.front_stop_dist)
+                                   / (cfg.decoder.front_slow_dist - cfg.decoder.front_stop_dist),
+                                   0.0, 1.0))
         return v, cfg.car.max_omega * turn_t
 
     t0 = time.perf_counter()
-    print(f"[data] 老师驱动采集 {len(args.train_seeds)} 局 x {args.seconds}s ...")
-    X, Y = rollout(cfg, brain, groups, dn, None, args.train_seeds, args.seconds, brain.dt,
-                   rig, mpc, drive_teacher)
+    print(f"[data] 老师驱动采集 {len(args.train_seeds)} 局 x {args.seconds}s (tof {args.tof_hz}Hz)...")
+    X, Y, meta = rollout(cfg, brain, groups, dn, None, args.train_seeds, args.seconds, brain.dt,
+                         rig, mpc, drive_teacher, tof_hz=args.tof_hz)
+    nz = float(np.mean(np.abs(Y) > 1e-6))
     print(f"       样本 {X.shape[0]} 用时 {time.perf_counter()-t0:.1f}s, "
-          f"label mean {Y.mean():+.3f} std {Y.std():.3f}")
+          f"tof_frames {meta['tof_frames']} brain_steps {meta['brain_steps']}")
+    print(f"       label mean {Y.mean():+.3f} std {Y.std():.3f} nonzero {nz*100:.0f}%")
 
     rd = None
     for rnd in range(args.dagger + 1):
@@ -112,17 +134,18 @@ def main(argv=None) -> int:
         rd.save(args.out)
         if rnd == args.dagger:
             break
-        Xn, Yn = rollout(cfg, brain, groups, dn, None, args.train_seeds, args.seconds, brain.dt,
-                         rig, mpc, lambda info, f, t, c: (c.car.max_speed * c.decoder.readout_fwd_frac,
-                                                          c.car.max_omega * float(np.clip(rd.predict(f), -1, 1))))
+        Xn, Yn, _m = rollout(cfg, brain, groups, dn, None, args.train_seeds, args.seconds, brain.dt,
+                             rig, mpc, lambda info, f, t, c: (c.car.max_speed * c.decoder.readout_fwd_frac,
+                                                              c.car.max_omega * float(np.clip(rd.predict(f), -1, 1))),
+                             tof_hz=args.tof_hz)
         X = np.concatenate([X, Xn])
         Y = np.concatenate([Y, Yn])
         print(f"[train {rnd+1}] DAgger 新增 {Xn.shape[0]}，累计 {X.shape[0]}")
 
     # 验证集：与老师的 MSE + 无遮挡偏置
     print(f"\n[eval] 验证迷宫 {args.val_seeds} ...")
-    Xe, Ye = rollout(cfg, brain, groups, dn, None, args.val_seeds, args.seconds, brain.dt,
-                     rig, mpc, drive_teacher)
+    Xe, Ye, _me = rollout(cfg, brain, groups, dn, None, args.val_seeds, args.seconds, brain.dt,
+                          rig, mpc, drive_teacher, tof_hz=args.tof_hz)
     mse = float(np.mean((rd.predict(Xe) - Ye) ** 2))
     base = float(np.mean((Ye - Ye.mean()) ** 2))
     print(f"  val MSE {mse:.5f}  常数基线 {base:.5f}  R2 {1 - mse/base:.3f}")
