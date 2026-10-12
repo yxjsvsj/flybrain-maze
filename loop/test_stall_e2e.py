@@ -205,7 +205,7 @@ def t_slow_motion_no_stop():
         d = max(0, seq - 2)
         return (0.004 * d, 0.0, 0.0)
 
-    bridge, exc = _run_scenario("slow", ticks, pose, steps=200)
+    bridge, exc = _run_scenario("slow", ticks, pose, steps=340)
     check("no MechanicalStallError", exc is None)
     check("no failsafe", bridge.failsafe_reason is None)
     check("drove most of the run (>=100 non-zero)", len(_nonzero_recs(bridge.recs)) >= 100)
@@ -222,7 +222,7 @@ def t_sustained_zero_mech_stop():
     def pose(seq):
         return (0.0, 0.0, 0.0)
 
-    bridge, exc = _run_scenario("zero", ticks, pose, steps=200)
+    bridge, exc = _run_scenario("zero", ticks, pose, steps=340)
     check("raised MechanicalStallError", exc is not None)
     check("failsafe latched with 'mechanical'",
           bridge.failsafe_reason is not None and "mechanical" in bridge.failsafe_reason)

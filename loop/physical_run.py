@@ -81,10 +81,13 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
     for step in range(steps):
         steps_done = step + 1
+        _t_step = time.perf_counter() if timing is not None else 0.0
         frame, _age = tof.latest()                 # stale/unhealthy/reset -> 抛 TofError
         dists = enc.sense(frame)
         is_new = enc.update(frame, dists)          # 新 seq 才刷缓存
         inject, info = enc.inject()
+        if timing is not None:
+            timing.add("tof_enc_ms", (time.perf_counter() - _t_step) * 1e3)
 
         if memory is not None:
             if is_new:                             # **只在 ToF 帧变化时 update 一次**
@@ -113,16 +116,26 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
 
         tb = time.perf_counter()
         fired = brain.step(inject=inject)
+        _brain_ms = (time.perf_counter() - tb) * 1e3
         brain_ns += time.perf_counter() - tb
-        if timing is not None and step == 0:
-            timing["first_formal_brain_step_s"] = time.perf_counter() - tb
+        if timing is not None:
+            timing.add("brain_ms", _brain_ms)
+            timing["_t_after_brain"] = time.perf_counter()
+            if step == 0:
+                timing["first_formal_brain_step_s"] = _brain_ms * 1e-3
         v, omega = dec.update(fired, info=info, stalled=stalled_in)
+        if timing is not None:
+            timing.add("dec_update_ms", (time.perf_counter() - timing["_t_after_brain"]) * 1e3)
+            timing["_t_after_dec"] = time.perf_counter()
         car.set_command(v, omega)
         car.step(maze, dt)                          # OdomRealCar -> 真实位姿
+        if timing is not None:
+            timing.add("odom_step_ms", (time.perf_counter() - timing["_t_after_dec"]) * 1e3)
         if timing is not None and "first_odom_move_t" not in timing and car.distance > 0.0:
             timing["first_odom_move_t"] = time.monotonic()
 
         # legacy 判定（冻结语义）
+        _t_stall = time.perf_counter() if timing is not None else 0.0
         legacy_stalled = (dec.front_blocked
                           or (abs(dec.v) > 0.15 * cfg.car.max_speed
                               and car.last_move < 0.3 * abs(dec.v) * dt))
@@ -146,6 +159,8 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
         # 禁止再向 bridge 提交任何非零 motor 命令。由 main 转成 latched FAILSAFE + STOP；
         # 绝不自动倒车，也绝不自动恢复。car.set_command(0,0) 只改本地仿真态，**不是**执行器 STOP。
         if stall_policy == "windowed" and det is not None and win_stalled and win_reason == "mechanical":
+            if timing is not None:
+                timing.event("mechanical_raise", {"wall_t": wall_t})
             raise MechanicalStallError(
                 t=wall_t, odom_seq=odom_seq,
                 window_move_m=det.last_window_move_cells * enc.m_per_cell,
@@ -159,6 +174,10 @@ def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                 time_to_goal = steps_done * dt
 
         if trace_fn is not None and step % trace_every == 0:
+            if timing is not None:
+                timing.add("stall_decision_ms", (time.perf_counter() - _t_stall) * 1e3)
+                timing.count("control_step")
+                timing.add("control_step_compute_ms", (time.perf_counter() - _t_step) * 1e3)
             trace_fn({
                 "step": step, "t": step * dt,
                 "x": car.x, "y": car.y, "theta": car.theta,
@@ -318,7 +337,8 @@ def main(argv=None) -> int:
           f"front={ [ORDER[i] for i in np.where(enc.front)[0]] }")
 
     # ---- P2 预热：Bridge 启动前把 brain/encoder/Decoder 计算链跑热（RealFlyBrain CUDA 首调 ~1s）----
-    timing = {}
+    from loop.timing_collect import Timing
+    timing = Timing()
     if args.warmup_steps > 0:
         from loop.p2_warmup import WarmupError, reset_after_warmup, run_warmup
 
@@ -374,22 +394,32 @@ def main(argv=None) -> int:
         min_cmd=args.min_cmd, slew_rate=args.slew_rate,
         dry_run=args.dry_run, log_path=args.log)
     bridge = PikachuBridge(pcfg)
+    bridge.timing = timing  # type: ignore[assignment]
     hardware_mode = not args.dry_run
     pacer = RealTimePacer(max_lag_s=args.max_pacer_lag, enabled=not args.no_realtime,
                           allow_resync=not hardware_mode)
 
     def trace_callback(rec: dict) -> None:
+        if timing is not None:
+            timing.count("on_step")
         if "first_on_step_t" not in timing:
             timing["first_on_step_t"] = time.monotonic()
         if ("first_drive_cmd_t" not in timing
                 and (abs(rec.get("v", 0.0)) > 1e-6 or abs(rec.get("omega", 0.0)) > 1e-6)):
             timing["first_drive_cmd_t"] = time.monotonic()
+        tp = time.perf_counter()
         lag = pacer.wait(rec["t"])
+        if timing is not None:
+            timing.add("pacer_wait_ms", (time.perf_counter() - tp) * 1e3)
+            timing.add("pacer_lag_ms", lag * 1e3)
         bridge.note_lag(lag)
         if hardware_mode and lag > args.max_pacer_lag:
             bridge.enter_failsafe(
                 f"pacer 落后 {lag*1000:.0f}ms > {args.max_pacer_lag*1000:.0f}ms")
+        tb2 = time.perf_counter()
         bridge.on_step(rec)
+        if timing is not None:
+            timing.add("bridge_on_step_ms", (time.perf_counter() - tb2) * 1e3)
 
     def _on_signal(signum, _f):
         print(f"\n[physical] 信号 {signum}，停车退出")
@@ -468,6 +498,22 @@ def main(argv=None) -> int:
           f"{_delta_ms('bridge_running_t','first_drive_cmd_t')} ms")
     print(f"  bridge RUNNING -> first odom move: "
           f"{_delta_ms('bridge_running_t','first_odom_move_t')} ms")
+    print(f"  counts: {timing.counts()}")
+    for _k in ("control_step_compute_ms", "tof_enc_ms", "brain_ms", "dec_update_ms",
+               "odom_step_ms", "stall_decision_ms", "pacer_wait_ms", "pacer_lag_ms",
+               "bridge_on_step_ms", "http_send_ms", "http_drive", "http_stop"):
+        if timing.stats(_k)["n"]:
+            print(f"  {_k}: {timing.stats(_k)}")
+    _fe = timing.first_event("latch")
+    _mr = timing.first_event("mechanical_raise")
+    print(f"  first external FAILSAFE latch: {None if _fe is None else round(_fe[0]-timing.get('bridge_running_t', _fe[0]),3)} s after RUNNING  payload={None if _fe is None else _fe[1]}")
+    print(f"  first mechanical raise        : {None if _mr is None else round(_mr[0]-timing.get('bridge_running_t', _mr[0]),3)} s after RUNNING")
+    if args.log:
+        try:
+            timing.dump(args.log + ".timing.json")
+            print(f"  timing -> {args.log}.timing.json")
+        except Exception as _exc:                              # noqa: BLE001
+            print(f"  timing dump failed: {_exc}")
     print("[physical] bridge:", bridge.stats())
     print("[physical] odom:", odom.stats())
     print("[physical] tof:", tof.stats())

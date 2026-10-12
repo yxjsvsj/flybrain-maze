@@ -76,11 +76,22 @@ class WindowedStallDetector:
         self._last_theta = None
 
     # ---- 输入 ----
+    def _active(self, v: float, w: float) -> bool:
+        """是否有“运动意图”：任一通道归一化后超过 min_cmd_frac。"""
+        return (abs(v) / max(1e-9, self.max_speed) >= self.min_cmd_frac
+                or abs(w) / max(1e-9, self.max_omega) >= self.min_cmd_frac)
+
     def note_command(self, t: float, v: float, w: float) -> None:
-        """只在**逐步**（per-cycle）显著变化时重置宽限；参考值每步更新，
-        避免缓慢漂移累积后误触发，也不被脑的逐周期抖动反复重置。"""
-        if (abs(v - self._last_cmd[0]) > self.cmd_change_thresh
-                or abs(w - self._last_cmd[1]) > self.cmd_change_thresh):
+        """宽限触发：
+        - **STOP/idle -> active 转换无条件开始 startup grace**（修复：readout smooth 启动
+          的逐周期 Δ 都 < cmd_change_thresh，旧实现永不更新 _cmd_change_t → grace 失效）。
+        - 另外，逐步显著变化（> cmd_change_thresh）也重新宽限；参考值每步更新，避免缓慢
+          漂移累积误触发，也不被脑的逐周期小抖动反复重置。"""
+        pv, pw = self._last_cmd
+        started = self._active(v, w) and not self._active(pv, pw)
+        if (started
+                or abs(v - pv) > self.cmd_change_thresh
+                or abs(w - pw) > self.cmd_change_thresh):
             self._cmd_change_t = t
         self._last_cmd = (v, w)
 

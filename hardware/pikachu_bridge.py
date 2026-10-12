@@ -266,6 +266,7 @@ class PikachuBridge:
         self.slew_events = 0
         self.mailbox_overwrites = 0
         self._put_count = 0
+        self.timing = None          # 可选：loop.timing_collect.Timing（P2 埋点）  # type: ignore[assignment]
         # pacer 落后统计（实体运动期间落后是危险信号：实体已经比仿真多执行了旧命令）
         self.max_lag_ms = 0.0
         self.lag_failures = 0
@@ -334,6 +335,8 @@ class PikachuBridge:
                     return
                 self.state = st
             self._mailbox.clear()
+        if self.timing is not None:
+            self.timing.event("latch", {"state": st.value, "msg": msg})
         if st is BridgeState.FAILSAFE:
             print(f"\n[bridge] *** FAILSAFE (latched) *** {msg}")
             print("[bridge] 只发送 STOP，不再接受运动指令。"
@@ -430,6 +433,8 @@ class PikachuBridge:
                     continue
                 item = self._mailbox.take()
                 if item is None:
+                    if self.timing is not None:
+                        self.timing.count("empty_mailbox")
                     continue
                 # take 之后再确认一次状态：latch 可能发生在“读状态”与“取指令”之间
                 # （同线程重入路径尤其如此）。此刻已 latch 则丢弃过期 DRIVE，只发 STOP。
@@ -465,6 +470,11 @@ class PikachuBridge:
                 err = f"{type(exc).__name__}: {exc}"
         latency = (time.perf_counter() - t0) * 1e3
         self.last_latency_ms = latency
+        if self.timing is not None:
+            self.timing.count("http_drive" if kind == "DRIVE" else "http_stop")
+            self.timing.add("http_send_ms", latency)
+            self.timing.interval("http_send")
+            self.timing.interval("http_drive" if kind == "DRIVE" else "http_stop")
 
         ok, note = False, err
         if err:
