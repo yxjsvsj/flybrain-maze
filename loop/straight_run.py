@@ -30,7 +30,7 @@ from hardware.tof5 import DEFAULT_ANGLES_DEG, ORDER
 from hardware.tof5_client import Tof5Client, TofError
 from loop.decode import Decoder
 from loop.encode_tof import PhysicalToFEncoder
-from loop.odom_shadow_run import OdomRealCar
+from loop.odom_shadow_run import ODOM_WHEEL_DIAM, OdomRealCar
 from loop.physical_run import _run_physical
 from loop.physical_stall import MechanicalStallError
 from loop.run import make_setup
@@ -77,6 +77,8 @@ def main(argv=None) -> int:
     ap.add_argument("--width-cells", type=int, default=3)
     ap.add_argument("--goal-cells", type=int, default=3)
     ap.add_argument("--meters-per-cell", type=float, required=True)
+    ap.add_argument("--odom-wheel-diam", type=float, default=ODOM_WHEEL_DIAM,
+                    help="runner 统计里程用的有效轮径 m；须与生产 Pi 里程计一致（默认 0.067）")
     ap.add_argument("--pikachu-url", default="")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--rate-hz", type=float, default=10.0)
@@ -175,7 +177,8 @@ def main(argv=None) -> int:
             time.sleep(0.05)
     print(f"[odom] :{args.odom_port} ok   [tof] :{args.tof_port} ok")
 
-    real_car = OdomRealCar(car.x, car.y, car.theta, cfg.car, odom, args.meters_per_cell)
+    real_car = OdomRealCar(car.x, car.y, car.theta, cfg.car, odom, args.meters_per_cell,
+                           wheel_diam=args.odom_wheel_diam)
 
     pcfg = PikachuConfig(
         base_url=args.pikachu_url or "http://127.0.0.1:8000",

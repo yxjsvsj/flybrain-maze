@@ -21,18 +21,18 @@ import time
 import numpy as np
 
 from config import Config, apply_preset  # noqa: F401
-from hardware.odometry import CPR, LEFT_SIGN, RIGHT_SIGN, WHEEL_DIAM
+from hardware.odometry import CPR, LEFT_SIGN, RIGHT_SIGN, WHEEL_DIAM  # noqa: F401
 from hardware.odometry_client import OdomSample
 from hardware.tof5 import DEFAULT_ANGLES_DEG, ORDER
 from hardware.tof5_client import TofFrame
 from loop.decode import Decoder
 from loop.encode_tof import PhysicalToFEncoder
-from loop.odom_shadow_run import OdomRealCar
+from loop.odom_shadow_run import ODOM_WHEEL_DIAM, OdomRealCar
 from loop.physical_run import _run_physical
 from loop.physical_stall import MechanicalStallError, WindowedStallDetector
 from loop.run import make_setup
 
-M_PER_COUNT = math.pi * WHEEL_DIAM / CPR
+M_PER_COUNT = math.pi * ODOM_WHEEL_DIAM / CPR    # 合成 ticks 与 OdomRealCar 用同一轮径
 MPC = 0.40
 BRAIN_DT = 0.02
 MAX_SPEED = 0.9

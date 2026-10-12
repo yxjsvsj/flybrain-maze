@@ -37,7 +37,7 @@ import time
 import numpy as np
 
 from config import Config, apply_preset  # noqa: F401  (保持与 shadow_run 一致的导入面)
-from hardware.odometry import CPR, LEFT_SIGN, RIGHT_SIGN, WHEEL_DIAM
+from hardware.odometry import CPR, LEFT_SIGN, RIGHT_SIGN, WHEEL_DIAM  # noqa: F401
 from hardware.odometry_client import OdomClient, OdomError
 from hardware.pikachu_bridge import BridgeState, PikachuBridge, PikachuConfig
 from loop.decode import Decoder
@@ -46,6 +46,10 @@ from loop.shadow_run import RealTimePacer
 from world.car import DiffDriveCar
 
 M_PER_COUNT = math.pi * WHEEL_DIAM / CPR
+# 生产 Pi 里程计跑的是标定的有效轮径 0.067 m（start_both_inner.sh --wheel-diam 0.067），
+# 而 hardware.odometry 的模块默认 WHEEL_DIAM=0.070 是名义值。runner 的 car.distance 必须
+# 与生产一致，否则统计里程有 ~4.5% 偏置（见 P2d-4 分析）。用 ODOM_WHEEL_DIAM，不硬编码。
+ODOM_WHEEL_DIAM = 0.067
 
 
 def wrap_pi(a: float) -> float:
@@ -56,10 +60,12 @@ class OdomRealCar(DiffDriveCar):
     """冻结 run() 用的车：step() 用真实里程计位姿（米->格）。不做虚拟碰撞强制。"""
 
     def __init__(self, x0: float, y0: float, th0: float, car_cfg,
-                 client: OdomClient, meters_per_cell: float):
+                 client: OdomClient, meters_per_cell: float,
+                 wheel_diam: float = ODOM_WHEEL_DIAM):
         super().__init__(x0, y0, th0, car_cfg)
         self.client = client
         self.m_per_cell = float(meters_per_cell)
+        self.m_per_count = math.pi * float(wheel_diam) / CPR   # 与生产轮径一致
         self._sx, self._sy, self._sth = float(x0), float(y0), float(th0)
         self._ox0 = self._oy0 = self._oth0 = 0.0
         self._have_origin = False
@@ -94,8 +100,8 @@ class OdomRealCar(DiffDriveCar):
             self._pl, self._pr = s.left, s.right
             self.last_move = 0.0
         else:
-            d_left = LEFT_SIGN * (s.left - pl) * M_PER_COUNT
-            d_right = RIGHT_SIGN * (s.right - pr) * M_PER_COUNT
+            d_left = LEFT_SIGN * (s.left - pl) * self.m_per_count
+            d_right = RIGHT_SIGN * (s.right - pr) * self.m_per_count
             self._pl, self._pr = s.left, s.right
             move = abs(0.5 * (d_left + d_right)) / self.m_per_cell
             self.last_move = move
