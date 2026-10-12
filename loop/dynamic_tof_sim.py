@@ -68,14 +68,21 @@ def frame_from_pose(maze, x, y, th, t, seq, *, rig, meters_per_cell,
                     init_count=0, read_errors=0, reinit_count=0)
 
 
-def build_memory(cfg, maze, memory_on):
+def build_memory(cfg, maze, memory_on, geometry=None):
+    """memory_on 且有 geometry -> P2 ToFMemory（逐原点射线，TOO_NEAR≠精确墙命中）；
+    否则退化为车体中心的 OccupancyMemory。均不修改冻结 nav.memory。"""
     if not memory_on:
         return None
-    from nav.memory import OccupancyMemory
-    m = OccupancyMemory(maze.w, maze.h, cfg.encoder.max_range,
-                        unknown_cost=cfg.nav.unknown_cost, lookahead=cfg.nav.lookahead,
-                        arrive_dist=cfg.nav.arrive_dist, off_path_tol=cfg.nav.off_path_tol,
-                        free_conflict_threshold=cfg.nav.free_conflict_threshold)
+    if geometry:
+        from loop.memory_tof import ToFMemory
+        cls = ToFMemory
+    else:
+        from nav.memory import OccupancyMemory
+        cls = OccupancyMemory
+    m = cls(maze.w, maze.h, cfg.encoder.max_range,
+            unknown_cost=cfg.nav.unknown_cost, lookahead=cfg.nav.lookahead,
+            arrive_dist=cfg.nav.arrive_dist, off_path_tol=cfg.nav.off_path_tol,
+            free_conflict_threshold=cfg.nav.free_conflict_threshold)
     if maze.goal is not None:
         m.set_goal(maze.goal[0], maze.goal[1])
     return m
@@ -97,19 +104,19 @@ def _pursuit(memory, cfg, dec, x, y, th, info):
 
 def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=10.0,
                 rig=None, max_valid_mm=1200.0, too_near_mm=40.0, noise_mm=0.0,
-                dropout_p=0.0, seed=0, stop_on_goal=True):
+                dropout_p=0.0, seed=0, stop_on_goal=True, geometry=None):
     """动态闭环仿真。返回 (traj, summary)。不接触硬件。"""
     dt = brain.dt
     mpc = enc.m_per_cell
     rig = rig or load_rig()
     rng = np.random.default_rng(seed)
-    memory = build_memory(cfg, maze, memory_on)
+    memory = build_memory(cfg, maze, memory_on, geometry)
     n = max(1, int(round(seconds / dt)))
     period = 1.0 / tof_hz
     frame, seq, last_t = None, 0, -1e9
     x0, y0 = car.x, car.y
     traj = []
-    reached, t_goal = False, -1.0
+    reached, t_goal, best = False, -1.0, float("inf")
     for k in range(n):
         t = k * dt
         if frame is None or (t - last_t) >= period - 1e-9:
@@ -124,8 +131,13 @@ def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=1
         inject, info = enc.inject()
         if memory is not None:
             if is_new:
-                vmask = enc.valid_mask(frame)
-                memory.update(car.x, car.y, car.theta + enc.angles[vmask], dists[vmask])
+                if geometry:
+                    from loop.tof_geometry import frame_to_cell_rays
+                    rays = frame_to_cell_rays(frame, car.x, car.y, car.theta, geometry, mpc)
+                    memory.update_rays(car.x, car.y, rays, tof_seq=frame.seq)
+                else:
+                    vmask = enc.valid_mask(frame)
+                    memory.update(car.x, car.y, car.theta + enc.angles[vmask], dists[vmask])
                 memory.check_invariants()
             _pursuit(memory, cfg, dec, car.x, car.y, car.theta, info)
         fired = brain.step(inject=inject)
@@ -133,6 +145,8 @@ def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=1
         car.set_command(v, omega)
         car.step(maze, dt)
         d = maze.dist_to_goal(car.x, car.y)
+        if d >= 0:
+            best = min(best, d)
         if d == 0 and not reached:
             reached, t_goal = True, (k + 1) * dt
         traj.append({"t": t, "x": car.x, "y": car.y, "theta": car.theta, "v": v, "omega": omega,
@@ -143,10 +157,16 @@ def run_dynamic(cfg, maze, car, brain, enc, dec, *, memory_on, seconds, tof_hz=1
             break
     optimal = maze.optimal_path()
     summ = {"reached_goal": reached, "time_to_goal_s": t_goal,
+            "timeout": (not reached),
+            "best_goal_dist": (best if best != float("inf") else -1),
             "path_len_cells": car.distance, "net_disp_cells": math.hypot(car.x - x0, car.y - y0),
-            "collisions": car.collisions, "collision_events": car.collision_events,
+            "collision_steps": car.collisions, "collision_events": car.collision_events,
+            "front_safety_events": dec.front_blocks,
             "replans": (memory.replans if memory else 0),
+            "no_path_events": (memory.invalidations.get("NO_PATH", 0) if memory else 0),
+            "map_revision": (getattr(memory, "map_revision", 0) if memory else 0),
             "optimal_path_cells": optimal,
+            "min_time_lower_bound_s": (optimal / cfg.car.max_speed if optimal > 0 else -1.0),
             "path_efficiency": (optimal / car.distance
                                 if (reached and car.distance > 0 and optimal > 0) else -1.0),
             "steps": len(traj)}

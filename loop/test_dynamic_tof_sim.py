@@ -66,7 +66,9 @@ def main() -> int:
     traj, s = run_dynamic(cfg, maze2, car, brain, enc2, dec2, memory_on=False,
                           seconds=3.0, tof_hz=10.0, rig=rig, seed=64)
     check("run_dynamic produced steps", s["steps"] == len(traj) and s["steps"] > 0)
-    for k in ("reached_goal", "path_len_cells", "collisions", "path_efficiency", "replans"):
+    for k in ("reached_goal", "path_len_cells", "collision_steps", "collision_events",
+              "path_efficiency", "replans", "timeout", "best_goal_dist",
+              "min_time_lower_bound_s"):
         check(f"summary has {k}", k in s)
     check("tracks cells not metres (path_len_cells)", "path_len_cells" in s and "path_len_m" not in s)
 
