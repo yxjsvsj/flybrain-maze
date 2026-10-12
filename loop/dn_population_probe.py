@@ -52,11 +52,11 @@ def make_frame(stim, seq, t):
 
 
 def run_trial(cfg, brain, groups, dn_idx, trace_cls, stim, *, seed, seconds=3.0, settle=1.5,
-              tof_hz=10.0, mpc=0.40):
+              tof_hz=10.0, mpc=0.40, enc_cls=PhysicalToFEncoder):
     """一次独立试次：全新 Encoder/Decoder/Trace + brain.reset(seed)。"""
-    enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
-                             sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
-                             car_radius=cfg.car.radius, meters_per_cell=mpc)
+    enc = enc_cls(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                  sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                  car_radius=cfg.car.radius, meters_per_cell=mpc)
     dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
     trace = trace_cls(brain, idx=dn_idx, tau=0.2)
     brain.reset(seed)

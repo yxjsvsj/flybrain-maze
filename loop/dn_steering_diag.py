@@ -35,7 +35,7 @@ STRONG = 0.30        # |turn_cmd| 达到它视为"已产生明显转向"
 
 
 def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof_hz=10.0,
-              mpc=0.40, rig=None):
+              mpc=0.40, rig=None, enc_cls=PhysicalToFEncoder):
     """带详细决策记录的动态闭环（P2Control 公平包络，memory_gain=0）。"""
     from loop.p2_control import P2Control, turn_dn_single
     maze = Maze(rows)
@@ -54,9 +54,9 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
     else:
         src = lambda c: -rd(c.last_brain_turn)         # noqa: E731
     ctl = P2Control(cfg.decoder, fe, src, name=kind)
-    enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
-                             sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
-                             car_radius=cfg.car.radius, meters_per_cell=mpc)
+    enc = enc_cls(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                  sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                  car_radius=cfg.car.radius, meters_per_cell=mpc)
     car = DiffDriveCar(sx, sy, sth, cfg.car)
     brain.reset(seed)
     rig = rig or load_rig()
@@ -108,6 +108,7 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
     summary = {"reach": bool(recs and recs[-1]["gd"] == 0), "bestD": int(best),
                "cev": recs[-1]["cev"] if recs else 0, "stuck": (best > 0) and (T - last_imp) > 8.0,
                "sat%": ctl.saturation_ratio() * 100, "stop%": ctl.stop_ratio() * 100,
+               "front_events": int(ctl.front_blocks),
                "minGap": min((wall_clearance(maze, r["x"], r["y"], CAR_R) for r in recs),
                              default=float("nan"))}
     return summary, recs

@@ -72,11 +72,12 @@ def make_frame(stim, seq, t):
                     ages_ms={n: 100.0 for n in ORDER}, init_count=0, read_errors=0, reinit_count=0)
 
 
-def calibrate_baseline(cfg, brain, groups, dn_idx, seed, *, seconds=2.0, tof_hz=10.0, mpc=0.40):
+def calibrate_baseline(cfg, brain, groups, dn_idx, seed, *, seconds=2.0, tof_hz=10.0, mpc=0.40,
+                       enc_cls=PhysicalToFEncoder):
     """用无遮挡 A 状态标定 raw_turn 基线 b0（固定后不再改）。"""
-    enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
-                             sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
-                             car_radius=cfg.car.radius, meters_per_cell=mpc)
+    enc = enc_cls(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                  sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                  car_radius=cfg.car.radius, meters_per_cell=mpc)
     dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
     brain.reset(seed)
     dt = brain.dt
@@ -100,11 +101,12 @@ def calibrate_baseline(cfg, brain, groups, dn_idx, seed, *, seconds=2.0, tof_hz=
     return float(np.mean(vals)) if vals else 0.0
 
 
-def run_switch_test(cfg, brain, groups, dn_idx, seed, readout, plan, *, tof_hz=10.0, mpc=0.40):
+def run_switch_test(cfg, brain, groups, dn_idx, seed, readout, plan, *, tof_hz=10.0, mpc=0.40,
+                    enc_cls=PhysicalToFEncoder):
     """单条连续时间序列 A→刺激→A：脑连续运行，**不在切换时重置**。返回各段 turn 数组。"""
-    enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
-                             sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
-                             car_radius=cfg.car.radius, meters_per_cell=mpc)
+    enc = enc_cls(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                  sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                  car_radius=cfg.car.radius, meters_per_cell=mpc)
     dec = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn_idx)
     brain.reset(seed)
     readout.reset()
