@@ -88,16 +88,16 @@ def main() -> int:
     c = timing.counts()
     check(f"control_step counted ({c.get('control_step')}) == steps", c.get("control_step") == steps)
     check(f"on_step counted ({c.get('on_step')}) == steps", c.get("on_step") == steps)
-    check(f"dry bridge sent http DRIVE frames ({c.get('http_drive', 0)})",
-          (c.get("http_drive", 0) or 0) > 0)
+    check(f"dry bridge sent http DRIVE frames ({c.get('http_drive_dry', 0)})",
+          (c.get("http_drive_dry", 0) or 0) > 0)
     check(f"no spurious STOP while RUNNING (http_stop={c.get('http_stop', 0)})",
-          (c.get("http_stop", 0) or 0) == 0)
+          (c.get("http_stop_dry", 0) or 0) == 0)
     for k in ("brain_ms", "dec_update_ms", "odom_step_ms", "control_step_compute_ms", "tof_enc_ms"):
         check(f"{k}: n={timing.stats(k)['n']}", timing.stats(k)["n"] == steps)
     print("\n[timing] counts:", c)
     print("[timing] brain_ms:", timing.stats("brain_ms"))
     print("[timing] control_step_compute_ms:", timing.stats("control_step_compute_ms"))
-    print("[timing] http_drive interval:", timing.stats("http_drive"))
+    print("[timing] http_drive interval:", timing.stats("http_drive_interval_dry"))
     print("[timing] empty_mailbox:", c.get("empty_mailbox", 0))
 
     npass = sum(1 for _, ok in RESULTS if ok)

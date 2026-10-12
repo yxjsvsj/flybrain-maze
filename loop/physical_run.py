@@ -43,6 +43,31 @@ from loop.run import make_setup, print_stats
 from loop.shadow_run import RealTimePacer
 
 
+def evaluate_run_status(*, start_ok: bool, mech_exc, comms_exc, interrupted: bool,
+                        latches, stop_confirmed, dry_run: bool):
+    """决定 physical_run 退出码。0=正常；否则 (1, reasons)。
+
+    只**判读**已有状态，不改动 FAILSAFE latch 与 STOP 顺序。
+    latches: Timing.events("latch") -> [(t, "latch", {"state": "...", "msg": ...}), ...]
+    """
+    reasons = []
+    if not start_ok:
+        reasons.append("bridge preflight failed")
+    if mech_exc is not None:
+        reasons.append("mechanical stall")
+    if comms_exc is not None:
+        reasons.append(f"comms {type(comms_exc).__name__}")
+    if interrupted:
+        reasons.append("interrupted")
+    for _t, _k, payload in (latches or []):
+        st = payload.get("state") if isinstance(payload, dict) else None
+        if st in ("FAILSAFE", "BLOCKED_GUARD"):
+            reasons.append(f"bridge {st}")
+    if not dry_run and stop_confirmed is not True:
+        reasons.append("final STOP not confirmed")
+    return (0 if not reasons else 1), reasons
+
+
 def _run_physical(cfg, maze, car, brain, enc, dec, tof, steps, *, stop_on_goal,
                   trace_fn, trace_every, geometry=None, stall_policy="legacy", timing=None):
     """复刻冻结 run() 的循环，但：sense 用真 ToF、Memory 按 tof_seq 门控。
@@ -436,8 +461,12 @@ def main(argv=None) -> int:
           f"ToF 10Hz。collisions/contact_ratio 不是物理碰撞。")
     stats = None
     mech_exc = None
+    comms_exc = None
+    interrupted = False
+    start_ok = False
     try:
-        if not bridge.start():
+        start_ok = bridge.start()
+        if not start_ok:
             print("[physical] 桥接未 RUNNING（预检失败）——仿真照跑，实体不动")
         timing["bridge_running_t"] = time.monotonic()
         stats = _run_physical(cfg, maze, real_car, brain, enc, dec, tof, steps,
@@ -451,10 +480,12 @@ def main(argv=None) -> int:
         print("[physical] *** -> 立即 STOP + latched FAILSAFE；禁止自动倒车 / 自动恢复 ***")
         bridge.enter_failsafe(f"mechanical stall: {exc}")
     except (OdomError, TofError) as exc:
+        comms_exc = exc
         print(f"\n[physical] *** {type(exc).__name__}: {exc}")
         print("[physical] *** -> FAILSAFE（停车 + latch，不自动恢复）***")
         bridge.enter_failsafe(f"{type(exc).__name__}: {exc}")
     except KeyboardInterrupt:
+        interrupted = True
         print("[physical] 中断")
     finally:
         bridge.stop(reason="finally"); odom.stop(); tof.stop()
@@ -498,10 +529,14 @@ def main(argv=None) -> int:
           f"{_delta_ms('bridge_running_t','first_drive_cmd_t')} ms")
     print(f"  bridge RUNNING -> first odom move: "
           f"{_delta_ms('bridge_running_t','first_odom_move_t')} ms")
+    print(f"  bridge RUNNING -> first HTTP DRIVE: "
+          f"{_delta_ms('bridge_running_t','first_http_drive_start_t')} ms "
+          f"(resp->{_delta_ms('bridge_running_t','first_http_drive_resp_t')} ms)")
     print(f"  counts: {timing.counts()}")
     for _k in ("control_step_compute_ms", "tof_enc_ms", "brain_ms", "dec_update_ms",
                "odom_step_ms", "stall_decision_ms", "pacer_wait_ms", "pacer_lag_ms",
-               "bridge_on_step_ms", "http_send_ms", "http_drive", "http_stop"):
+               "bridge_on_step_ms", "http_send_ms_real", "http_drive_interval_real",
+               "http_send_ms_dry", "http_drive_interval_dry"):
         if timing.stats(_k)["n"]:
             print(f"  {_k}: {timing.stats(_k)}")
     _fe = timing.first_event("latch")
@@ -517,7 +552,14 @@ def main(argv=None) -> int:
     print("[physical] bridge:", bridge.stats())
     print("[physical] odom:", odom.stats())
     print("[physical] tof:", tof.stats())
-    return 0
+
+    rc, reasons = evaluate_run_status(
+        start_ok=start_ok, mech_exc=mech_exc, comms_exc=comms_exc, interrupted=interrupted,
+        latches=timing.events("latch"), stop_confirmed=bridge.last_stop_confirmed,
+        dry_run=args.dry_run)
+    if reasons:
+        print(f"[physical] *** rc={rc} reasons: {reasons}")
+    return rc
 
 
 if __name__ == "__main__":

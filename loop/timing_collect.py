@@ -85,6 +85,9 @@ class Timing:
                 return t, p
         return None
 
+    def events(self, kind=None):
+        return [e for e in self._events if kind is None or e[1] == kind]
+
     def stats(self, k):
         xs = self._durs.get(k) or []
         return {"n": len(xs), "p50": _pctl(xs, 0.5), "p95": _pctl(xs, 0.95),

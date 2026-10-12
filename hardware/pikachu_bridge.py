@@ -458,6 +458,7 @@ class PikachuBridge:
                 self._last_out_t = time.perf_counter()
 
         payload = {"v": round(float(V), 2), "w": round(float(W), 2)}
+        tmono = time.monotonic() if self.timing is not None else 0.0
         t0 = time.perf_counter()
         status, body, err = 0, {}, ""
         if cfg.dry_run:
@@ -471,10 +472,15 @@ class PikachuBridge:
         latency = (time.perf_counter() - t0) * 1e3
         self.last_latency_ms = latency
         if self.timing is not None:
-            self.timing.count("http_drive" if kind == "DRIVE" else "http_stop")
-            self.timing.add("http_send_ms", latency)
-            self.timing.interval("http_send")
-            self.timing.interval("http_drive" if kind == "DRIVE" else "http_stop")
+            real = not cfg.dry_run                    # 真实 HTTP vs dry-run 模拟，明确区分
+            tag = "real" if real else "dry"
+            self.timing.count(f"http_{kind.lower()}_{tag}")
+            self.timing.add(f"http_send_ms_{tag}", latency)
+            if kind == "DRIVE":
+                self.timing.interval(f"http_drive_interval_{tag}")
+                if real and "first_http_drive_start_t" not in self.timing:
+                    self.timing["first_http_drive_start_t"] = tmono
+                    self.timing["first_http_drive_resp_t"] = time.monotonic()
 
         ok, note = False, err
         if err:
