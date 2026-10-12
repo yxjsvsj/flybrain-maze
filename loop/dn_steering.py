@@ -190,6 +190,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", default="64,101,202,303")
     ap.add_argument("--val-seed", type=int, default=512, help="未参与调试的新 seed")
+    ap.add_argument("--dyn-seeds", default=None,
+                    help="动态实验的多个 seed（逗号分隔）；默认只用第一个 seed")
     ap.add_argument("--brain", default="real")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--dyn-seconds", type=float, default=40.0)
@@ -224,17 +226,19 @@ def main(argv=None) -> int:
         print()
 
     # ---- 任务4/5：动态 must_left / must_right（公平包络，memory_gain=0） ----
+    dseeds = [int(s) for s in args.dyn_seeds.split(",")] if args.dyn_seeds else seeds[:1]
     print("任务4/5 动态验证（P2Control 同包络, memory_gain=0, seconds=%.0f）" % args.dyn_seconds)
-    print(f"{'scenario':11s} {'ctrl':10s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} {'cstep':>6s} "
-          f"{'minGap':>7s} {'bestD':>6s} {'sat%':>5s} {'stop%':>6s} {'stuck':>5s}")
-    for name in ("must_left", "must_right"):
-        rows = SCENARIOS[name]
-        for kind in ("DN_orig", "DN_readout", "DN_zero", "DN_swap"):
-            r = _dynamic(cfg, brain, groups, dn, seeds[0], kind,
-                         DNReadout(brain.dt, b0=b0[seeds[0]]), rows, seconds=args.dyn_seconds)
-            print(f"{name:11s} {kind:10s} {str(r['reach'])[:1]:>5s} {r['t_goal']:7.2f} "
-                  f"{r['cev']:4d} {r['cstep']:6d} {r['minGap']:7.3f} {r['bestD']:6d} "
-                  f"{r['sat%']:5.1f} {r['stop%']:6.1f} {str(r['stuck'])[:1]:>5s}")
+    print(f"{'seed':>5s} {'scenario':11s} {'ctrl':10s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} "
+          f"{'cstep':>6s} {'minGap':>7s} {'bestD':>6s} {'sat%':>5s} {'stop%':>6s} {'stuck':>5s}")
+    for sd in dseeds:
+        for name in ("must_left", "must_right"):
+            rows = SCENARIOS[name]
+            for kind in ("DN_orig", "DN_readout", "DN_zero", "DN_swap"):
+                r = _dynamic(cfg, brain, groups, dn, sd, kind,
+                             DNReadout(brain.dt, b0=b0[sd]), rows, seconds=args.dyn_seconds)
+                print(f"{sd:5d} {name:11s} {kind:10s} {str(r['reach'])[:1]:>5s} {r['t_goal']:7.2f} "
+                      f"{r['cev']:4d} {r['cstep']:6d} {r['minGap']:7.3f} {r['bestD']:6d} "
+                      f"{r['sat%']:5.1f} {r['stop%']:6.1f} {str(r['stuck'])[:1]:>5s}")
     return 0
 
 
