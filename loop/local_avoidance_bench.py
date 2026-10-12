@@ -210,6 +210,54 @@ def run_one(cfg, rows, brain, groups, dn, controller, readout_path, *, seconds=4
     return out
 
 
+def run_fair(cfg, rows, brain, groups, dn, turn_kind, *, seconds=40.0, seed=64, rig=None,
+             mpc=0.40, trace_path=None):
+    """公平台架：统一前进速度/安全停车/平滑，只换神经转向来源（P2Control）。"""
+    from loop.p2_control import P2Control, turn_dn_single, turn_swap, turn_zero
+    srcs = {"DNf": turn_dn_single, "Zf": turn_zero, "SWAPf": turn_swap}
+    maze = Maze(rows)
+    sx, sy, sth = maze.start
+    cfg.decoder.mode = "dn"
+    cfg.decoder.escape_thresh = 1e9          # 关掉 dn 逃逸反射，隔离"转向"本身
+    fe = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn)
+    ctl = P2Control(cfg.decoder, fe, srcs[turn_kind], name=turn_kind)
+    enc = PhysicalToFEncoder(groups, cfg.encoder, brain.dt, DEFAULT_ANGLES_DEG,
+                             sensor_order=ORDER, car_max_speed=cfg.car.max_speed,
+                             car_radius=cfg.car.radius, meters_per_cell=mpc)
+    car = DiffDriveCar(sx, sy, sth, cfg.car)
+    brain.reset(seed)
+    traj, s = run_dynamic(cfg, maze, car, brain, enc, ctl, memory_on=False,
+                          seconds=seconds, tof_hz=10.0, rig=rig or load_rig(), seed=seed)
+    clr = min(wall_clearance(maze, p["x"], p["y"], CAR_R) for p in traj) if traj else float("nan")
+    best, last_improve = float("inf"), 0.0
+    for p in traj:
+        d = p["goal_dist"]
+        if d >= 0 and d < best:
+            best, last_improve = d, p["t"]
+    T = traj[-1]["t"] if traj else 0.0
+    stuck = (not s["reached_goal"]) and (T - last_improve) > 8.0
+    om = [p["omega"] for p in traj]
+    vv = [p["v"] for p in traj]
+    out = {
+        "reached_goal": bool(s["reached_goal"]), "time_to_goal_s": float(s["time_to_goal_s"]),
+        "collision_events": int(s["collision_events"]), "collision_steps": int(s["collision_steps"]),
+        "min_clearance_cells": float(clr), "best_goal_dist": int(s["best_goal_dist"]),
+        "stuck": bool(stuck), "timeout": bool(s["timeout"]),
+        "v_mean": float(np.mean(vv)) if vv else 0.0,
+        "omega_mean": float(np.mean(np.abs(om))) if om else 0.0,
+        "sat_ratio": float(ctl.saturation_ratio()), "stop_ratio": float(ctl.stop_ratio()),
+    }
+    if trace_path and traj:
+        with open(trace_path, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(["t", "x", "y", "theta", "v", "omega", "brain_turn", "turn_cmd", "goal_dist"])
+            for p in traj:
+                w.writerow([f"{p['t']:.4f}", f"{p['x']:.5f}", f"{p['y']:.5f}", f"{p['theta']:.5f}",
+                            f"{p['v']:.5f}", f"{p['omega']:.5f}", f"{p['brain_turn']:.5f}",
+                            f"{p['turn_cmd']:.5f}", p["goal_dist"]])
+    return out
+
+
 def main(argv=None) -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -223,6 +271,7 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=64)
     ap.add_argument("--meters-per-cell", type=float, default=0.40)
     ap.add_argument("--out-dir", default=None, help="轨迹 CSV 输出目录（不提交）")
+    ap.add_argument("--fair", action="store_true", help="只跑公平台架（P2Control：DNf/Zf/SWAPf）")
     args = ap.parse_args(argv)
 
     cfg, _m, _c, brain, groups, _e, _ = make_setup(
@@ -242,26 +291,44 @@ def main(argv=None) -> int:
         print(f"{name:11s} {str(g['straight_pass']):>13s} {str(g['path_exists']):>11s} "
               f"{g['goal_dy']:>16.1f} {str(Maze(rows).start):>14s}")
 
-    # ---- 2) 四控制对照 ----
-    print(f"\n[local-avoidance] memory_gain=0 (no Dijkstra). seconds={args.seconds} seed={args.seed}")
-    print(f"{'scenario':11s} {'ctrl':4s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} {'cstep':>6s} "
-          f"{'minGap':>7s} {'bestD':>6s} {'stuck':>5s} {'timeout':>7s} {'path':>6s}")
-    table = []
+    # ---- 2) 原始对照（未统一包络；仅作参考，不混合归因） ----
+    if not args.fair:
+        print(f"\n[legacy] memory_gain=0. seconds={args.seconds} seed={args.seed}"
+              "（DN/N 的前进速度来源不同；DN 同时控制 v/omega —— 独立实验，勿混合归因）")
+        print(f"{'scenario':11s} {'ctrl':4s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} {'cstep':>6s} "
+              f"{'minGap':>7s} {'bestD':>6s} {'stuck':>5s} {'timeout':>7s} {'path':>6s}")
+        for name, rows in SCENARIOS.items():
+            for ctrl in CONTROLLERS:
+                tp = None
+                if args.out_dir:
+                    os.makedirs(args.out_dir, exist_ok=True)
+                    tp = os.path.join(args.out_dir, f"legacy_{name}_{ctrl}.csv")
+                r = run_one(cfg, rows, brain, groups, dn, ctrl, args.new,
+                            seconds=args.seconds, seed=args.seed, mpc=args.meters_per_cell,
+                            trace_path=tp)
+                print(f"{name:11s} {ctrl:4s} {str(r['reached_goal'])[:1]:>5s} "
+                      f"{r['time_to_goal_s']:7.2f} {r['collision_events']:4d} {r['collision_steps']:6d} "
+                      f"{r['min_clearance_cells']:7.3f} {r['best_goal_dist']:6d} "
+                      f"{str(r['stuck'])[:1]:>5s} {str(r['timeout'])[:1]:>7s} {r['path_len_cells']:6.2f}")
+
+    # ---- 3) 公平台架（P2Control）：统一前进速度/安全停车，只换神经转向来源 ----
+    print(f"\n[fair] P2Control：同 fwd_frac/smooth/front-stop，仅 turn_source 不同. "
+          f"seconds={args.seconds} seed={args.seed}")
+    print(f"{'scenario':11s} {'ctrl':5s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} {'cstep':>6s} "
+          f"{'minGap':>7s} {'bestD':>6s} {'v_mean':>7s} {'|om|':>6s} {'sat%':>5s} {'stop%':>6s} {'stuck':>5s}")
     for name, rows in SCENARIOS.items():
-        maze = Maze(rows)
-        for ctrl in CONTROLLERS:
+        for kind in ("DNf", "Zf", "SWAPf"):
             tp = None
             if args.out_dir:
                 os.makedirs(args.out_dir, exist_ok=True)
-                tp = os.path.join(args.out_dir, f"la_{name}_{ctrl}.csv")
-            r = run_one(cfg, rows, brain, groups, dn, ctrl, args.new,
-                        seconds=args.seconds, seed=args.seed, mpc=args.meters_per_cell,
-                        trace_path=tp)
-            table.append((name, ctrl, r))
-            print(f"{name:11s} {ctrl:4s} {str(r['reached_goal'])[:1]:>5s} "
+                tp = os.path.join(args.out_dir, f"fair_{name}_{kind}.csv")
+            r = run_fair(cfg, rows, brain, groups, dn, kind, seconds=args.seconds,
+                         seed=args.seed, mpc=args.meters_per_cell, trace_path=tp)
+            print(f"{name:11s} {kind:5s} {str(r['reached_goal'])[:1]:>5s} "
                   f"{r['time_to_goal_s']:7.2f} {r['collision_events']:4d} {r['collision_steps']:6d} "
                   f"{r['min_clearance_cells']:7.3f} {r['best_goal_dist']:6d} "
-                  f"{str(r['stuck'])[:1]:>5s} {str(r['timeout'])[:1]:>7s} {r['path_len_cells']:6.2f}")
+                  f"{r['v_mean']:7.3f} {r['omega_mean']:6.2f} {r['sat_ratio'] * 100:5.1f} "
+                  f"{r['stop_ratio'] * 100:6.1f} {str(r['stuck'])[:1]:>5s}")
     if args.out_dir:
         print(f"\n[traces] -> {args.out_dir} (t,x,y,theta,v,omega,brain_turn; uncommitted)")
     return 0
