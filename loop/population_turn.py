@@ -29,7 +29,25 @@ R_IDX: tuple[int, ...] = (
     1227, 287, 931, 513, 94, 1079, 983, 904, 968, 267, 262, 143, 797, 311, 294, 526, 1055, 1001,
     416, 299, 434, 1126, 649, 404, 850, 1008, 958, 245, 907, 1000, 409, 234, 886, 11, 1275, 902,
     681, 948, 1003, 418, 1015, 860, 1016, 1090, 770, 1308, 692, 315, 275, 1264)
+L_BRAIN_IDX: tuple[int, ...] = (
+    1131, 21677, 927, 12995, 133997, 28717, 125909, 25242, 2588, 131957, 32033, 35516, 5510,
+    898, 126573, 3768, 24308, 173, 124314, 3059, 5617, 3264, 16006, 39029, 274, 130185, 112856,
+    146900, 3770, 2837, 687, 383, 762, 1752, 3331, 131119, 1448, 123463, 3625, 2699, 21253, 2575,
+    131772, 22, 1490, 132668, 32040, 125897, 33589, 3811)
+R_BRAIN_IDX: tuple[int, ...] = (
+    131148, 1593, 21562, 3654, 505, 53638, 26200, 19425, 24788, 1457, 1405, 746, 13343, 1823,
+    1653, 3853, 38593, 27530, 2606, 1708, 2805, 121975, 6360, 2529, 15570, 28562, 23864, 1315,
+    19582, 27454, 2574, 1222, 17703, 51, 139588, 19224, 7852, 22978, 27670, 2613, 28791, 16059,
+    28809, 71744, 11980, 162987, 8638, 1842, 1506, 134427)
+
+# 校验和（sha1[:12]，int64）：
+#   L_CHECKSUM/R_CHECKSUM = 仅按 L_POS/R_POS 各自计算（不合并、不排序）
+#   INDEX_CHECKSUM = 合并后**排序**（历史值，verify_indices 用）
+L_CHECKSUM = "15ba62fd7381"
+R_CHECKSUM = "ecd24b8c4759"
 INDEX_CHECKSUM = "9285ac175082"
+LB_CHECKSUM = "8729a058f8e1"     # L_BRAIN_IDX（全脑神经元 ID）
+RB_CHECKSUM = "165acfaeae37"
 GAIN = 8.0        # 幅度比例：一次性由 screen |D_stim| 尺度(~0.12) 定为 ~1/0.12（披露，非搜索）
 SIGN = -1.0       # D>0(左障碍) -> 负 omega（避障向开口）
 TAU = 0.2
@@ -39,6 +57,27 @@ K_GROUP = 50
 def checksum(L, R) -> str:
     arr = np.array(list(L) + list(R), np.int64)
     return hashlib.sha1(np.sort(arr).tobytes()).hexdigest()[:12]
+
+
+def _ck(a) -> str:
+    return hashlib.sha1(np.array(list(a), np.int64).tobytes()).hexdigest()[:12]
+
+
+def audit_indices(brain) -> dict:
+    """分别记录 L/R 的位置索引、对应全脑神经元 ID 及各自校验和（不合并）。"""
+    dn = np.asarray(brain.cells(["descending_neuron"]))
+    lb = [int(dn[i]) for i in L_IDX]
+    rb = [int(dn[i]) for i in R_IDX]
+    return {
+        "L_pos": list(L_IDX), "R_pos": list(R_IDX), "L_brain": lb, "R_brain": rb,
+        "L_pos_ck": _ck(L_IDX), "R_pos_ck": _ck(R_IDX),
+        "L_brain_ck": _ck(lb), "R_brain_ck": _ck(rb),
+        "disjoint": len(set(L_IDX) & set(R_IDX)) == 0,
+        "ok": (_ck(L_IDX) == L_CHECKSUM and _ck(R_IDX) == R_CHECKSUM
+               and _ck(lb) == LB_CHECKSUM and _ck(rb) == RB_CHECKSUM
+               and len(L_IDX) == K_GROUP and len(R_IDX) == K_GROUP
+               and len(set(L_IDX) & set(R_IDX)) == 0),
+    }
 
 
 def screen_indices(cfg, brain, groups, dn_idx, screen_seeds, *, k=K_GROUP):
@@ -129,12 +168,7 @@ def estimate_b0(cfg, brain, groups, dn_idx, seed, *, seconds=1.2, tof_hz=10.0, m
 
 
 def verify_indices(brain) -> bool:
-    dn = np.asarray(brain.cells(["descending_neuron"]))
-    ok = (len(L_IDX) == K_GROUP and len(R_IDX) == K_GROUP
-          and len(set(L_IDX) & set(R_IDX)) == 0
-          and max(list(L_IDX) + list(R_IDX)) < len(dn)
-          and checksum(L_IDX, R_IDX) == INDEX_CHECKSUM)
-    return bool(ok)
+    return bool(audit_indices(brain)["ok"])
 
 
 if __name__ == "__main__":
