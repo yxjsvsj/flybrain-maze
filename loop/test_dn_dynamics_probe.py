@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 
-from loop.dn_dynamics_probe import PLANS, per_dn_metrics, plan_segments, pop_diff
+from loop.dn_dynamics_probe import PLANS, per_dn_metrics, plan_segments, pop_diff, seg_means
 
 RESULTS = []
 
@@ -54,9 +54,12 @@ def main() -> int:
     # 群体差分 D = mean(L组) - mean(R组)
     act2 = np.zeros((4, n))
     act2[0:2, s0:s1] = 1.0                                  # 左组刺激段升高；右组全 0
-    _t, D, _segs = pop_diff(act2, [0, 1], [2, 3], plan, dt)
+    D = pop_diff(act2, [0, 1], [2, 3])
     check("pop_diff: D>0 during stimulus", float(np.mean(D[s0:s1])) > 0)
     check("pop_diff: D~0 before stimulus", abs(float(np.mean(D[a0:a1]))) < 1e-9)
+    sm = seg_means(D, plan, dt)
+    check("seg_means: one mean per segment", len(sm) == 3)
+    check("time-matched net effect decays after removal", abs(sm[2]) < abs(sm[1]))
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))
