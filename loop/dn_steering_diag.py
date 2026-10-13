@@ -35,8 +35,11 @@ STRONG = 0.30        # |turn_cmd| 达到它视为"已产生明显转向"
 
 
 def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof_hz=10.0,
-              mpc=0.40, rig=None, enc_cls=PhysicalToFEncoder):
-    """带详细决策记录的动态闭环（P2Control 公平包络，memory_gain=0）。"""
+              mpc=0.40, rig=None, enc_cls=PhysicalToFEncoder, turn_source=None):
+    """带详细决策记录的动态闭环（P2Control 公平包络，memory_gain=0）。
+
+    turn_source 非空时直接用它（外部提供的 stateful callable(ctl)->turn），忽略 kind。
+    """
     from loop.p2_control import P2Control, turn_dn_single
     maze = Maze(rows)
     sx, sy, sth = maze.start
@@ -45,7 +48,9 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
     fe = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn)
     idx = fe.index
     rd = DNReadout(brain.dt, b0=b0)
-    if kind == "DN_readout":
+    if turn_source is not None:
+        src = turn_source
+    elif kind == "DN_readout":
         src = lambda c: rd(c.last_brain_turn)          # noqa: E731
     elif kind == "DN_zero":
         src = lambda c: 0.0                            # noqa: E731
