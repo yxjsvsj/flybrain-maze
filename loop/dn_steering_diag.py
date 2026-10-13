@@ -48,6 +48,7 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
     fe = Decoder(brain, groups, cfg.decoder, cfg.car, brain.dt, dn_idx=dn)
     idx = fe.index
     rd = DNReadout(brain.dt, b0=b0)
+    diag = DNReadout(brain.dt, b0=b0)   # 始终喂入 DNa02 raw，供 corr 记录"实际参与控制的 EMA"
     if turn_source is not None:
         src = turn_source
     elif kind == "DN_readout":
@@ -85,6 +86,7 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
         v, omega = ctl.update(fired, info)
         car.set_command(v, omega)
         car.step(maze, dt)
+        corr = diag(float(ctl.dec.last_brain_turn))   # DNa02 基线校正+EMA（与控制同源）
         gd = maze.dist_to_goal(car.x, car.y)
         cl = enc._cache.get("L", (0, 0, 0, 0, 0))
         cr = enc._cache.get("R", (0, 0, 0, 0, 0))
@@ -99,7 +101,7 @@ def run_trace(cfg, brain, groups, dn, seed, kind, rows, *, b0, seconds=40.0, tof
             "size_L": cl[3], "size_R": cr[3], "chase_L": cl[1], "chase_R": cr[1],
             "loom_L": cl[0], "loom_R": cr[0], "threat_L": cl[2], "threat_R": cr[2],
             "rate_L": float(ctl.dec.rates[idx["turn_L"]]), "rate_R": float(ctl.dec.rates[idx["turn_R"]]),
-            "raw": float(ctl.dec.last_brain_turn), "b0": float(b0), "corr": float(rd.ema),
+            "raw": float(ctl.dec.last_brain_turn), "b0": float(b0), "corr": float(corr),
             "turn": float(ctl.last_turn_cmd), "v": float(ctl.v), "om": float(ctl.omega),
             "front": bool(ctl.front_blocked), "cev": int(car.collision_events),
         })

@@ -20,7 +20,7 @@ from loop.dn_steering import calibrate_baseline
 from loop.dn_steering_diag import run_trace
 from loop.local_avoidance_bench import SCENARIOS
 from loop.run import make_setup
-from loop.turn_hold import HOLD_LEVEL, HOLD_S, HOLD_THRESH, make_source, required_omega_sign
+from loop.turn_hold import HOLD_MAG_CAP, HOLD_S, HOLD_THRESH, make_source, required_omega_sign
 
 VARIANTS = ("DN_ema", "DN_hold", "DN_zero", "DN_swap")
 
@@ -66,7 +66,7 @@ def main(argv=None) -> int:
     b0 = {sd: calibrate_baseline(cfg, brain, groups, dn, sd) for sd in seeds}
 
     print(f"\n任务3 公平对照（BASE 编码器, memory_gain=0, seconds={args.seconds:.0f}; "
-          f"预注册 hold: thresh={HOLD_THRESH} hold={HOLD_S}s level={HOLD_LEVEL}）")
+          f"预注册 hold: thresh={HOLD_THRESH} hold={HOLD_S}s mag_cap={HOLD_MAG_CAP}）")
     print(f"{'variant':8s} {'seed':>5s} {'scenario':10s} {'reach':>5s} {'t_goal':>7s} {'cev':>4s} "
           f"{'stop%':>6s} {'firstTurn':>9s} {'cumTurn_deg':>11s} {'holds':>5s} {'fail':>5s}")
     rows_out = {}
