@@ -83,12 +83,29 @@ def run_demo(cfg, brain, groups, dn_idx, seed, rows, mode, *, b0pop, b0dn, rig,
                          ("turn", ctl.last_turn_cmd), ("v", ctl.v), ("om", ctl.omega),
                          ("front", 1.0 if ctl.front_blocked else 0.0), ("gd", gd)):
             rec[key].append(val)
-        if gd == 0 and reach_t < 0:
-            reach_t = t
+        if gd == 0:                       # 首次到达即停，避免混入到达后的运动
+            if reach_t < 0:
+                reach_t = t
+            break
     return {"rec": {k: np.array(v, float) for k, v in rec.items()},
             "reach": reach_t >= 0, "t_goal": reach_t,
             "cev": int(car.collision_events), "cevs": int(car.collisions),
             "maze": maze}
+
+
+def front_spans(t, front):
+    """front_safety 停车（v=0）的连续时间段。"""
+    spans, i, n = [], 0, len(t)
+    while i < n:
+        if front[i] > 0.5:
+            j = i
+            while j + 1 < n and front[j + 1] > 0.5:
+                j += 1
+            spans.append((t[i], t[j]))
+            i = j + 1
+        else:
+            i += 1
+    return spans
 
 
 def render(maze, demos, title, out_path):
@@ -104,7 +121,10 @@ def render(maze, demos, title, out_path):
     for label, d, color in demos:
         r = d["rec"]
         a.plot(r["x"], r["y"], "-", lw=1.6, color=color, label=label)
-    a.set_title(f"{title}\n[VIRTUAL SIMULATION - not a real vehicle]")
+        fs = r["front"] > 0.5
+        if fs.any():                       # 停车段用红点标出
+            a.plot(r["x"][fs], r["y"][fs], ".", ms=3, color="red")
+    a.set_title(f"{title}\n[VIRTUAL SIMULATION - not a real vehicle]  red dots = front_safety stop")
     a.set_aspect("equal")
     a.legend(fontsize=8)
     for j, (key, lbl) in enumerate((("D", "population D(t)=mean(L)-mean(R)"),
@@ -112,14 +132,17 @@ def render(maze, demos, title, out_path):
                                     ("v", "v (forward)"))):
         bx = ax[(j + 1) // 2, (j + 1) % 2]
         for label, d, color in demos:
-            bx.plot(d["rec"]["t"], d["rec"][key], lw=1.2, color=color, label=label)
-        bx.set_title(lbl)
+            r = d["rec"]
+            for (t0, t1) in front_spans(r["t"], r["front"]):
+                bx.axvspan(t0, max(t1, t0 + 1e-3), color=color, alpha=0.12, lw=0)
+            bx.plot(r["t"], r[key], lw=1.2, color=color, label=label)
+        bx.set_title(lbl + "  (shaded = front_safety stop)")
         bx.set_xlabel("t (s)")
         bx.grid(alpha=0.3)
         if key == "v":
             for label, d, color in demos:
                 bx.plot(d["rec"]["t"], d["rec"]["om"], lw=0.8, ls="--", color=color)
-            bx.set_title("v (solid) / omega (dashed)")
+            bx.set_title("v (solid) / omega (dashed)  (shaded = front_safety stop)")
     fig.tight_layout()
     fig.savefig(out_path, dpi=110)
     plt.close(fig)
