@@ -63,8 +63,9 @@ def run_diag(cfg, brain, groups, dn_idx, seed, rows, *, seconds=40.0, gain=GAIN,
     n = int(round(seconds / dt))
     period = 1.0 / tof_hz
     frame, seq, last_t = None, 0, -1e9
-    keys = ("t", "x", "y", "th", "D", "Dmb", "raw", "turn", "v", "om", "front", "gd",
-            "tofF", "tofFL", "tofFR", "nearL", "nearR",
+    keys = ("t", "x", "y", "th", "D", "Dmb", "raw", "turn", "v", "om", "front", "gd", "seq",
+            "tofL", "tofFL", "tofF", "tofFR", "tofR",
+            "stL", "stFL", "stF", "stFR", "stR", "nearL", "nearR",
             "loomL", "loomR", "chaseL", "chaseR", "threatL", "threatR", "meanL", "meanR")
     rec = {k: [] for k in keys}
     reach_t = -1.0
@@ -88,16 +89,19 @@ def run_diag(cfg, brain, groups, dn_idx, seed, rows, *, seconds=40.0, gain=GAIN,
         car.step(maze, dt)
         gd = maze.dist_to_goal(car.x, car.y)
         cl, cr = enc._cache.get("L", (0, 0, 0, 0, 0)), enc._cache.get("R", (0, 0, 0, 0, 0))
-        sf, sfl, sfr = (frame.status.get("F"), frame.status.get("FL"), frame.status.get("FR"))
-        nearF = sf in IN_RANGE
+        sk = {"VALID": 2.0, "TOO_NEAR": 1.0}
+        rng, st = frame.ranges, frame.status
         vals = {"t": t, "x": car.x, "y": car.y, "th": car.theta, "D": D, "Dmb": D - b0,
                 "raw": raw, "turn": ctl.last_turn_cmd, "v": ctl.v, "om": ctl.omega,
-                "front": 1.0 if ctl.front_blocked else 0.0, "gd": gd,
-                "tofF": float(frame.ranges.get("F") or 0.0),
-                "tofFL": float(frame.ranges.get("FL") or 0.0),
-                "tofFR": float(frame.ranges.get("FR") or 0.0),
-                "nearL": 1.0 if (nearF or sfl in IN_RANGE) else 0.0,
-                "nearR": 1.0 if (nearF or sfr in IN_RANGE) else 0.0,
+                "front": 1.0 if ctl.front_blocked else 0.0, "gd": gd, "seq": float(frame.seq),
+                "tofL": float(rng.get("L") or 0.0), "tofFL": float(rng.get("FL") or 0.0),
+                "tofF": float(rng.get("F") or 0.0), "tofFR": float(rng.get("FR") or 0.0),
+                "tofR": float(rng.get("R") or 0.0),
+                "stL": sk.get(st.get("L"), 0.0), "stFL": sk.get(st.get("FL"), 0.0),
+                "stF": sk.get(st.get("F"), 0.0), "stFR": sk.get(st.get("FR"), 0.0),
+                "stR": sk.get(st.get("R"), 0.0),
+                "nearL": 1.0 if (st.get("F") in IN_RANGE or st.get("FL") in IN_RANGE) else 0.0,
+                "nearR": 1.0 if (st.get("F") in IN_RANGE or st.get("FR") in IN_RANGE) else 0.0,
                 "loomL": float(info.get("loom_L", 0.0)), "loomR": float(info.get("loom_R", 0.0)),
                 "chaseL": float(cl[1]), "chaseR": float(cr[1]),
                 "threatL": float(info.get("threat_L", 0.0)), "threatR": float(info.get("threat_R", 0.0)),
