@@ -86,7 +86,7 @@ def run_job(cfg, brain, groups, dn_idx, seed, plan, *, b0, gain=GAIN, sign=SIGN,
         a = np.asarray(tr.observe(fired), np.float32)
         D.append(float(a[:len(L_IDX)].mean() - a[len(L_IDX):].mean()))
     D = np.array(D)
-    return {"Dmb": D - b0, "dt": dt, "names": seqs}
+    return {"D": D, "Dmb": D - b0, "dt": dt, "names": seqs}
 
 
 def roll_mean(x, w):
