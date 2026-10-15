@@ -66,7 +66,9 @@ def run_diag(cfg, brain, groups, dn_idx, seed, rows, *, seconds=40.0, gain=GAIN,
     keys = ("t", "x", "y", "th", "D", "Dmb", "raw", "turn", "v", "om", "front", "gd", "seq",
             "tofL", "tofFL", "tofF", "tofFR", "tofR",
             "stL", "stFL", "stF", "stFR", "stR", "nearL", "nearR",
-            "loomL", "loomR", "chaseL", "chaseR", "threatL", "threatR", "meanL", "meanR")
+            "loomL", "loomR", "chaseL", "chaseR", "threatL", "threatR",
+            "inj_loomL", "inj_loomR", "inj_chaseL", "inj_chaseR", "inj_threatL", "inj_threatR",
+            "inj_fwd", "meanL", "meanR")
     rec = {k: [] for k in keys}
     reach_t = -1.0
     for k in range(n):
@@ -91,6 +93,8 @@ def run_diag(cfg, brain, groups, dn_idx, seed, rows, *, seconds=40.0, gain=GAIN,
         cl, cr = enc._cache.get("L", (0, 0, 0, 0, 0)), enc._cache.get("R", (0, 0, 0, 0, 0))
         sk = {"VALID": 2.0, "TOO_NEAR": 1.0}
         rng, st = frame.ranges, frame.status
+        ps = float(enc.per_step)
+        jf = float(enc.cfg.forward_drive_dv * ps) if enc.cfg.forward_drive_dv > 0 else 0.0
         vals = {"t": t, "x": car.x, "y": car.y, "th": car.theta, "D": D, "Dmb": D - b0,
                 "raw": raw, "turn": ctl.last_turn_cmd, "v": ctl.v, "om": ctl.omega,
                 "front": 1.0 if ctl.front_blocked else 0.0, "gd": gd, "seq": float(frame.seq),
@@ -105,6 +109,13 @@ def run_diag(cfg, brain, groups, dn_idx, seed, rows, *, seconds=40.0, gain=GAIN,
                 "loomL": float(info.get("loom_L", 0.0)), "loomR": float(info.get("loom_R", 0.0)),
                 "chaseL": float(cl[1]), "chaseR": float(cr[1]),
                 "threatL": float(info.get("threat_L", 0.0)), "threatR": float(info.get("threat_R", 0.0)),
+                # 实际注入到各细胞群的每步幅度（dv*per_step），避免把 NO_TARGET 当作"无神经输入"
+                "inj_loomL": cl[0] * ps if cl[0] > 0 else 0.0,
+                "inj_loomR": cr[0] * ps if cr[0] > 0 else 0.0,
+                "inj_chaseL": cl[1] * ps if cl[1] > 0 else 0.0,
+                "inj_chaseR": cr[1] * ps if cr[1] > 0 else 0.0,
+                "inj_threatL": cl[2] * ps if cl[2] > 0 else 0.0,
+                "inj_threatR": cr[2] * ps if cr[2] > 0 else 0.0, "inj_fwd": jf,
                 "meanL": meanL, "meanR": meanR}
         for kk, vv in vals.items():
             rec[kk].append(vv)
