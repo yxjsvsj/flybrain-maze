@@ -26,7 +26,7 @@ def fake_rec(n=60):
 
 def main() -> int:
     print("=========== p2_counterfactual ===========")
-    # 分叉规则：|turn|>=0.9 的最长段起点
+    # 分叉规则：|turn|>=0.5 的最长段起点
     turn = np.zeros(100)
     turn[20:60] = 0.95                          # 最长段 20..59
     turn[70:80] = 1.0                           # 较短

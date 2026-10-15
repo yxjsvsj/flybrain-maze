@@ -89,8 +89,8 @@ def run_cf(cfg, brain, groups, dn_idx, seed, rec, fork_i, frame_mode, inj_mode, 
     n = min(n_total, len(rec["t"]))
     Ds, turns = [], []
     inj_post = {g: 0.0 for g in INJ_GROUPS}
-    inj_pre = {g: 0.0 for g in INJ_GROUPS}
-    kk = kp = 0
+    inj_series = {g: [] for g in INJ_GROUPS}
+    kk = 0
     for k in range(n):
         fm = "orig" if k < fork_i else frame_mode
         im = "enc" if k < fork_i else inj_mode
@@ -104,23 +104,20 @@ def run_cf(cfg, brain, groups, dn_idx, seed, rec, fork_i, frame_mode, inj_mode, 
             inj = []
         fired = brain.step(inject=inj)
         amt = _inject_amounts(groups, inj)
+        for g in INJ_GROUPS:
+            inj_series[g].append(amt[g])
         if k >= fork_i:
             for g in INJ_GROUPS:
                 inj_post[g] += amt[g]
             kk += 1
-        else:
-            for g in INJ_GROUPS:
-                inj_pre[g] += amt[g]
-            kp += 1
         a = np.asarray(tr.observe(fired), np.float32)
         Dv = float(a[:len(L_IDX)].mean() - a[len(L_IDX):].mean())
         Ds.append(Dv)
         turns.append(float(np.clip(sign * gain * (Dv - b0), -1.0, 1.0)))
     if kk:
         inj_post = {g: v / kk for g, v in inj_post.items()}
-    if kp:
-        inj_pre = {g: v / kp for g, v in inj_pre.items()}
-    return np.array(Ds, float), np.array(turns, float), inj_post, inj_pre
+    inj_series = {g: np.array(v, float) for g, v in inj_series.items()}
+    return np.array(Ds, float), np.array(turns, float), inj_post, inj_series
 
 
 def run_A_drift(cfg, brain, groups, dn_idx, seed, b0, *, seconds=40.0, gain=GAIN, sign=SIGN,
@@ -231,21 +228,21 @@ def main(argv=None) -> int:
         rec = run_diag(cfg, brain, groups, dn_idx, seed, SCENARIOS[sc], seconds=args.seconds,
                        rig=rig, b0=b0)
         fork = pick_fork(rec["turn"], rec["t"])
-        n_total = min(fork + int(round(5.0 / dt)), len(rec["t"]))
+        n_total = min(fork + int(round(10.0 / dt)), len(rec["t"]))
         conds, inj_print, checks = {}, {}, []
+        COL = {"loom_L": "loomL", "loom_R": "loomR", "chase_L": "chaseL", "chase_R": "chaseR",
+               "threat_L": "threatL", "threat_R": "threatR", "fwd": "fwd"}
         for name, (fm, im) in CONDS.items():
-            Ds, turns, inj_post, inj_pre = run_cf(cfg, brain, groups, dn_idx, seed, rec, fork,
-                                                  fm, im, b0=b0, n_total=n_total)
+            Ds, turns, inj_post, inj_series = run_cf(cfg, brain, groups, dn_idx, seed, rec, fork,
+                                                     fm, im, b0=b0, n_total=n_total)
             conds[name] = (Ds, turns)
             inj_print[name] = inj_post
-            # 分叉前 D/turn 一致；分叉前注入和一致；orig 全程 D/turn 一致
+            # 分叉前：D/turn 逐时间步一致；注入**逐群、逐时间步**精确核对；orig 全程一致
             pre = slice(0, fork)
-            dj = float(sum(np.sum(rec["inj_" + g][:fork]) for g in
-                           ("loomL", "loomR", "chaseL", "chaseR", "threatL", "threatR", "fwd")))
-            dp = float(sum(inj_pre.values())) * max(1, fork)
             ok_dt = (len(Ds) > fork and np.allclose(Ds[pre], rec["D"][pre], atol=1e-4)
                      and np.allclose(turns[pre], rec["turn"][pre], atol=1e-4))
-            ok_inj = abs(dp - dj) <= 1e-3 * max(1.0, dj)
+            ok_inj = all(np.allclose(inj_series[g][:fork], rec["inj_" + COL[g]][:fork], atol=1e-7)
+                         for g in INJ_GROUPS)
             if name == "orig":
                 ok_inj = ok_inj and np.allclose(Ds, rec["D"][:len(Ds)], atol=1e-4)
             checks.append((name, bool(ok_dt), bool(ok_inj)))
