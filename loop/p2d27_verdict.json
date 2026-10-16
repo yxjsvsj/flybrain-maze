@@ -1,0 +1,46 @@
+{
+ "verdict": "PARTIAL",
+ "summary_confirm": {
+  "nocue": {
+   "obs_medianR_med": 0.1219,
+   "cue_medianR_med": 0.1325,
+   "sustain_med": 0.35,
+   "valid_rate_med": 0.35,
+   "frac_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0
+  },
+  "cue0": {
+   "obs_medianR_med": 0.1534,
+   "cue_medianR_med": 0.291,
+   "sustain_med": 0.3,
+   "valid_rate_med": 0.34,
+   "frac_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0
+  },
+  "cue120": {
+   "obs_medianR_med": 0.1441,
+   "cue_medianR_med": 0.2836,
+   "sustain_med": 0.4,
+   "valid_rate_med": 0.32,
+   "frac_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0
+  },
+  "diffuse": {
+   "obs_medianR_med": 0.1472,
+   "cue_medianR_med": 0.0673,
+   "sustain_med": 0.25,
+   "valid_rate_med": 0.4,
+   "frac_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0
+  }
+ },
+ "position_separation_deg": [],
+ "max_obs_medianR": 0.1824,
+ "max_cue_medianR": 0.9891,
+ "any_localized_ge0.30": true,
+ "criterion": {
+  "BUMP_R": 0.3,
+  "SUSTAIN_MIN_S": 1.0,
+  "PHASE_SEP_MIN": 90.0
+ }
+}
