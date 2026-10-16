@@ -1,0 +1,111 @@
+{
+ "audit": {
+  "LC10a_to_DNa02": {
+   "n_edges": 0,
+   "w_sum": 0.0,
+   "w_pos": 0.0,
+   "w_neg": 0.0
+  },
+  "LC10a_to_all_DN": {
+   "n_edges": 275,
+   "w_sum": 0.1326,
+   "w_pos": 0.1326,
+   "w_neg": 0.0
+  },
+  "DNa02_receives_visual": {
+   "n_edges": 179,
+   "w_sum": 0.0146,
+   "w_pos": 0.0349,
+   "w_neg": -0.0203
+  },
+  "DNa02_top_inputs": [
+   [
+    "vnc_intrinsic",
+    2.551
+   ],
+   [
+    "cb_intrinsic",
+    0.668
+   ],
+   [
+    "ascending_neuron",
+    0.224
+   ],
+   [
+    "vnc_motor",
+    0.159
+   ],
+   [
+    "descending_neuron",
+    0.134
+   ]
+  ],
+  "visual_to_DN_top_types": [
+   [
+    "DNpe008",
+    2.155
+   ],
+   [
+    "DNp17",
+    2.13
+   ],
+   [
+    "DNge094",
+    1.607
+   ],
+   [
+    "DNp04",
+    1.364
+   ],
+   [
+    "DNb03",
+    1.341
+   ],
+   [
+    "DNp03",
+    1.171
+   ],
+   [
+    "DNg82",
+    0.951
+   ],
+   [
+    "DNpe054",
+    0.862
+   ],
+   [
+    "DNp26",
+    0.804
+   ],
+   [
+    "DNp05",
+    0.73
+   ]
+  ],
+  "visual_to_DN_ipsi_contra": {
+   "contra": 9.97,
+   "ipsi": 47.13
+  },
+  "counts": {
+   "LC10a": 275,
+   "DNa02": 2,
+   "visual_projection": 9201,
+   "descending_neuron": 1314
+  }
+ },
+ "three_functions": {
+  "obstacle_triggers_turning": {
+   "supported": false,
+   "evidence": "LC10a->DNa02 edges=0; DNa02<-visual n=179 net w=0.0146 (pos 0.0349/neg -0.0203, 近乎相消), vs DNa02<-vnc_intrinsic=2.551 -> 视觉输入可忽略"
+  },
+  "left_right_selection": {
+   "supported": false,
+   "evidence": "visual->DN 虽以同侧为主 {'contra': 9.97, 'ipsi': 47.13}，但**靶是 looming/逃逸 DN**，非转向；**LC10a->DNa02 边=0** -> 无数据支持的视觉→转向 左右选择"
+  },
+  "return_to_neutral": {
+   "supported": false,
+   "evidence": "静态连接无法证明动态回中性；需动力学证据（本轮不运行）"
+  }
+ },
+ "verdict": "NO-GO"
+}
