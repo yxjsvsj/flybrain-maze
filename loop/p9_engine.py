@@ -18,8 +18,8 @@ REFS = [
      "title": "A biophysical account of multiplication by a single neuron", "doi": "10.1038/s41586-022-04428-3",
      "use": "T4 **电导型**(passive conductance-based) 模型：E_exc(胆碱能)、E_inh(GluCl 分流抑制)、输入电阻测量。"
             "**勘误/边界：该定标仅针对 T4，不可外推为全脑统一参数**。"},
-    {"cite": "Seelig & Jayaraman 2015, Nat Neurosci 18:718",
-     "title": "Neural dynamics for landmark orientation and angular path integration", "doi": "10.1038/nn.3996",
+    {"cite": "Seelig & Jayaraman 2015, Nature 521(7551):186-191 [P9-1b0 勘误：原写 Nat Neurosci 18:718]",
+     "title": "Neural dynamics for landmark orientation and angular path integration", "doi": "10.1038/nature14446",
      "use": "CX 神经元膜动力学/时间常数量级"},
     {"cite": "Turner-Evans et al. 2017, eLife 6:e23496",
      "title": "Angular velocity integration in a fly heading circuit", "doi": "10.7554/eLife.23496",

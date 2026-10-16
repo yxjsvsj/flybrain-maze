@@ -72,7 +72,7 @@
 → 若无法取得，只可在**声明约定+不确定性**下做**小规模**测试；**不得**为转弯效果编造参数。
 
 ## 引用（完整题名/DOI 见 `p90_engine.json.references`）
-Groschner et al. 2022 *Nature* 602:92 (`10.1038/s41586-022-04428-3`)；Seelig & Jayaraman 2015 *Nat Neurosci* 18:718 (`10.1038/nn.3996`)；
+Groschner et al. 2022 *Nature* **603(7899):119-123** (`10.1038/s41586-022-04428-3`)；Seelig & Jayaraman 2015 *Nature* **521(7551):186-191** (`10.1038/nature14446`)；
 Turner-Evans et al. 2017 *eLife* 6:e23496 (`10.7554/eLife.23496`)；Borst et al. 2010 *Annu Rev Neurosci* 33:49 (`10.1146/annurev-neuro-060909-153155`)；
 Gruntman et al. 2022 *Curr Biol* (`10.1016/j.cub.2021.10.063`)。
 
