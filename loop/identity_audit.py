@@ -72,20 +72,24 @@ def main() -> int:
                 t.add(int(indices[e]))
         return t
 
-    print("\n== 接口证据表（只读；下游=1跳/2跳；DN=descending_neuron, motor=vnc/cb_motor）==")
+    print("\n== 接口证据表（只读；下游=1跳/2跳**全量**，无截断）==")
     for name in ("SNta29", "SNpp59", "LgLG3"):
         idx = np.flatnonzero(ct == name)
         if len(idx) == 0:
             print(f"  {name}: 本机无此类型")
             continue
         t1 = one_hop(idx.tolist())
-        t2 = t1 | set().union(*[one_hop([x]) for x in list(t1)[:2000]]) if t1 else set()
+        t2 = t1 | set().union(*[one_hop([x]) for x in t1]) if t1 else set()   # 全量 2 跳
         ids_s = ids[idx].tolist()[:5] if ids is not None else "?"
         sides = sorted(set(side[idx].tolist())) if side is not None else []
         print(f"  {name:8s} n={len(idx):4d} 本机索引例={idx[:3].tolist()} 原始ids例={ids_s} "
               f"侧别={sides} 1跳下游={len(t1)} 2跳到DN={len(t2 & dn)} 到motor={len(t2 & motor)}")
-    print("  不确定性：本机 `ids` 为 10001.. 顺序号（非 FlyWire bodyId），跨版本只能靠"
-          "**cell_type 名称**对应；未见独立原始 bodyId/神经束字段。")
+    print("  索引说明：**数组位置 = 本机索引 = 模拟器全脑索引**（= weights.npz 的 W 行列序）；"
+          "**`ids` = MaleCNS v1.0 原始 bodyId（非顺序号）**，可用 `ids[本机索引]` 与官方注释表精确对接"
+          "（见 loop/same_source_crosswalk.py）。")
+    print("  连接图区分：本表用**文件连接图**（weights.npz 的 W）。运行态 `sensory_input=False` 只把"
+          "**sensory 神经元的入突触**置 0（W 对应行）→ 改变其**上游**驱动，**不改其输出**；"
+          "故 vnc_sensory 的**下游**在文件图与运行态一致。")
     return 0
 
 

@@ -54,3 +54,53 @@
 `SNta29`(机械感) 是否真有可解释的**自运动相关输入**；在此之前**不注入、不调 K、不接车辆**。
 
 **边界**：未改权重/BASE 编码/正式 readout/P1/tags；未接 P2Control；未操作虚拟/实体车；未做注入实验。
+
+---
+
+## P2d-24c 追加：**同源注释对接**（只读；工具 `loop/same_source_crosswalk.py`）
+
+### 1. 数据身份/来源/校验值
+- 构建代码 `flybrain/build.py` 明写：**从 MaleCNS v1.0** 构建（`BUCKET=flyem-male-cns/v1.0/...`；
+  `body-annotations-male-cns-v1.0-minconf-0.5.feather`、`connectome-weights-male-cns-v1.0-...feather`）；
+  `ids = ann.index(bodyId)` → **`brain.npz.ids` 就是 MaleCNS v1.0 的原始 bodyId**。
+- **校验值**：
+  - `brain.npz` = `cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca` **MATCH**
+  - `weights.npz` = `c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c` **MATCH**
+  → **同源于官方 brain-v1（MaleCNS v1.0 构建）= True**（本地文件与官方预构建逐字节相同；未重建/未覆盖）。
+- 下载**官方 v1.0 注释表**（`body-annotations-...v1.0...feather`，14.5 MB，sha256 `2177e246…`），
+  按 `bodyId` **精确 join**（**未**按名称跨版本强配）。
+
+### 2. 官方表实际字段（211,577 行，36 列）
+`class / subclass / supertype / entryNerve / exitNerve / receptorType / somaNeuromere / somaSide /
+rootSide / instance / superclass / type / flywireType / group / somaLocation / tosomaLocation / vfbId /
+hemibrainType / statusLabel …`。**本机 brain.npz 未保存**其中 `class/subclass/entryNerve/exitNerve/
+receptorType/…`，故必须靠官方表。
+
+### 3. SNpp59 全部 6 个（本机 idx / bodyId / 侧别 / 官方字段）
+| 本机idx | bodyId | 侧别 | class | subclass | type | **entryNerve** | exitNerve | receptorType | somaNeuromere |
+|---|---|---|---|---|---|---|---|---|---|
+| 160026 | 828667 | L | mechanosensory_proprioceptive | chordotonal organ | SNpp59 | **MetaLN** | 未提供 | 未提供 | 未提供 |
+| 161639 | 905339 | L | 同上 | chordotonal organ | SNpp59 | **ProLN** | 未提供 | 未提供 | 未提供 |
+| 161640 | 905340 | L | 同上 | chordotonal organ | SNpp59 | **ProLN** | 未提供 | 未提供 | 未提供 |
+| 162431 | 908146 | L | 同上 | chordotonal organ | SNpp59 | **MesoLN** | 未提供 | 未提供 | 未提供 |
+| 162438 | 908166 | **R** | 同上 | chordotonal organ | SNpp59 | **MesoLN** | 未提供 | 未提供 | 未提供 |
+| 164373 | 932315 | **R** | 同上 | chordotonal organ | SNpp59 | **MetaLN** | 未提供 | 未提供 | 未提供 |
+
+（`instance/flywireType/somaSide/somaLocation/tosomaLocation` 这 6 行**未提供**。类别核对：`SNta29`=
+`mechanosensory_tactile / mechanosensory bristle`；`LgLG3`=`gustatory / leg bristle`——均未展开刺激实验。）
+
+### 4. 两问的分别回答
+- **问 1：身份是否完成同源核验？→ 是（YES）。**
+  本地文件与官方 MaleCNS v1.0 构建**逐字节一致**；`ids`≡bodyId；SNpp59 6 个按 bodyId **精确命中**官方行，
+  得到 **class=`mechanosensory_proprioceptive`、subclass=`chordotonal organ`、entryNerve=MetaLN/ProLN/MesoLN（腿神经）**。
+- **问 2：该细胞究竟感受什么物理变量？与轮式车测量量是否够依据对应？**
+  官方注释给出：**腿部本体感觉弦音器（leg chordotonal organ，机械—本体感觉）**，即**感受腿的机械形变/关节状态**，
+  **不是**身体 yaw/角速度传感器（果蝇 yaw 靠 halteres，本连接组无 haltere 标签）。
+  → **与"轮式车的轮编码器（每侧轮转角=肢体关节类比）"有可辩护的对应**；**与"车体 yaw"没有直接依据**。
+  不确定性仍在：**符号/具体关节/量纲未提供**（`receptorType/somaNeuromere/somaLocation` 均为"未提供"），且仅 6 个神经元。
+
+### 5. 结论与建议（第一项通过**不**自动批准第二项）
+- 身份**同源核验通过**；感受变量**已确定为腿部本体感觉（弦音器）**——但**不是 yaw**。
+- 因此若接口目标是"**自运动/yaw 反馈**"：**依据不足 → 暂停该路线**（**不退回整池 vnc_sensory 强刺激**）。
+- 若接口目标改为"**肢体本体感觉**"：可**仅**提出设计依据——用**轮编码器（每侧轮转角）**映射到
+  **SNpp59（L 4 / R 2）**，并**预先披露**其符号/关节/量纲未定；**本轮不注入、不调 K、不接 P2Control**。
