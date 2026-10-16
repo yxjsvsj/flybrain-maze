@@ -1,0 +1,124 @@
+{
+ "archive": {
+  "per_seed": [
+   {
+    "seed": 11,
+    "photo_left_delta": 685.9,
+    "vpn_left_delta": -1.28,
+    "dn_L_left_delta": -0.02,
+    "dn_R_left_delta": -0.04,
+    "left_dnL_minus_dnR": 0.02
+   },
+   {
+    "seed": 12,
+    "photo_left_delta": 685.34,
+    "vpn_left_delta": -6.02,
+    "dn_L_left_delta": 0.06,
+    "dn_R_left_delta": 0.1,
+    "left_dnL_minus_dnR": -0.04
+   },
+   {
+    "seed": 13,
+    "photo_left_delta": 685.4,
+    "vpn_left_delta": -4.08,
+    "dn_L_left_delta": 0.02,
+    "dn_R_left_delta": 0.16,
+    "left_dnL_minus_dnR": -0.14
+   },
+   {
+    "seed": 14,
+    "photo_left_delta": 685.38,
+    "vpn_left_delta": -2.76,
+    "dn_L_left_delta": 0.02,
+    "dn_R_left_delta": 0.08,
+    "left_dnL_minus_dnR": -0.06
+   },
+   {
+    "seed": 15,
+    "photo_left_delta": 685.1,
+    "vpn_left_delta": -4.92,
+    "dn_L_left_delta": 0.12,
+    "dn_R_left_delta": -0.02,
+    "left_dnL_minus_dnR": 0.14
+   }
+  ],
+  "median_abs_left_dnL_minus_dnR": 0.06,
+  "note": "control-subtracted = stimulus minus same-seed no-stimulus control",
+  "conclusion": "NO lateral-specific sensory transmission under the unmodified LIF (>='VPN delta sign-mixed/none, DN delta ~0')"
+ },
+ "result": {
+  "frozen": {
+   "solo_change": "row-L1 synaptic normalization (incoming weights per neuron scaled to unit L1)",
+   "seeds": [
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "STIM_A": 0.5,
+   "PRE/STIM/POST": [
+    25,
+    50,
+    25
+   ],
+   "gain/tonic/noise/threshold/eye_gain": "UNCHANGED",
+   "stimulus": "left/right eye az<-0.3/>0.3, constant",
+   "metric": "control-subtracted (stim minus same-seed no-stim)",
+   "GO_STABLE": 4,
+   "GO_EFFECT": 0.5,
+   "GO_VPN": 0.5
+  },
+  "per_seed": [
+   {
+    "seed": 11,
+    "vpn_left_delta_pop": -3.82,
+    "left_dnL_minus_dnR_cell": -0.00115,
+    "right_dnR_minus_dnL_cell": 0.00086,
+    "dnL_pop_stim": 1.56,
+    "post_dnL_pop": 1.6,
+    "ipsi_gt_contra": false
+   },
+   {
+    "seed": 12,
+    "vpn_left_delta_pop": -1.1,
+    "left_dnL_minus_dnR_cell": 0.00087,
+    "right_dnR_minus_dnL_cell": 0.00197,
+    "dnL_pop_stim": 1.64,
+    "post_dnL_pop": 1.68,
+    "ipsi_gt_contra": true
+   },
+   {
+    "seed": 13,
+    "vpn_left_delta_pop": -3.66,
+    "left_dnL_minus_dnR_cell": 0.00234,
+    "right_dnR_minus_dnL_cell": -4e-05,
+    "dnL_pop_stim": 1.62,
+    "post_dnL_pop": 1.36,
+    "ipsi_gt_contra": false
+   },
+   {
+    "seed": 14,
+    "vpn_left_delta_pop": -1.88,
+    "left_dnL_minus_dnR_cell": 0.00086,
+    "right_dnR_minus_dnL_cell": -0.00171,
+    "dnL_pop_stim": 1.64,
+    "post_dnL_pop": 1.56,
+    "ipsi_gt_contra": false
+   },
+   {
+    "seed": 15,
+    "vpn_left_delta_pop": -3.0,
+    "left_dnL_minus_dnR_cell": 0.00087,
+    "right_dnR_minus_dnL_cell": -0.00203,
+    "dnL_pop_stim": 1.56,
+    "post_dnL_pop": 1.72,
+    "ipsi_gt_contra": false
+   }
+  ],
+  "ipsi_gt_contra_seeds": 1,
+  "median_abs_lateral_cell": 0.00087,
+  "median_vpn_delta_pop": 3.0,
+  "verdict": "NO-GO"
+ }
+}
