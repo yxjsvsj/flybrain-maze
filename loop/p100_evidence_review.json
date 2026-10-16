@@ -1,0 +1,442 @@
+{
+ "review": {
+  "LP_direct_to_KC": {
+   "edges": 0,
+   "sumW": 0.0,
+   "absW": 0.0,
+   "posW": 0.0,
+   "negW": 0.0,
+   "pos_edges": 0,
+   "neg_edges": 0
+  },
+  "LP_2hop_to_KC": {
+   "n_intermediate": 56,
+   "n_path_edges": 56,
+   "sum_w_in": 0.0884,
+   "sum_w_out": 1.7124,
+   "top": [
+    {
+     "x_bodyId": 15737,
+     "x_type": "LTe16",
+     "x_side": "R",
+     "w_in": 0.0007,
+     "w_out": 0.3385
+    },
+    {
+     "x_bodyId": 15369,
+     "x_type": "LTe16",
+     "x_side": "L",
+     "w_in": 0.001,
+     "w_out": 0.2953
+    },
+    {
+     "x_bodyId": 10342,
+     "x_type": "DNc02",
+     "x_side": "R",
+     "w_in": 0.0018,
+     "w_out": 0.2945
+    },
+    {
+     "x_bodyId": 10100,
+     "x_type": "OA-AL2b1",
+     "x_side": "R",
+     "w_in": 0.0076,
+     "w_out": 0.2532
+    },
+    {
+     "x_bodyId": 22440,
+     "x_type": "LTe50",
+     "x_side": "R",
+     "w_in": 0.0024,
+     "w_out": -0.1519
+    },
+    {
+     "x_bodyId": 533359,
+     "x_type": "LTe41",
+     "x_side": "L",
+     "w_in": 0.0007,
+     "w_out": 0.1227
+    },
+    {
+     "x_bodyId": 10432,
+     "x_type": "OA-AL2b1",
+     "x_side": "L",
+     "w_in": 0.0065,
+     "w_out": 0.0873
+    },
+    {
+     "x_bodyId": 11785,
+     "x_type": "MBON33",
+     "x_side": "L",
+     "w_in": 0.0002,
+     "w_out": 0.0619
+    }
+   ]
+  },
+  "LP_direct_to_MBON": {
+   "edges": 1,
+   "sumW": 0.0002,
+   "absW": 0.0002,
+   "posW": 0.0002,
+   "negW": 0.0,
+   "pos_edges": 1,
+   "neg_edges": 0
+  },
+  "LP_2hop_to_MBON": {
+   "n_intermediate": 146,
+   "n_path_edges": 146,
+   "sum_w_in": 1.762,
+   "sum_w_out": 0.4851,
+   "top": [
+    {
+     "x_bodyId": 529023,
+     "x_type": "CL303",
+     "x_side": "R",
+     "w_in": 0.001,
+     "w_out": 0.1977
+    },
+    {
+     "x_bodyId": 12832,
+     "x_type": "CL303",
+     "x_side": "L",
+     "w_in": 0.0002,
+     "w_out": 0.1742
+    },
+    {
+     "x_bodyId": 13706,
+     "x_type": "LT85",
+     "x_side": "L",
+     "w_in": 0.0013,
+     "w_out": 0.0204
+    },
+    {
+     "x_bodyId": 19122,
+     "x_type": "LT85",
+     "x_side": "R",
+     "w_in": 0.0006,
+     "w_out": 0.0151
+    },
+    {
+     "x_bodyId": 15557,
+     "x_type": "AVLP705m",
+     "x_side": "L",
+     "w_in": 0.0004,
+     "w_out": 0.0094
+    },
+    {
+     "x_bodyId": 11785,
+     "x_type": "MBON33",
+     "x_side": "L",
+     "w_in": 0.0002,
+     "w_out": 0.0067
+    },
+    {
+     "x_bodyId": 24034,
+     "x_type": "LTe11",
+     "x_side": "R",
+     "w_in": 0.001,
+     "w_out": 0.0063
+    },
+    {
+     "x_bodyId": 12120,
+     "x_type": "AVLP316",
+     "x_side": "R",
+     "w_in": 0.0089,
+     "w_out": 0.0051
+    }
+   ]
+  },
+  "LP_direct_to_DAN": {
+   "edges": 0,
+   "sumW": 0.0,
+   "absW": 0.0,
+   "posW": 0.0,
+   "negW": 0.0,
+   "pos_edges": 0,
+   "neg_edges": 0
+  },
+  "LP_2hop_to_DAN": {
+   "n_intermediate": 109,
+   "n_path_edges": 109,
+   "sum_w_in": 1.2037,
+   "sum_w_out": 0.7543,
+   "top": [
+    {
+     "x_bodyId": 11785,
+     "x_type": "MBON33",
+     "x_side": "L",
+     "w_in": 0.0002,
+     "w_out": 0.2107
+    },
+    {
+     "x_bodyId": 12351,
+     "x_type": "M_spPN4t9",
+     "x_side": "L",
+     "w_in": 0.0036,
+     "w_out": 0.2079
+    },
+    {
+     "x_bodyId": 529023,
+     "x_type": "CL303",
+     "x_side": "R",
+     "w_in": 0.001,
+     "w_out": 0.0716
+    },
+    {
+     "x_bodyId": 12832,
+     "x_type": "CL303",
+     "x_side": "L",
+     "w_in": 0.0002,
+     "w_out": 0.0645
+    },
+    {
+     "x_bodyId": 19659,
+     "x_type": "LC10a",
+     "x_side": "L",
+     "w_in": 0.0015,
+     "w_out": 0.0175
+    },
+    {
+     "x_bodyId": 15557,
+     "x_type": "AVLP705m",
+     "x_side": "L",
+     "w_in": 0.0004,
+     "w_out": 0.0171
+    },
+    {
+     "x_bodyId": 29744,
+     "x_type": "LC10a",
+     "x_side": "R",
+     "w_in": 0.001,
+     "w_out": 0.0164
+    },
+    {
+     "x_bodyId": 13616,
+     "x_type": "AVLP504",
+     "x_side": "L",
+     "w_in": 0.0003,
+     "w_out": 0.0164
+    }
+   ]
+  },
+  "MBON_direct_to_DN": {
+   "edges": 409,
+   "sumW": 0.2581,
+   "absW": 0.8459,
+   "posW": 0.552,
+   "negW": -0.2939,
+   "pos_edges": 206,
+   "neg_edges": 203
+  },
+  "MBON_2hop_to_DN": {
+   "n_intermediate": 5538,
+   "n_path_edges": 5538,
+   "sum_w_in": -1.0816,
+   "sum_w_out": 54.0932,
+   "top": [
+    {
+     "x_bodyId": 10069,
+     "x_type": "AN_multi_28",
+     "x_side": "R",
+     "w_in": 0.0011,
+     "w_out": 2.6985
+    },
+    {
+     "x_bodyId": 10394,
+     "x_type": "DNg98",
+     "x_side": "L",
+     "w_in": 0.0001,
+     "w_out": -1.749
+    },
+    {
+     "x_bodyId": 10746,
+     "x_type": "CB2177",
+     "x_side": "L",
+     "w_in": 0.0005,
+     "w_out": -1.001
+    },
+    {
+     "x_bodyId": 10840,
+     "x_type": "AN_multi_14",
+     "x_side": "R",
+     "w_in": 0.0003,
+     "w_out": 0.9502
+    },
+    {
+     "x_bodyId": 10680,
+     "x_type": "DNp48",
+     "x_side": "L",
+     "w_in": 0.0021,
+     "w_out": 0.7562
+    },
+    {
+     "x_bodyId": 10823,
+     "x_type": "DNp48",
+     "x_side": "R",
+     "w_in": 0.0021,
+     "w_out": 0.69
+    },
+    {
+     "x_bodyId": 10490,
+     "x_type": "CB4202",
+     "x_side": "M",
+     "w_in": 0.0003,
+     "w_out": 0.6506
+    },
+    {
+     "x_bodyId": 11261,
+     "x_type": "DNp54",
+     "x_side": "L",
+     "w_in": 0.0012,
+     "w_out": -0.6327
+    }
+   ]
+  },
+  "KC_direct_to_DN": {
+   "edges": 152,
+   "sumW": 0.0805,
+   "absW": 0.0805,
+   "posW": 0.0805,
+   "negW": 0.0,
+   "pos_edges": 152,
+   "neg_edges": 0
+  },
+  "KC_2hop_to_DN": {
+   "n_intermediate": 1544,
+   "n_path_edges": 1544,
+   "sum_w_in": 142.2935,
+   "sum_w_out": 9.6608,
+   "top": [
+    {
+     "x_bodyId": 10005,
+     "x_type": "AOTU019",
+     "x_side": "R",
+     "w_in": 0.0004,
+     "w_out": -0.4638
+    },
+    {
+     "x_bodyId": 10070,
+     "x_type": "AOTU019",
+     "x_side": "L",
+     "w_in": 0.0001,
+     "w_out": -0.4602
+    },
+    {
+     "x_bodyId": 18056,
+     "x_type": "LAL197",
+     "x_side": "R",
+     "w_in": 0.0012,
+     "w_out": 0.4045
+    },
+    {
+     "x_bodyId": 10347,
+     "x_type": "LHPV6q1",
+     "x_side": "L",
+     "w_in": 0.0001,
+     "w_out": 0.393
+    },
+    {
+     "x_bodyId": 10508,
+     "x_type": "CB0802",
+     "x_side": "R",
+     "w_in": 0.0003,
+     "w_out": -0.3395
+    },
+    {
+     "x_bodyId": 10185,
+     "x_type": "OA-VUMa8",
+     "x_side": "M",
+     "w_in": 0.0001,
+     "w_out": 0.3362
+    },
+    {
+     "x_bodyId": 11477,
+     "x_type": "LHPV6q1",
+     "x_side": "R",
+     "w_in": 0.0001,
+     "w_out": 0.3311
+    },
+    {
+     "x_bodyId": 519624,
+     "x_type": "DNa03",
+     "x_side": "L",
+     "w_in": 0.0001,
+     "w_out": 0.311
+    }
+   ]
+  },
+  "KC_to_MBON": {
+   "edges": 61210,
+   "sumW": 56.1782,
+   "absW": 56.1782,
+   "posW": 56.1782,
+   "negW": 0.0,
+   "pos_edges": 61210,
+   "neg_edges": 0
+  },
+  "DAN_to_KC": {
+   "edges": 129113,
+   "sumW": 423.4738,
+   "absW": 423.4738,
+   "posW": 423.4738,
+   "negW": 0.0,
+   "pos_edges": 129113,
+   "neg_edges": 0
+  }
+ },
+ "pomdp": {
+  "student_inputs": [
+   "五路 ToF 距离",
+   "其时间变化",
+   "内部神经状态",
+   "自身运动指令反馈"
+  ],
+  "variable_goal_note": "若目标是**可变的**(不同出口)，学生**无任何目标标识输入** → **目标不可辨识**：同一 ToF 历史在不同目标下应产生不同动作，但输入完全相同。",
+  "not_identifiable": [
+   "目标身份/位置(无输入)",
+   "全局朝向(仅局部 ToF 不可定)",
+   "已探索/未探索",
+   "门后/走廊尽头的可达性",
+   "死胡同 vs 环路(局部相似)"
+  ],
+  "implication": "固定目标且初始条件可控时或可用**内部状态**隐式编码；**可变目标**则**信息不可辨识**——在禁止外部目标/航向输入的前提下，不能假定学生可复现全图教师。",
+  "scope": "仅**信息论**陈述，不据此断言生物不可行，也不批准任何外部目标注入。"
+ },
+ "provenance": {
+  "source": "loop/p91b1.json (commit)",
+  "ms_per_step_matches_original_2f12217": true,
+  "ms_per_step": {
+   "50": 549.7,
+   "100": 793.2,
+   "500": 3611.9,
+   "2000": 12883.9
+  },
+  "remeasure_present_and_separate": true,
+  "remeasure": {
+   "50": 583.9,
+   "100": 998.6,
+   "500": 4166.2,
+   "2000": 14977.8
+  },
+  "traced_peak_mem_present": true,
+  "confused": false,
+  "verdict": "**未混淆**：ms_per_step=原始 2f12217 测量；remeasure 另存独立字段；traced_peak_mem 为 eb47a58 增补"
+ },
+ "verdict": {
+  "verdict": "NO-GO（维持）",
+  "evidence_levels": {
+   "L1_direct_absent": "LPLC2/LC4 直接→学习回路 Σ|w|=0.0002（≈0）—— **直接缺失**（数据支持，强）",
+   "L2_indirect": "2 跳候选中间神经元合计 n=311（需看逐条权重；**间接存在≠功能有效**）",
+   "L3_MB_to_DN": "MBON→DN 边 409 Σw 0.2581 Σ|w| 0.8459 (正 0.552/负 -0.2939)；KC→DN 边 152 Σ|w| 0.0805 —— **Σw 小不足以单独断言功能弱**，须结合 Σ|w| 与 2 跳",
+   "L4_g_unit": "绝对电导 g_unit 未定标（P9-1b1 科学 NO-GO）—— **数据缺失**"
+  },
+  "overturned": false,
+  "why": "直接 ToF→学习回路缺失(数据支持)；但 P10-0 以 **Σw** 断言'MB→DN 很弱'**表述过强**，本轮改为**并列 Σ|w|/正负/间接**。综合 **直接缺失 + g_unit 未定标**仍为 NO-GO；",
+  "remaining_blockers": [
+   "ToF(当前靶)→学习回路 直接Σ|w|≈0（未改靶）",
+   "g_unit 未定标",
+   "可变目标信息不可辨识"
+  ],
+  "note": "不改变感觉靶、不建突触、不找第二机制；Dijkstra 仅未来训练期教师。"
+ }
+}
