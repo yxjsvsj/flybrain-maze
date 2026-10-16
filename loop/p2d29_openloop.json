@@ -1,0 +1,119 @@
+{
+ "verdict": "FAIL_OFFLINE",
+ "pop_dir": 8,
+ "ns_dir": 8,
+ "n": 8,
+ "pop_false_mean": 0.4736,
+ "ns_false_mean": 0.4537,
+ "reduction": 0.042,
+ "ns_miss": 1,
+ "gate": {
+  "REDUCE_MIN": 0.3
+ },
+ "per": [
+  {
+   "seed": 64,
+   "side": "left",
+   "expect_sign": -1,
+   "pop_stim": -0.8884,
+   "pop_false": 0.5608,
+   "pop_miss": false,
+   "pop_decay": 0.7355,
+   "ns_stim": -0.7228,
+   "ns_false": 0.5965,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 64,
+   "side": "right",
+   "expect_sign": 1,
+   "pop_stim": 0.6346,
+   "pop_false": 0.5279,
+   "pop_miss": false,
+   "pop_decay": 0.6213,
+   "ns_stim": 0.2892,
+   "ns_false": 0.3573,
+   "ns_miss": true,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 101,
+   "side": "left",
+   "expect_sign": -1,
+   "pop_stim": -0.6615,
+   "pop_false": 0.4672,
+   "pop_miss": false,
+   "pop_decay": 0.9982,
+   "ns_stim": -0.454,
+   "ns_false": 0.4425,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 101,
+   "side": "right",
+   "expect_sign": 1,
+   "pop_stim": 0.8375,
+   "pop_false": 0.4391,
+   "pop_miss": false,
+   "pop_decay": 0.4964,
+   "ns_stim": 0.5779,
+   "ns_false": 0.3591,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 202,
+   "side": "left",
+   "expect_sign": -1,
+   "pop_stim": -0.8307,
+   "pop_false": 0.4315,
+   "pop_miss": false,
+   "pop_decay": 0.7388,
+   "ns_stim": -0.5878,
+   "ns_false": 0.3389,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 202,
+   "side": "right",
+   "expect_sign": 1,
+   "pop_stim": 0.8759,
+   "pop_false": 0.452,
+   "pop_miss": false,
+   "pop_decay": 0.9892,
+   "ns_stim": 0.6312,
+   "ns_false": 0.5229,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 303,
+   "side": "left",
+   "expect_sign": -1,
+   "pop_stim": -0.9103,
+   "pop_false": 0.3618,
+   "pop_miss": false,
+   "pop_decay": 0.5116,
+   "ns_stim": -0.7162,
+   "ns_false": 0.3825,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  },
+  {
+   "seed": 303,
+   "side": "right",
+   "expect_sign": 1,
+   "pop_stim": 0.6716,
+   "pop_false": 0.5484,
+   "pop_miss": false,
+   "pop_decay": 0.7125,
+   "ns_stim": 0.3794,
+   "ns_false": 0.6302,
+   "ns_miss": false,
+   "ns_decay": 1.0
+  }
+ ]
+}

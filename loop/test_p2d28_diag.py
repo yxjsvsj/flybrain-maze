@@ -13,11 +13,12 @@ def check(label, ok):
     print(f"  [{'PASS' if ok else 'FAIL'}] {label}")
 
 
-def rec(t, dminF, turn, sizeLR, theta, v=0.0, gd=99, Dmb=0.3, front=False, cev=0, turn_pre=None):
+def rec(t, dminF, turn, sizeLR, theta, v=0.0, gd=99, Dmb=0.3, front=False, cev=0, turn_pre=None,
+        tof_FL=1000.0, tof_FR=1000.0):
     return {"t": t, "dmin_F": dminF, "turn": turn, "size_L": sizeLR, "size_R": 0.0,
             "theta": theta, "v": v, "gd": gd, "Dmb": Dmb, "front": front, "cev": cev,
-            "need_deg": 0.0, "D": Dmb, "om": turn,
-            "turn_pre": (turn * 1.5 if turn_pre is None else turn_pre)}
+            "need_deg": 0.0, "D": Dmb, "om": turn, "tof_FL": tof_FL, "tof_FR": tof_FR,
+            "tof_F": dminF * 1000, "turn_pre": (turn * 1.5 if turn_pre is None else turn_pre)}
 
 
 def main() -> int:
@@ -35,7 +36,7 @@ def main() -> int:
     e = events(recs, dt)
     check("approach detected", e["approach"] == 49 or (e["approach"] is not None and recs[e["approach"]]["dmin_F"] < 1.2))
     check("turn_start detected", e["turn_start"] == 50)
-    check("lateral_clear detected", e["lateral_clear"] == 250)
+    check("lateral_diff_zero detected", e["lateral_diff_zero"] == 250)
     check("forward_resume detected", e["forward_resume"] is not None)
     m = metrics(recs, dt)
     check("saturated during turn phase", m["frac_sat_after_turn"] > 0.3)
@@ -48,16 +49,17 @@ def main() -> int:
     for i in range(50):
         recs2.append(rec(tt, 2.0, 0.0, 0.0, 0.0)); tt += dt
     for i in range(500):
-        recs2.append(rec(tt, 0.4, 1.0, 0.6, i * 0.02, v=0.0, Dmb=0.4)); tt += dt  # 恒饱和, 0.6侧差, Dmb大
-    recs2.append(rec(tt, 0.4, 0.0, 0.6, 10.0, v=0.0, Dmb=0.4)); tt += dt         # 命令回零但 theta 已大
+        recs2.append(rec(tt, 0.4, 1.0, 0.6, i * 0.02, v=0.0, Dmb=0.4, tof_FL=300, tof_FR=300)); tt += dt
+    recs2.append(rec(tt, 0.4, 0.0, 0.6, 10.0, v=0.0, Dmb=0.4, tof_FL=300, tof_FR=300)); tt += dt
     for i in range(30):
-        recs2.append(rec(tt, 0.4, 0.0, 0.6, 12.0 + i * 0.05, v=0.0, Dmb=0.4)); tt += dt  # 回零后继续转
+        recs2.append(rec(tt, 0.4, 0.0, 0.6, 12.0 + i * 0.05, v=0.0, Dmb=0.4, tof_FL=300, tof_FR=300)); tt += dt
     m2 = metrics(recs2, dt)
     tags = attribute(m2, recs2)
     check("failure flagged saturated (M)", "M" in tags)
     check("failure flagged D not back (N)", "N" in tags)
-    check("failure flagged side not clearing (S)", "S" in tags)
-    check("failure flagged rotation after zero (V)", "V" in tags)
+    check("failure flagged side present (S)", "S" in tags)
+    check("vehicle response NOT an independent fault (no V)", "V" not in tags)
+    check("sign-flips-per-second field present", "turn_sign_flips_per_s" in m2)
 
     # 无证据 -> U
     recs3 = [rec(i * dt, 3.0, 0.0, 0.0, 0.0) for i in range(10)]

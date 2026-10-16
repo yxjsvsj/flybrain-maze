@@ -1,0 +1,35 @@
+{
+ "pop_false_mean": 0.4459,
+ "ns_false_mean": 0.163,
+ "reduction": 0.634,
+ "per": [
+  {
+   "seed": 64,
+   "pop_false": 0.4538,
+   "ns_false": 0.1374,
+   "pop_flips": 130,
+   "ns_flips": 16
+  },
+  {
+   "seed": 101,
+   "pop_false": 0.4324,
+   "ns_false": 0.124,
+   "pop_flips": 95,
+   "ns_flips": 21
+  },
+  {
+   "seed": 202,
+   "pop_false": 0.4197,
+   "ns_false": 0.1872,
+   "pop_flips": 115,
+   "ns_flips": 6
+  },
+  {
+   "seed": 303,
+   "pop_false": 0.4776,
+   "ns_false": 0.2035,
+   "pop_flips": 109,
+   "ns_flips": 10
+  }
+ ]
+}

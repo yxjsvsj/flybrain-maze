@@ -138,14 +138,18 @@ def events(recs, dt):
     ev["approach"] = idx_first(recs, lambda r: r["dmin_F"] < D_FAR)
     ev["turn_start"] = idx_first(recs, lambda r: abs(r["turn"]) >= STRONG)
     ts = ev["turn_start"]
+    # 注意：侧别差首次归零**不等于**"障碍真正清除"——只记为 lateral_diff_zero（离线参考）。
     if ts is not None:
-        ev["lateral_clear"] = next((i for i in range(ts, len(recs))
-                                    if abs(recs[i]["size_L"] - recs[i]["size_R"]) < 0.05), None)
+        ev["lateral_diff_zero"] = next((i for i in range(ts, len(recs))
+                                        if abs(recs[i]["size_L"] - recs[i]["size_R"]) < 0.05), None)
         ev["forward_resume"] = next((i for i in range(ts, len(recs))
                                      if abs(recs[i]["turn"]) < 0.1 and recs[i]["v"] > 0.02), None)
     else:
-        ev["lateral_clear"] = ev["forward_resume"] = None
+        ev["lateral_diff_zero"] = ev["forward_resume"] = None
     return ev
+
+
+SIDE_CLOSE_MM = 400.0     # 侧向 ToF < 该值 = 该侧近障（mm）
 
 
 def metrics(recs, dt):
@@ -164,8 +168,12 @@ def metrics(recs, dt):
            "total_heading_deg": round(float(np.degrees(np.unwrap(th)[-1] - np.unwrap(th)[0])), 1),
            "approach_t": round(recs[ev["approach"]]["t"], 2) if ev["approach"] is not None else None,
            "turn_start_t": round(recs[ts]["t"], 2) if ts is not None else None,
-           "lateral_clear_t": round(recs[ev["lateral_clear"]]["t"], 2) if ev["lateral_clear"] is not None else None,
-           "forward_resume_t": round(recs[ev["forward_resume"]]["t"], 2) if ev["forward_resume"] is not None else None}
+           "lateral_diff_zero_t": round(recs[ev["lateral_diff_zero"]]["t"], 2) if ev["lateral_diff_zero"] is not None else None,
+           "forward_resume_t": round(recs[ev["forward_resume"]]["t"], 2) if ev["forward_resume"] is not None else None,
+           "side_near_frac_L": round(float(np.mean([r["tof_FL"] < SIDE_CLOSE_MM for r in recs
+                                                    if r["tof_FL"] == r["tof_FL"]])), 3),
+           "side_near_frac_R": round(float(np.mean([r["tof_FR"] < SIDE_CLOSE_MM for r in recs
+                                                    if r["tof_FR"] == r["tof_FR"]])), 3)}
     if ts is not None:
         seg = slice(ts, len(recs))
         out["frac_sat_after_turn"] = round(float(np.mean(np.abs(turn[seg]) >= SAT)), 3)
@@ -193,7 +201,8 @@ def metrics(recs, dt):
     # 振荡证据：神经转向命令 / 侧别感觉 的换号率；剪裁前幅度；D 波动
     T = recs[-1]["t"] if recs else 1.0
     out["turn_sign_changes"] = int(np.sum(np.diff(np.sign(turn)) != 0))
-    out["turn_osc_hz"] = round(out["turn_sign_changes"] / T, 2)
+    # 口径更正：这是**每秒换号率**（不是"频率/Hz 的谐波"）。
+    out["turn_sign_flips_per_s"] = round(out["turn_sign_changes"] / T, 2)
     out["sizeLR_sign_changes"] = int(np.sum(np.diff(np.sign(sizeLR)) != 0))
     out["frac_sat_any"] = round(float(np.mean(np.abs(turn) >= SAT)), 3)
     pre = np.array([r["turn_pre"] for r in recs])
@@ -209,23 +218,24 @@ ATTRIB = {"S": "感觉输入持续/反复触发", "N": "神经信号持续或背
 
 
 def attribute(met, recs):
-    """基于证据归因（可多标签；无证据给 U）。**只用离线记录**。"""
+    """基于证据归因（可多标签；无证据给 U）。**只用离线记录**。
+
+    口径更正：**车辆响应不是独立故障**——它是"神经命令 → 运动学"的下游**症状**，
+    因此**不再**列为独立失效标签（删除旧 V 标签）。
+    """
     tags = []
-    # N：神经转向命令快速振荡（背景/无稳定状态）或 D-b0 未回背景
-    if met.get("turn_osc_hz", 0.0) >= 2.0:
+    # N：神经转向命令快速换号（背景/无稳定状态）或 D-b0 未回背景
+    if met.get("turn_sign_flips_per_s", 0.0) >= 2.0:
         tags.append("N")
     elif met.get("Dmb_min_after_turn") is not None and met["Dmb_min_after_turn"] > 0.05:
         tags.append("N")
     # M：gain=8 把小幅 D（std~0.08）放大到剪裁饱和——剪裁前 |turn|>1 出现在可观比例
     if met.get("frac_preclip_over1", 0.0) > 0.05:
         tags.append("M")
-    # S：侧向障碍始终未减（感觉持续）。注意：sizeLR 换号在车辆自旋时会**混入**，故不作为
-    #    S 的独立证据（证据见 bg 段：无遮挡时振荡仍存在 → 非感觉驱动）。
-    if met.get("lateral_clear_t") is None and met.get("approach_t") is not None:
+    # S：侧向障碍持续接近（用 ToF 近障占比，而非"侧别差归零"）。大小差异受自旋混入，不作独立证据。
+    if (met.get("side_near_frac_L", 0.0) > 0.5 or met.get("side_near_frac_R", 0.0) > 0.5) \
+            and met.get("approach_t") is not None:
         tags.append("S")
-    # V：车辆累计转角巨大（持续旋转）
-    if abs(met.get("total_heading_deg", 0.0)) > 360.0:
-        tags.append("V")
     if not tags:
         tags.append("U")
     return tags
@@ -267,8 +277,8 @@ def reanalyze(outdir, dt=0.02):
               ensure_ascii=False, indent=1)
     # 逐事件证据表
     ev_cols = ["seed", "scenario", "reach", "T", "bestD", "approach_t", "turn_start_t",
-               "lateral_clear_t", "forward_resume_t", "total_heading_deg", "net_omega",
-               "net_turn", "turn_osc_hz", "frac_sat_any", "frac_preclip_over1", "D_std",
+               "lateral_diff_zero_t", "forward_resume_t", "side_near_frac_L", "side_near_frac_R", "total_heading_deg", "net_omega",
+               "net_turn", "turn_sign_flips_per_s", "frac_sat_any", "frac_preclip_over1", "D_std",
                "bg_turn_absmean", "corr_sizeLR_turn", "attrib"]
     with open(os.path.join(HERE, "p2d28_events.csv"), "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=ev_cols, lineterminator="\n"); w.writeheader()
@@ -318,7 +328,7 @@ def main(argv=None) -> int:
         res = reanalyze(a.outdir)
         for m in res:
             print(f"{m['seed']:5d} {m['scenario']:10s} reach={m['reach']!s:1s} "
-                  f"headΔ={m['total_heading_deg']:+7.1f} osc={m['turn_osc_hz']}Hz "
+                  f"headΔ={m['total_heading_deg']:+7.1f} flips/s={m['turn_sign_flips_per_s']} "
                   f"sat={m['frac_sat_any']} preclip>1={m['frac_preclip_over1']} "
                   f"netΩ={m['net_omega']} D_std={m['D_std']} attrib={m['attrib']}")
         plot_compare(a.outdir)
@@ -348,7 +358,7 @@ def main(argv=None) -> int:
             print(f"{sd:5d} {sc:10s} reach={str(s['reach'])[:1]} bestD={s['bestD']:3d} "
                   f"T={met['T']:5.2f} headΔ={met['total_heading_deg']:+7.1f} "
                   f"sat={met.get('frac_sat_after_turn')} Dmb_min={met.get('Dmb_min_after_turn')} "
-                  f"lateral_clear={met['lateral_clear_t']} attrib={met['attrib']}")
+                  f"lateral_diff_zero={met['lateral_diff_zero_t']} attrib={met['attrib']}")
     json.dump(all_met, open(os.path.join(HERE, "p2d28_metrics.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
     print("wrote p2d28_metrics.json + p2d28_out/trace_*.csv")
