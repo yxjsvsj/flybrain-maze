@@ -9,8 +9,8 @@ import sys
 
 import numpy as np
 
-from loop.ring_spatial import (N_MIN, R_MIN, angles, bootstrap_angle, circ_diff_deg,
-                               circ_stats, eb_frame, n_modes, split_half)
+from loop.ring_spatial import (N_MIN, R_MIN, angles, bootstrap_mean_angle, circ_diff_deg,
+                               circ_stats, eb_frame, n_modes, shortest_arc_ci, split_half)
 
 RESULTS = []
 
@@ -42,9 +42,40 @@ def main() -> int:
     m90 = circ_stats(angles(ring_cell(90), fr))["mean"]
     check("relative 0 vs 90 preserved (~90)", abs(circ_diff_deg(m0, m90) - 90) < 6)
     check("unimodal (1 mode)", n_modes(a) == 1)
-    bo = bootstrap_angle(a)
-    check("bootstrap CI small", bo["ci_half_deg"] < 10)
+    bo = bootstrap_mean_angle(a)
+    check("bootstrap uncertainty small (mean stable)", bo["boot_circ_std_deg"] < 10)
+    check("95% CI half-width small", bo["ci95_half_deg"] < 10)
     check("split-half stable", split_half(a) < 10)
+
+    # ---- 关键区分：宽分布 vs 均值稳定 ----
+    # (a) 很宽但单峰的突触分布（spread 60°）：raw 圆标准差大，但均值角估计仍稳定
+    wide = angles(ring_cell(20, 2000, spread_deg=60), fr)
+    wst = circ_stats(wide); wbo = bootstrap_mean_angle(wide)
+    check("wide spread -> large raw circ std", np.degrees(wst["circ_std"]) > 45)
+    check("wide spread -> mean still stable (boot std small)", wbo["boot_circ_std_deg"] < 3)
+    check("wide spread -> CI narrow vs raw std",
+          wbo["ci95_half_deg"] < np.degrees(wst["circ_std"]))
+
+    # (b) 小样本：均值不确定性应变大（相对大样本）
+    small = angles(ring_cell(20, 6, spread_deg=60), fr)
+    sbo = bootstrap_mean_angle(small)
+    check("small sample -> larger mean uncertainty", sbo["boot_circ_std_deg"] > wbo["boot_circ_std_deg"])
+
+    # (c) 环绕 ±180°：直接测圆统计的跨分支（不经过任意符号的网格帧）
+    wrap_raw = np.radians(np.array([179.0, -179.0, 178.0, -178.0, 180.0]))
+    check("wrap near +-180 handled", circ_diff_deg(circ_stats(wrap_raw)["mean"], np.radians(180)) < 3)
+
+    # (d) 双峰：raw 圆标准差大且峰数>1
+    bim = angles(np.r_[ring_cell(0, 300), ring_cell(180, 300)], fr)
+    check("bimodal -> large raw std", np.degrees(circ_stats(bim)["circ_std"]) > 50)
+    check("bimodal -> >1 mode", n_modes(bim) > 1)
+
+    # (e) CI 定义：最短弧（跨 0° 分支时 lo>hi 也正确；只查弧宽）
+    lo, hi = shortest_arc_ci(np.radians([350, 355, 0, 5, 10, 300]), level=0.8)
+    check("shortest-arc CI width small", ((hi - lo) % (2 * np.pi)) <= np.radians(90))
+    # 弧确实覆盖那个簇（350..10）：把这些角落回该弧内
+    arc = ((np.radians([350, 355, 0, 5, 10]) - lo) % (2 * np.pi))
+    check("shortest-arc CI covers the cluster", (arc <= ((hi - lo) % (2 * np.pi)) + 1e-9).all())
 
     # 均匀分布 -> 无效
     uni = angles(rng.uniform(-np.pi, np.pi, 400).reshape(-1, 1) * [1, 1, 0]

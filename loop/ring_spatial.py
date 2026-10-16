@@ -34,7 +34,8 @@ NBINS = 24
 MODE_FRAC = 0.25
 
 CELL_COLS = ["bodyId", "group", "n_total", "n_EB", "EB_ratio", "n_pre_EB", "n_post_EB",
-             "circ_mean_deg", "R", "n_modes", "ci_half_deg", "split_half_diff_deg",
+             "circ_mean_deg", "R", "raw_circ_std_deg", "n_modes", "boot_circ_std_deg",
+             "ci95_lo_deg", "ci95_hi_deg", "ci95_half_deg", "split_half_diff_deg",
              "pre_mean_deg", "post_mean_deg", "valid", "reason"]
 
 
@@ -68,19 +69,47 @@ def circ_stats(theta):
     return {"n": n, "mean": mean, "R": R, "circ_std": csd}
 
 
-def bootstrap_angle(theta, B=BOOT_B, seed=BOOT_SEED):
+def shortest_arc_ci(means_rad, level=0.95):
+    """圆上最短包含 `level` 比例的弧；(lo, hi) 弧度，宽 = 最短弧长。"""
+    a = np.sort(np.mod(np.asarray(means_rad, float), 2 * np.pi))
+    n = len(a)
+    if n == 0:
+        return float("nan"), float("nan")
+    k = min(n - 1, max(1, int(np.floor(level * n))))
+    best = (float("inf"), a[0], a[0])
+    for i in range(n):
+        j = (i + k) % n
+        span = (a[j] - a[i]) % (2 * np.pi)
+        if best is None or span < best[0]:
+            best = (span, a[i], a[j])
+    return float(best[1]), float(best[2])
+
+
+def bootstrap_mean_angle(theta, B=BOOT_B, seed=BOOT_SEED, level=0.95):
+    """**bootstrap 均值角的不确定性**（与原始突触角度分布的圆标准差**区分**）。
+
+    实现：B 次有放回重采样，每次算该样本的**圆均值角** `m_b`；再对这 B 个 `m_b`：
+      - `boot_circ_std_deg` = 其圆标准差（= 阈值 `UNC_MAX_DEG` 所门的"bootstrap 不确定性"）；
+      - `ci95_lo/hi/half_deg` = 这 B 个 `m_b` 上**最短 95% 弧**的端点与半宽（明确的 CI 定义）。
+    **上一版把 `boot_circ_std_deg` 误命名为 `ci_half_deg`**；本版分开命名，不再混用。
+    """
     theta = np.asarray(theta, float)
     n = len(theta)
     if n < 2:
-        return {"mean": float("nan"), "ci_half_deg": float("inf"), "R": 0.0}
+        return {"mean": float("nan"), "boot_circ_std_deg": float("inf"),
+                "ci95_lo_deg": float("nan"), "ci95_hi_deg": float("nan"),
+                "ci95_half_deg": float("inf"), "B": B, "level": level}
     rng = np.random.default_rng(seed)
-    idx = rng.integers(0, n, size=(B, n))
-    st = theta[idx]                                            # (B, n)
-    C = np.cos(st).mean(1); S = np.sin(st).mean(1)
-    m = float(np.arctan2(S.mean(), C.mean()))
-    R = float(np.hypot(C.mean(), S.mean()))
-    ci = float(np.degrees(np.sqrt(-2 * np.log(max(R, 1e-12)))))
-    return {"mean": m, "ci_half_deg": ci, "R": R}
+    st = theta[rng.integers(0, n, size=(B, n))]                # (B, n)
+    means = np.arctan2(np.sin(st).mean(1), np.cos(st).mean(1))  # 逐次 bootstrap 圆均值角
+    Cb = float(np.cos(means).mean()); Sb = float(np.sin(means).mean())
+    R = float(np.hypot(Cb, Sb))
+    boot_std = float(np.degrees(np.sqrt(-2 * np.log(R)))) if R > 1e-12 else float("inf")
+    lo, hi = shortest_arc_ci(means, level)
+    half = float(np.degrees(((hi - lo) % (2 * np.pi)) / 2))
+    return {"mean": float(np.arctan2(Sb, Cb)), "boot_circ_std_deg": boot_std,
+            "ci95_lo_deg": float(np.degrees(lo)), "ci95_hi_deg": float(np.degrees(hi)),
+            "ci95_half_deg": half, "B": B, "level": level}
 
 
 def n_modes(theta, nbins=NBINS, frac=MODE_FRAC, merge_deg=60.0):
@@ -124,9 +153,10 @@ def split_half(theta, seed=SPLIT_SEED):
 
 
 def cell_quality(theta_eb, n_total):
-    st = circ_stats(theta_eb)
+    st = circ_stats(theta_eb)                                  # 原始突触角度分布
+    raw_std_deg = float(np.degrees(st["circ_std"]))            # 分布圆标准差（宽窄）
     ratio = (st["n"] / n_total) if n_total else 0.0
-    bo = bootstrap_angle(theta_eb)
+    bo = bootstrap_mean_angle(theta_eb)                        # 均值角估计的不确定性
     md = n_modes(theta_eb)
     sh = split_half(theta_eb)
     reasons = []
@@ -138,10 +168,13 @@ def cell_quality(theta_eb, n_total):
         reasons.append(f"R<{R_MIN}")
     if md > MODE_MAX:
         reasons.append(f"multimodal({md})")
-    if bo["ci_half_deg"] > UNC_MAX_DEG:
-        reasons.append(f"ci>{UNC_MAX_DEG:g}")
+    if bo["boot_circ_std_deg"] > UNC_MAX_DEG:                  # 原门槛，门的是 bootstrap 不确定性
+        reasons.append(f"boot_std>{UNC_MAX_DEG:g}")
     return {"n_EB": st["n"], "EB_ratio": round(ratio, 4), "circ_mean": st["mean"],
-            "R": round(st["R"], 4), "n_modes": md, "ci_half_deg": round(bo["ci_half_deg"], 2),
+            "R": round(st["R"], 4), "raw_circ_std_deg": round(raw_std_deg, 2),
+            "n_modes": md, "boot_circ_std_deg": round(bo["boot_circ_std_deg"], 2),
+            "ci95_lo_deg": round(bo["ci95_lo_deg"], 2), "ci95_hi_deg": round(bo["ci95_hi_deg"], 2),
+            "ci95_half_deg": round(bo["ci95_half_deg"], 2),
             "split_half_diff_deg": round(sh, 2), "valid": not reasons,
             "reason": ";".join(reasons)}
 
@@ -187,7 +220,9 @@ def build(coords, frame, group_of):
             "n_EB": q["n_EB"], "EB_ratio": q["EB_ratio"],
             "n_pre_EB": int((m_eb & (kind == 0)).sum()), "n_post_EB": int((m_eb & (kind == 1)).sum()),
             "circ_mean_deg": round(float(np.degrees(q["circ_mean"])), 2) if q["n_EB"] else "",
-            "R": q["R"], "n_modes": q["n_modes"], "ci_half_deg": q["ci_half_deg"],
+            "R": q["R"], "raw_circ_std_deg": q["raw_circ_std_deg"], "n_modes": q["n_modes"],
+            "boot_circ_std_deg": q["boot_circ_std_deg"], "ci95_lo_deg": q["ci95_lo_deg"],
+            "ci95_hi_deg": q["ci95_hi_deg"], "ci95_half_deg": q["ci95_half_deg"],
             "split_half_diff_deg": q["split_half_diff_deg"],
             "pre_mean_deg": round(float(np.degrees(circ_stats(th_pre)["mean"])), 2) if len(th_pre) else "",
             "post_mean_deg": round(float(np.degrees(circ_stats(th_post)["mean"])), 2) if len(th_post) else "",

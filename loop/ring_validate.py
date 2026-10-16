@@ -51,7 +51,8 @@ def validate(epg_ids, epg_ang_deg, pen_by_group, W, idx_of, B=NULL_B, seed=NULL_
             for i in range(B):
                 perm = rng.permutation(ang)                     # 打乱 EPG↔角度
                 null[i] = weighted_circ(perm[m], cols)[0]
-            p = float((null >= obs).mean())
+            # 加一估计（Phipson-Smyth）：即使无置换 ≥ 观测，p 也不为 0
+            p = (1.0 + float((null >= obs).sum())) / (1.0 + B)
             recs.append({"bodyId": int(b), "n_epg_in": int(m.sum()), "R_w": round(obs, 4),
                          "p": round(p, 4), "wmean_deg": round(float(np.degrees(wm)), 2),
                          "null_med_Rw": round(float(np.median(null)), 4)})
