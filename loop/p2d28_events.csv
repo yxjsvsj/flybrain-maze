@@ -1,0 +1,7 @@
+seed,scenario,reach,T,bestD,approach_t,turn_start_t,lateral_clear_t,forward_resume_t,total_heading_deg,net_omega,net_turn,turn_osc_hz,frac_sat_any,frac_preclip_over1,D_std,bg_turn_absmean,corr_sizeLR_turn,attrib
+606,must_left,False,39.98,5,6.2,0.22,0.4,0.82,1694.9,0.74,0.2842,6.6,0.148,0.147,0.077,0.5233,-0.201,MNV
+606,must_right,False,39.98,7,6.1,0.26,0.5,0.96,1551.9,0.677,0.2604,7.13,0.117,0.117,0.0711,0.4858,-0.229,MNV
+808,must_left,False,39.98,5,4.7,0.0,0.2,0.82,-1300.4,-0.568,-0.2184,7.33,0.188,0.188,0.0907,0.5157,-0.309,MNV
+808,must_right,False,39.98,4,0.2,0.0,0.6,0.22,-1586.8,-0.693,-0.2669,6.7,0.198,0.198,0.0915,0.5771,-0.297,MNV
+1001,must_left,False,39.98,2,4.7,0.22,0.5,0.54,905.0,0.395,0.1521,6.48,0.129,0.129,0.0795,0.5065,-0.178,MNV
+1001,must_right,True,24.24,0,8.9,0.26,0.6,1.08,17.1,0.012,0.0041,7.76,0.119,0.119,0.0801,0.4599,-0.288,MN
