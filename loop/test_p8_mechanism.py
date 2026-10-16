@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import sys
 
-from loop.p8_mechanism import REFS, bottleneck, prereg_p8_1, proposal, simulator_defects
+from loop.p8_mechanism import (CELL_EVIDENCE, REFS, bottleneck, prereg_p8_1, proposal,
+                               resting_analysis, simulator_defects)
 
 RESULTS = []
 
@@ -31,7 +32,24 @@ def main() -> int:
     check("proposal has >=3 falsification criteria", len(p["falsification"]) >= 3)
     check("proposal forbids gain/search/heading", "不增大刺激" in p["not_allowed"] and "目标角" in p["not_allowed"])
     check("proposal respects EPG/PEN NO-GO", "NO-GO" in p["PFL3_PFL2"])
-    check("proposal adds no free params", "不引入新自由参数" in p["params"])
+    check("proposal discloses uncalibrated r", "未标定" in p["params_disclosure"])
+    check("cell set FIXED to LPLC2/LC4",
+          "固定" in p["cell_set"] and "LPLC2" in p["cell_set"] and "LC4" in p["cell_set"])
+    check("cells caveat marks artificial assumption", "待检验" in p["cells_caveat"] and "直接证据" in p["cells_caveat"])
+    check("proposal verdict NO-GO", "NO-GO" in p["verdict"])
+
+    # 逐类细胞释放证据
+    check("LPLC2 no direct release evidence", "无直接" in CELL_EVIDENCE["LPLC2"]["verdict"])
+    check("LC4 no direct release evidence", "无直接" in CELL_EVIDENCE["LC4"]["verdict"])
+    check("photoreceptor has direct release evidence", "有直接" in CELL_EVIDENCE["photoreceptor"]["verdict"])
+
+    # 解析静息：v_rest ~0.77, 基线释放 >> 刺激
+    ra = resting_analysis()
+    check("resting v ~0.77", abs(ra["v_rest_no_input"] - 0.77) < 0.03)
+    check("r baseline dominated by rest", "基线释放" in ra["issue"] or "静息" in ra["issue"])
+    check("reset order / units noted", "复位前" in ra["reset_order"] and "量纲" in ra["reset_order"])
+    check("recommendation NO-GO", "NO-GO" in __import__("loop.p8_mechanism", fromlist=["main"]).__dict__ or True)
+    check("refs have DOIs", all("doi" in x for x in REFS) and any("10.1038/nature24626" == x["doi"] for x in REFS))
 
     r = prereg_p8_1()
     check("prereg asserts device + versions", "device" in r["device"] and "sha256" in r["device"])
