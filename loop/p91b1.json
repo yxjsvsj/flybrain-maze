@@ -2,17 +2,17 @@
  "literature": [
   {
    "param": "R_in (input resistance)",
-   "value": "KC: 2.5±1 GΩ; PN: 598±69 MΩ; 胚胎中枢: 5.1±0.4 GΩ",
-   "cells": "Kenyon cells(P. americana); 触角叶 PN; 胚胎中枢神经元",
-   "paper": "J Neurophysiol 2009, 10.1152/jn.00183.2009; J Neurosci 29(19):6239, 10.1523/JNEUROSCI.1039-09.2009; J Neurosci 18(12):4673",
-   "use": "g_l=1/R_in ≈ 0.2–1.7 nS（**逐类型不同**）"
+   "value": "KC(P. americana): 2.5±1 GΩ; PN(Drosophila): 598±69 MΩ; 胚胎中枢(Drosophila): 5.1±0.4 GΩ",
+   "cells": "Kenyon cells = **P. americana(美洲大蠊,跨物种)**; 触角叶 PN / 胚胎中枢 = Drosophila",
+   "paper": "J Neurophysiol 2009, 10.1152/jn.00183.2009 (KC = **P. americana**); J Neurosci 29(19):6239, 10.1523/JNEUROSCI.1039-09.2009; J Neurosci 18(12):4673",
+   "use": "g_l=1/R_in ≈ 0.2–1.7 nS（**逐类型不同**）；KC 值属**跨物种外推**（非 Drosophila）"
   },
   {
    "param": "C_m (capacitance)",
-   "value": "KC: 2.7±0.8 pF; 胚胎: 2.1±0.15 pF (0.7–4.6); 2025 Cell TableS2: 0.9–5 pF",
-   "cells": "KC / 胚胎中枢 / 多类型(Drosophila)",
-   "paper": "10.1152/jn.00183.2009; J Neurosci 18(12):4673; Cell 2025 (10.1016/j.cell.2025.11.040)",
-   "use": "C ≈ 2–5 pF（小型中枢神经元量级）"
+   "value": "KC(P. americana): 2.7±0.8 pF; 胚胎(Drosophila): 2.1±0.15 pF (0.7–4.6); 2025 Cell TableS2(Drosophila): 0.9–5 pF",
+   "cells": "KC = **P. americana(跨物种)** / 胚胎中枢 / 多类型(Drosophila)",
+   "paper": "10.1152/jn.00183.2009 (KC = **P. americana**); J Neurosci 18(12):4673; Cell 2025 (10.1016/j.cell.2025.11.040)",
+   "use": "C ≈ 2–5 pF（小型中枢神经元量级）；KC 值属**跨物种外推**"
   },
   {
    "param": "tau_m = R_in*C",
@@ -23,10 +23,10 @@
   },
   {
    "param": "V_rest / V_th",
-   "value": "−53±9 / −47±6 mV (KC); PN V_rest≈−60",
-   "cells": "KC / PN",
-   "paper": "10.1152/jn.00183.2009; 10.1523/JNEUROSCI.1039-09.2009",
-   "use": "E_l≈−60、V_th≈−47 mV"
+   "value": "−53±9 / −47±6 mV (KC, **P. americana**); PN(Drosophila) V_rest≈−60",
+   "cells": "KC = **P. americana(跨物种)** / PN = Drosophila",
+   "paper": "10.1152/jn.00183.2009 (KC = **P. americana**); 10.1523/JNEUROSCI.1039-09.2009",
+   "use": "E_l≈−60、V_th≈−47 mV（KC 部分属**跨物种外推**）"
   },
   {
    "param": "E_exc (nAChR)",
@@ -45,9 +45,9 @@
   {
    "param": "tau_syn_e (nAChR mEPSC decay)",
    "value": "≈1.35–2 ms",
-   "cells": "KC / 培养胚胎神经元",
-   "paper": "Lee&O'Dowd 1999 (PMC6782340); PMC6740836",
-   "use": "EPSP 衰减常数"
+   "cells": "KC(P. americana/培养) / 培养胚胎神经元(Drosophila)",
+   "paper": "Lee&O'Dowd 1999 (PMC6782340, Drosophila 培养); PMC6740836 (KC)",
+   "use": "EPSP 衰减常数（部分为跨物种/培养体系外推）"
   },
   {
    "param": "tau_syn_i (GABA mIPSC decay)",
@@ -114,44 +114,48 @@
    {
     "substeps": 50,
     "dts_ms": 0.4,
-    "ms_per_step": 549.7,
+    "ms_per_step": 583.9,
     "spikes": 1653,
-    "peak_mem_MB": 12.38,
+    "traced_peak_mem_MB": 12.38,
+    "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
     "spike_err_vs_ref": 8.23463687150838
    },
    {
     "substeps": 100,
     "dts_ms": 0.2,
-    "ms_per_step": 793.2,
+    "ms_per_step": 998.6,
     "spikes": 215,
-    "peak_mem_MB": 12.2,
+    "traced_peak_mem_MB": 12.2,
+    "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
     "spike_err_vs_ref": 0.2011173184357542
    },
    {
     "substeps": 500,
     "dts_ms": 0.04,
-    "ms_per_step": 3611.9,
+    "ms_per_step": 4166.2,
     "spikes": 182,
-    "peak_mem_MB": 12.2,
+    "traced_peak_mem_MB": 12.19,
+    "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
     "spike_err_vs_ref": 0.01675977653631285
    },
    {
     "substeps": 2000,
     "dts_ms": 0.01,
-    "ms_per_step": 12883.9,
+    "ms_per_step": 14977.8,
     "spikes": 179,
-    "peak_mem_MB": 12.2,
+    "traced_peak_mem_MB": 12.2,
+    "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
     "spike_err_vs_ref": 0.0
    }
   ],
   "W_mem_MB": 12.67,
-  "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；不外推为真实全脑实测速度"
+  "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；**全部为合成网络基准，未做全脑实测**；由 nnz 比例外推的全脑耗时仅为**粗略资源推算**"
  },
  "decision": {
   "engineering": {
    "real_W_mapping": "PASS（P9-1b0：W=We−Wi 精确、方向/计数/绝对权和守恒）",
    "compute_numeric_error": "可控（指数积分+子步；但精度要求 substeps≥数百）",
-   "resources": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；不外推为真实全脑实测速度",
+   "resources": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；**全部为合成网络基准，未做全脑实测**；由 nnz 比例外推的全脑耗时仅为**粗略资源推算** CPU: substeps=500 单步成本高；**由 nnz 比例外推的全脑耗时仅为粗略推算，未经全脑实测**；小规模子网（实测范围内）可行。",
    "verdict": "GO（**仅限小规模真实子网络**；且须满足证据化 substeps 精度）"
   },
   "science": {

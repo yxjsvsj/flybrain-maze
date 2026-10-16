@@ -18,23 +18,24 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---- 可核实的果蝇电生理定量依据（单位/细胞/适用性） ----
 LIT = [
-    {"param": "R_in (input resistance)", "value": "KC: 2.5±1 GΩ; PN: 598±69 MΩ; 胚胎中枢: 5.1±0.4 GΩ",
-     "cells": "Kenyon cells(P. americana); 触角叶 PN; 胚胎中枢神经元",
-     "paper": "J Neurophysiol 2009, 10.1152/jn.00183.2009; J Neurosci 29(19):6239, 10.1523/JNEUROSCI.1039-09.2009; J Neurosci 18(12):4673",
-     "use": "g_l=1/R_in ≈ 0.2–1.7 nS（**逐类型不同**）"},
-    {"param": "C_m (capacitance)", "value": "KC: 2.7±0.8 pF; 胚胎: 2.1±0.15 pF (0.7–4.6); 2025 Cell TableS2: 0.9–5 pF",
-     "cells": "KC / 胚胎中枢 / 多类型(Drosophila)", "paper": "10.1152/jn.00183.2009; J Neurosci 18(12):4673; Cell 2025 (10.1016/j.cell.2025.11.040)",
-     "use": "C ≈ 2–5 pF（小型中枢神经元量级）"},
+    {"param": "R_in (input resistance)", "value": "KC(P. americana): 2.5±1 GΩ; PN(Drosophila): 598±69 MΩ; 胚胎中枢(Drosophila): 5.1±0.4 GΩ",
+     "cells": "Kenyon cells = **P. americana(美洲大蠊,跨物种)**; 触角叶 PN / 胚胎中枢 = Drosophila",
+     "paper": "J Neurophysiol 2009, 10.1152/jn.00183.2009 (KC = **P. americana**); J Neurosci 29(19):6239, 10.1523/JNEUROSCI.1039-09.2009; J Neurosci 18(12):4673",
+     "use": "g_l=1/R_in ≈ 0.2–1.7 nS（**逐类型不同**）；KC 值属**跨物种外推**（非 Drosophila）"},
+    {"param": "C_m (capacitance)", "value": "KC(P. americana): 2.7±0.8 pF; 胚胎(Drosophila): 2.1±0.15 pF (0.7–4.6); 2025 Cell TableS2(Drosophila): 0.9–5 pF",
+     "cells": "KC = **P. americana(跨物种)** / 胚胎中枢 / 多类型(Drosophila)",
+     "paper": "10.1152/jn.00183.2009 (KC = **P. americana**); J Neurosci 18(12):4673; Cell 2025 (10.1016/j.cell.2025.11.040)",
+     "use": "C ≈ 2–5 pF（小型中枢神经元量级）；KC 值属**跨物种外推**"},
     {"param": "tau_m = R_in*C", "value": "≈ 5–25 ms（由上二者推算）", "cells": "Drosophila 小型中枢神经元",
      "paper": "由上述 R_in×C 推算", "use": "膜时间常数**量级**（逐类型缺直接值）"},
-    {"param": "V_rest / V_th", "value": "−53±9 / −47±6 mV (KC); PN V_rest≈−60", "cells": "KC / PN",
-     "paper": "10.1152/jn.00183.2009; 10.1523/JNEUROSCI.1039-09.2009", "use": "E_l≈−60、V_th≈−47 mV"},
+    {"param": "V_rest / V_th", "value": "−53±9 / −47±6 mV (KC, **P. americana**); PN(Drosophila) V_rest≈−60", "cells": "KC = **P. americana(跨物种)** / PN = Drosophila",
+     "paper": "10.1152/jn.00183.2009 (KC = **P. americana**); 10.1523/JNEUROSCI.1039-09.2009", "use": "E_l≈−60、V_th≈−47 mV（KC 部分属**跨物种外推**）"},
     {"param": "E_exc (nAChR)", "value": "≈0 mV", "cells": "胆碱能突触", "paper": "Groschner 2022 (10.1038/s41586-022-04428-3)",
      "use": "兴奋反转电位"},
     {"param": "E_inh (GABA/GluCl)", "value": "mIPSC 反转 ≈−67 mV (Cl⁻)；GluCl 分流", "cells": "GABA/GluCl 突触",
      "paper": "10.1152/jn.00183.2009; Groschner 2022", "use": "抑制反转电位"},
-    {"param": "tau_syn_e (nAChR mEPSC decay)", "value": "≈1.35–2 ms", "cells": "KC / 培养胚胎神经元",
-     "paper": "Lee&O'Dowd 1999 (PMC6782340); PMC6740836", "use": "EPSP 衰减常数"},
+    {"param": "tau_syn_e (nAChR mEPSC decay)", "value": "≈1.35–2 ms", "cells": "KC(P. americana/培养) / 培养胚胎神经元(Drosophila)",
+     "paper": "Lee&O'Dowd 1999 (PMC6782340, Drosophila 培养); PMC6740836 (KC)", "use": "EPSP 衰减常数（部分为跨物种/培养体系外推）"},
     {"param": "tau_syn_i (GABA mIPSC decay)", "value": "≈2.67 ms", "cells": "KC", "paper": "PMC6740836",
      "use": "IPSP 衰减常数"},
     {"param": "单通道/单位点电导", "value": "单 nAChR 通道 ≈121±15 pS；单位点 ~0.1 nS；量化 q≈1.05 pA",
@@ -83,23 +84,25 @@ def measure_convergence_and_perf(N=166700, nnz=1000000, dt=20.0, substeps_list=(
         per = (time.perf_counter() - t0) * 1000
         cur, peak = tracemalloc.get_traced_memory(); tracemalloc.stop()
         total = float(cnt.sum())
-        if ref is None or sub == max(substeps_list):
-            pass
         out.append({"substeps": sub, "dts_ms": dt / sub, "ms_per_step": round(per, 1),
-                    "spikes": int(round(total)), "peak_mem_MB": round(peak / 1e6, 2)})
+                    "spikes": int(round(total)), "traced_peak_mem_MB": round(peak / 1e6, 2),
+                    "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值"})
     ref_spikes = out[-1]["spikes"]
     for r in out:
         r["spike_err_vs_ref"] = abs(r["spikes"] - ref_spikes) / max(1, ref_spikes)
     Wmem = (W.data.nbytes + W.indices.nbytes + W.indptr.nbytes) / 1e6
     return {"N": N, "nnz": nnz, "dt": dt, "rows": out, "W_mem_MB": round(Wmem, 2),
-            "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；不外推为真实全脑实测速度"}
+            "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；**全部为合成网络基准，未做全脑实测**；"
+                    "由 nnz 比例外推的全脑耗时仅为**粗略资源推算**"}
 
 
 def decision(perf=None):
     eng = {
         "real_W_mapping": "PASS（P9-1b0：W=We−Wi 精确、方向/计数/绝对权和守恒）",
         "compute_numeric_error": "可控（指数积分+子步；但精度要求 substeps≥数百）",
-        "resources": (perf or {}).get("note", "CPU: substeps=500 时单步成本高；全脑 CPU 不可承受（需 CUDA 或子步高效方案）；小规模子网可行"),
+        "resources": ((perf or {}).get("note", "") +
+                      " CPU: substeps=500 单步成本高；**由 nnz 比例外推的全脑耗时仅为粗略推算，未经全脑实测**；"
+                      "小规模子网（实测范围内）可行。"),
         "verdict": "GO（**仅限小规模真实子网络**；且须满足证据化 substeps 精度）",
     }
     sci = {
@@ -124,7 +127,7 @@ def main(argv=None) -> int:
     print("[P9-1b1] perf/convergence (synthetic):")
     for r in perf["rows"]:
         print(f"  substeps={r['substeps']:5d} dts={r['dts_ms']:.4f}ms {r['ms_per_step']:8.1f} ms/step "
-              f"spikes={r['spikes']:6d} err={r['spike_err_vs_ref']:.3f} peak_mem={r['peak_mem_MB']}MB")
+              f"spikes={r['spikes']:6d} err={r['spike_err_vs_ref']:.3f} traced_peak_mem={r['traced_peak_mem_MB']}MB")
     print(f"  W_mem={perf['W_mem_MB']} MB; {perf['note']}")
     d = decision(perf)
     print("[P9-1b1] decision:", d["engineering"]["verdict"], "|", d["science"]["verdict"],
