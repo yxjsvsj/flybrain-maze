@@ -1,0 +1,371 @@
+{
+ "summary": {
+  "n_epg_valid": 46,
+  "split_half_median_deg": 0.24,
+  "split_half_frac_lt20": 1.0,
+  "PEN_a(PEN1)": {
+   "n": 20,
+   "median_R_w": 0.8658,
+   "frac_p_lt_05": 1.0,
+   "null_median_R_w": 0.2124
+  },
+  "PEN_b(PEN2)": {
+   "n": 22,
+   "median_R_w": 0.915,
+   "frac_p_lt_05": 1.0,
+   "null_median_R_w": 0.2756
+  }
+ },
+ "per_pen": {
+  "PEN_a(PEN1)": {
+   "cells": [
+    {
+     "bodyId": 12358,
+     "n_epg_in": 17,
+     "R_w": 0.8837,
+     "p": 0.0,
+     "wmean_deg": 10.56,
+     "null_med_Rw": 0.2121
+    },
+    {
+     "bodyId": 17454,
+     "n_epg_in": 18,
+     "R_w": 0.9121,
+     "p": 0.0,
+     "wmean_deg": -33.19,
+     "null_med_Rw": 0.2261
+    },
+    {
+     "bodyId": 18419,
+     "n_epg_in": 21,
+     "R_w": 0.8754,
+     "p": 0.0,
+     "wmean_deg": -169.57,
+     "null_med_Rw": 0.2011
+    },
+    {
+     "bodyId": 18504,
+     "n_epg_in": 17,
+     "R_w": 0.8682,
+     "p": 0.0,
+     "wmean_deg": -61.08,
+     "null_med_Rw": 0.2046
+    },
+    {
+     "bodyId": 18744,
+     "n_epg_in": 21,
+     "R_w": 0.8566,
+     "p": 0.0,
+     "wmean_deg": -71.32,
+     "null_med_Rw": 0.2143
+    },
+    {
+     "bodyId": 18779,
+     "n_epg_in": 20,
+     "R_w": 0.8814,
+     "p": 0.0,
+     "wmean_deg": -18.17,
+     "null_med_Rw": 0.2048
+    },
+    {
+     "bodyId": 19189,
+     "n_epg_in": 17,
+     "R_w": 0.8725,
+     "p": 0.0,
+     "wmean_deg": 49.13,
+     "null_med_Rw": 0.228
+    },
+    {
+     "bodyId": 20818,
+     "n_epg_in": 20,
+     "R_w": 0.8558,
+     "p": 0.0,
+     "wmean_deg": 101.69,
+     "null_med_Rw": 0.2127
+    },
+    {
+     "bodyId": 25792,
+     "n_epg_in": 16,
+     "R_w": 0.9009,
+     "p": 0.0,
+     "wmean_deg": 157.86,
+     "null_med_Rw": 0.2344
+    },
+    {
+     "bodyId": 27296,
+     "n_epg_in": 18,
+     "R_w": 0.8616,
+     "p": 0.0,
+     "wmean_deg": -110.9,
+     "null_med_Rw": 0.2203
+    },
+    {
+     "bodyId": 34949,
+     "n_epg_in": 18,
+     "R_w": 0.8672,
+     "p": 0.0,
+     "wmean_deg": -30.88,
+     "null_med_Rw": 0.1968
+    },
+    {
+     "bodyId": 35743,
+     "n_epg_in": 17,
+     "R_w": 0.8594,
+     "p": 0.0,
+     "wmean_deg": 161.59,
+     "null_med_Rw": 0.236
+    },
+    {
+     "bodyId": 37142,
+     "n_epg_in": 19,
+     "R_w": 0.8642,
+     "p": 0.0,
+     "wmean_deg": -127.47,
+     "null_med_Rw": 0.1983
+    },
+    {
+     "bodyId": 53086,
+     "n_epg_in": 22,
+     "R_w": 0.8399,
+     "p": 0.0,
+     "wmean_deg": -124.92,
+     "null_med_Rw": 0.1882
+    },
+    {
+     "bodyId": 76194,
+     "n_epg_in": 17,
+     "R_w": 0.8826,
+     "p": 0.0,
+     "wmean_deg": -154.77,
+     "null_med_Rw": 0.2009
+    },
+    {
+     "bodyId": 512927,
+     "n_epg_in": 17,
+     "R_w": 0.8537,
+     "p": 0.0,
+     "wmean_deg": 67.04,
+     "null_med_Rw": 0.2382
+    },
+    {
+     "bodyId": 513283,
+     "n_epg_in": 18,
+     "R_w": 0.8414,
+     "p": 0.0,
+     "wmean_deg": 144.13,
+     "null_med_Rw": 0.1885
+    },
+    {
+     "bodyId": 514045,
+     "n_epg_in": 16,
+     "R_w": 0.8644,
+     "p": 0.0,
+     "wmean_deg": 110.01,
+     "null_med_Rw": 0.2217
+    },
+    {
+     "bodyId": 514405,
+     "n_epg_in": 19,
+     "R_w": 0.8572,
+     "p": 0.0,
+     "wmean_deg": -112.15,
+     "null_med_Rw": 0.1985
+    },
+    {
+     "bodyId": 521814,
+     "n_epg_in": 18,
+     "R_w": 0.928,
+     "p": 0.0,
+     "wmean_deg": 14.1,
+     "null_med_Rw": 0.2341
+    }
+   ],
+   "median_R_w": 0.8658,
+   "frac_p_lt_05": 1.0,
+   "n": 20
+  },
+  "PEN_b(PEN2)": {
+   "cells": [
+    {
+     "bodyId": 15176,
+     "n_epg_in": 15,
+     "R_w": 0.9147,
+     "p": 0.0,
+     "wmean_deg": -19.7,
+     "null_med_Rw": 0.264
+    },
+    {
+     "bodyId": 18932,
+     "n_epg_in": 14,
+     "R_w": 0.9118,
+     "p": 0.0,
+     "wmean_deg": 65.8,
+     "null_med_Rw": 0.3592
+    },
+    {
+     "bodyId": 19760,
+     "n_epg_in": 17,
+     "R_w": 0.8836,
+     "p": 0.0,
+     "wmean_deg": 142.7,
+     "null_med_Rw": 0.2501
+    },
+    {
+     "bodyId": 21932,
+     "n_epg_in": 14,
+     "R_w": 0.9154,
+     "p": 0.0,
+     "wmean_deg": 48.13,
+     "null_med_Rw": 0.3108
+    },
+    {
+     "bodyId": 22240,
+     "n_epg_in": 15,
+     "R_w": 0.9201,
+     "p": 0.0,
+     "wmean_deg": -149.8,
+     "null_med_Rw": 0.2669
+    },
+    {
+     "bodyId": 23273,
+     "n_epg_in": 14,
+     "R_w": 0.9396,
+     "p": 0.0,
+     "wmean_deg": 13.6,
+     "null_med_Rw": 0.2959
+    },
+    {
+     "bodyId": 23619,
+     "n_epg_in": 9,
+     "R_w": 0.9744,
+     "p": 0.0,
+     "wmean_deg": 20.45,
+     "null_med_Rw": 0.3058
+    },
+    {
+     "bodyId": 24382,
+     "n_epg_in": 13,
+     "R_w": 0.8836,
+     "p": 0.0,
+     "wmean_deg": 116.97,
+     "null_med_Rw": 0.2476
+    },
+    {
+     "bodyId": 25184,
+     "n_epg_in": 14,
+     "R_w": 0.9238,
+     "p": 0.0,
+     "wmean_deg": -34.9,
+     "null_med_Rw": 0.2634
+    },
+    {
+     "bodyId": 26417,
+     "n_epg_in": 10,
+     "R_w": 0.9614,
+     "p": 0.0,
+     "wmean_deg": 104.52,
+     "null_med_Rw": 0.3124
+    },
+    {
+     "bodyId": 28791,
+     "n_epg_in": 14,
+     "R_w": 0.9204,
+     "p": 0.0,
+     "wmean_deg": 160.76,
+     "null_med_Rw": 0.2904
+    },
+    {
+     "bodyId": 29135,
+     "n_epg_in": 14,
+     "R_w": 0.9073,
+     "p": 0.0,
+     "wmean_deg": -111.55,
+     "null_med_Rw": 0.2774
+    },
+    {
+     "bodyId": 30310,
+     "n_epg_in": 15,
+     "R_w": 0.9136,
+     "p": 0.0,
+     "wmean_deg": 161.39,
+     "null_med_Rw": 0.3037
+    },
+    {
+     "bodyId": 30807,
+     "n_epg_in": 13,
+     "R_w": 0.9292,
+     "p": 0.0,
+     "wmean_deg": -34.44,
+     "null_med_Rw": 0.2646
+    },
+    {
+     "bodyId": 32258,
+     "n_epg_in": 10,
+     "R_w": 0.9562,
+     "p": 0.0,
+     "wmean_deg": 104.52,
+     "null_med_Rw": 0.2903
+    },
+    {
+     "bodyId": 39813,
+     "n_epg_in": 13,
+     "R_w": 0.9088,
+     "p": 0.0,
+     "wmean_deg": -78.93,
+     "null_med_Rw": 0.2708
+    },
+    {
+     "bodyId": 40390,
+     "n_epg_in": 13,
+     "R_w": 0.9099,
+     "p": 0.0,
+     "wmean_deg": -61.82,
+     "null_med_Rw": 0.2738
+    },
+    {
+     "bodyId": 55527,
+     "n_epg_in": 14,
+     "R_w": 0.9104,
+     "p": 0.0,
+     "wmean_deg": -111.2,
+     "null_med_Rw": 0.2706
+    },
+    {
+     "bodyId": 514125,
+     "n_epg_in": 17,
+     "R_w": 0.9101,
+     "p": 0.0,
+     "wmean_deg": -122.45,
+     "null_med_Rw": 0.2334
+    },
+    {
+     "bodyId": 518194,
+     "n_epg_in": 11,
+     "R_w": 0.9717,
+     "p": 0.0,
+     "wmean_deg": 20.57,
+     "null_med_Rw": 0.2957
+    },
+    {
+     "bodyId": 524717,
+     "n_epg_in": 13,
+     "R_w": 0.9374,
+     "p": 0.0,
+     "wmean_deg": -127.51,
+     "null_med_Rw": 0.2944
+    },
+    {
+     "bodyId": 529385,
+     "n_epg_in": 16,
+     "R_w": 0.9045,
+     "p": 0.0,
+     "wmean_deg": -170.45,
+     "null_med_Rw": 0.2468
+    }
+   ],
+   "median_R_w": 0.915,
+   "frac_p_lt_05": 1.0,
+   "n": 22
+  }
+ }
+}
