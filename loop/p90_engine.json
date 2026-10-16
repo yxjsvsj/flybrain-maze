@@ -1,0 +1,206 @@
+{
+ "data": {
+  "real_available": {
+   "connectome": "weights.npz：166,700 神经元、25,582,938 条有符号边（62% 正/38% 负）",
+   "transmitter_per_neuron": "body-neurotransmitters-male-cns-v1.0.feather (43 MB, GCS)",
+   "transmitter_per_tbar": "tbar-neurotransmitters-male-cns-v1.0.feather (2.65 GB, GCS) —— **逐突触(t-bar)**递质",
+   "identity": "cell_type / side / superclass / positions / visual-azimuth（brain.npz）",
+   "annotation": "body-annotations-...feather：class/subclass/supertype/entryNerve/...（P2d-24c 已核验）"
+  },
+  "literature_estimate": {
+   "E_rev": "E_exc≈0 mV、E_inh≈-70 mV、E_l≈-60 mV、V_th≈-45 mV（果蝇 patch-clamp 量级；逐细胞有别）",
+   "tau_syn": "兴奋(nAChR)~1-5 ms；抑制(GABA/GluCl)~5-20 ms（果蝇电生理量级）",
+   "tau_m": "~10-100 ms，逐类型不同（CX/T4 有测量；多数类型缺）"
+  },
+  "unknown": {
+   "absolute_synaptic_conductance": "**逐连接电导尺度**（连接组只给突触**计数**，未给电导）——**最关键未知**",
+   "per_type_membrane_params": "本连接组多数细胞类型的 C/g_l/V_rest/τ_m 无直接测量",
+   "receptor_composition": "逐连接受体类型/动力学（需 t-bar 递质 + 假设）"
+  }
+ },
+ "references": [
+  {
+   "cite": "Groschner, Malis, Zuidinga & Borst 2022, Nature 602:92",
+   "title": "A biophysical account of multiplication by a single neuron",
+   "doi": "10.1038/s41586-022-04428-3",
+   "use": "T4 **电导型**(passive conductance-based) 模型：E_exc(胆碱能)、E_inh(GluCl 分流抑制)、输入电阻测量"
+  },
+  {
+   "cite": "Seelig & Jayaraman 2015, Nat Neurosci 18:718",
+   "title": "Neural dynamics for landmark orientation and angular path integration",
+   "doi": "10.1038/nn.3996",
+   "use": "CX 神经元膜动力学/时间常数量级"
+  },
+  {
+   "cite": "Turner-Evans et al. 2017, eLife 6:e23496",
+   "title": "Angular velocity integration in a fly heading circuit",
+   "doi": "10.7554/eLife.23496",
+   "use": "P-EN 渐变电导整合的动力学量级"
+  },
+  {
+   "cite": "Nagel et al. 2019 / Fisher et al. 2022",
+   "title": "T4/T5 运动检测（电生理/电导）",
+   "doi": "10.1016/j.cub.2021.10.063",
+   "use": "T4/T5 输入为 graded-potential；τ 量级"
+  },
+  {
+   "cite": "Borst et al. 2010, Annu Rev Neurosci 33:49",
+   "title": "Fly motion vision",
+   "doi": "10.1146/annurev-neuro-060909-153155",
+   "use": "LPTC 渐变传导/时间常数"
+  },
+  {
+   "cite": "flybrain 构建 (build.py)",
+   "title": "per-neuron/per-tbar 递质预测 -> 权重符号",
+   "doi": "—",
+   "use": "连接组真实：突触计数权重 + 递质符号（兴奋/抑制）"
+  }
+ ],
+ "architecture": {
+  "neuron": "C_i dV_i/dt = -g_l,i (V_i - E_l,i) - g_exc,i (V_i - E_exc) - g_inh,i (V_i - E_inh) + I_noise,i",
+  "synapse": "d g_x,i/dt = -g_x,i / tau_syn,x + sum_j w_ij * s_j(t)；w 符号来自**递质预测**（兴奋->g_exc，抑制->g_inh）",
+  "spike": "V_i>=V_th -> spike，V_i<-V_reset，不应期（同 flybrain 接口）；**释放计算取复位前 V**",
+  "key_change": "由'电流型、瞬时、全同参数'改为'**电导型 + 反转电位 + 突触时间常数**'；抑制为**分流(shunting)**（不是简单负电流）→ 非线性积分、正确驱动力 (E-V)。",
+  "not_a_gain": "机制解释**不**是'增益更强故 DN 发放'，而是：分流抑制与驱动力 (E-V) 改变**积分/门控**；τ_syn 让突触事件在时间上叠加。",
+  "preserved": "神经元身份、左右侧别、真实连接、突触计数权重、递质符号**均不变**；不重构连接、不按成绩改权重。",
+  "forbidden": "不重包装 P8 的 r=clip(V,0,1) 未定标渐变释放；不注入航向/目标角；不手写转向/计时/回正。"
+ },
+ "param_table": [
+  {
+   "symbol": "E_exc",
+   "unit": "mV",
+   "range": "≈0 (相对静息 +55~+70)",
+   "source": "文献 Groschner2022 等",
+   "cells": "胆碱能靶(多数)",
+   "basis": "反转电位",
+   "uncertainty": "中(逐细胞有别)"
+  },
+  {
+   "symbol": "E_inh",
+   "unit": "mV",
+   "range": "≈-70 (GluCl/GABA)",
+   "source": "文献 Groschner2022",
+   "cells": "GluCl/GABA 靶",
+   "basis": "分流抑制反转",
+   "uncertainty": "中"
+  },
+  {
+   "symbol": "E_l",
+   "unit": "mV",
+   "range": "≈-60 (静息)",
+   "source": "文献",
+   "cells": "全部",
+   "basis": "漏电反转",
+   "uncertainty": "中"
+  },
+  {
+   "symbol": "V_th",
+   "unit": "mV",
+   "range": "≈-45",
+   "source": "文献",
+   "cells": "全部",
+   "basis": "发放阈值",
+   "uncertainty": "中"
+  },
+  {
+   "symbol": "tau_syn_e",
+   "unit": "ms",
+   "range": "1-5 (nAChR)",
+   "source": "文献",
+   "cells": "兴奋突触",
+   "basis": "EPSC 衰减",
+   "uncertainty": "中"
+  },
+  {
+   "symbol": "tau_syn_i",
+   "unit": "ms",
+   "range": "5-20 (GABA/GluCl)",
+   "source": "文献",
+   "cells": "抑制突触",
+   "basis": "IPSC 衰减",
+   "uncertainty": "中"
+  },
+  {
+   "symbol": "tau_m=C/g_l",
+   "unit": "ms",
+   "range": "10-100 (逐类型)",
+   "source": "文献",
+   "cells": "全部(**多类型缺测量**)",
+   "basis": "膜时间常数",
+   "uncertainty": "高(多数未知)"
+  },
+  {
+   "symbol": "w_ij(相对)",
+   "unit": "无单位",
+   "range": "连接组突触计数",
+   "source": "**真实数据** brain.npz",
+   "cells": "全部",
+   "basis": "相对突触效能",
+   "uncertainty": "低(计数已知)"
+  },
+  {
+   "symbol": "sign(w_ij)",
+   "unit": "±",
+   "range": "兴奋/抑制",
+   "source": "**真实数据** 递质预测",
+   "cells": "全部",
+   "basis": "兴奋->g_exc/抑制->g_inh",
+   "uncertainty": "低"
+  },
+  {
+   "symbol": "g_syn 绝对尺度",
+   "unit": "nS/突触",
+   "range": "**未知**",
+   "source": "**需要额外证据**",
+   "cells": "全部",
+   "basis": "计数->电导换算",
+   "uncertainty": "**高(最关键)**"
+  }
+ ],
+ "validation": {
+  "fairness": "同一连接组、同一冻结刺激、可比执行环境；**原 LIF vs 新引擎**并排。",
+  "layers": {
+   "P5_layer": "视叶/光感受器 -> 视觉投射(LPLC2/LC4)：层内是否出现**方向/左右特异**（对照无刺激）。",
+   "P6_layer": "视觉投射 -> 下行靶：冻结 ToF 输入下，DN 靶是否出现**>3σ** 的对照差值。",
+   "P7_respect": "**不**默认 LC10a->DNa02 直接存在（P7：0 直接边、弱两跳）；转向读出须用**解剖固定**的 DN 靶。",
+   "recovery": "撤除刺激后是否回落至对照（**必要条件**，不据此宣称会结束转弯）。"
+  },
+  "controls": [
+   "无刺激(同 seed)",
+   "左刺激",
+   "右刺激",
+   "左右镜像",
+   "（可选）收缩/亮度"
+  ],
+  "metrics": "同 seed **刺激-对照**同步窗；per-cell + 群体；K_SIG=3×对照每细胞 std；跨 seed 逐报。",
+  "gate": "GO 门槛**运行前冻结**：左右特异 ≥4/5 seed 且 >3σ；否则 NO-GO。",
+  "no_nav_tuning": "**不**以导航成功率反向调模型参数。",
+  "forbidden_io": "ToF **不**直接输出左/右/固定转角/回正；无计时器、无手写方向。"
+ },
+ "budget": {
+  "neurons": 166700,
+  "edges": 25582938,
+  "current_lif_cost": "P2d-28 实测：CPU ~5 s / 40 s-sim(2000 步)；CUDA 不可用（本机 'CUDA path could not be detected'）。",
+  "new_engine_overhead": "增加 2 个突触电导状态(g_exc,g_inh)+每突触非线性(分流/驱动力) → 估 ~2-4× 于原 LIF。",
+  "estimate": "**单次 40 s 全脑 trial ≈ 10-20 s(CPU)**；一次 5 seed × 5 条件 × 5 s 短程筛选 ≈ 数分钟；**全脑多 seed × 40 s 实验 ≈ 数十分钟~小时**，非'几分钟'。",
+  "memory": "g_exc/g_inh 2×166,700 float32 ≈ 1.3 MB；稀疏 W 不变(~25.6M nnz)。",
+  "plan": "**先**小规模(子网络/少数类型)机制测试 -> 通过后再全脑；先 CPU，CUDA 需先验证设备生效(checklist)。",
+  "device_check": "运行前**断言并记录** device；CUDA 路径需核对 `_W` 生效（P4-1a 教训：只改 CPU 数组不等于 CUDA 已运行）。",
+  "override_module": "**独立模块**覆盖 step（不改 flybrain 安装包/正式引擎）。"
+ },
+ "verdict": {
+  "decision": "GO（有条件，小规模先行）",
+  "because": "①架构有**定量实验依据**（Groschner 2022 电导型 T4 模型等）；②连接组/递质数据**真实可得**（含逐 t-bar 递质）；③主要不确定（**绝对电导尺度**）以**声明的单位约定 + 有界范围**处理，**非**隐藏增益。",
+  "conditions": [
+   "params 依 §param_table（单位/来源/细胞/依据/不确定性齐备）；**绝对电导尺度须声明约定并标注不确定**，不得为出方向而调。",
+   "**先小规模机制测试**（子网络）→ 过**预注册门槛**后才允许全脑。",
+   "公平比较原 LIF；尊重 P7（LC10a->DNa02 0 直接边）；用 P6 冻结 ToF 输入作对照。",
+   "若小规模测试即**证伪**（无层内方向特异或无 DN 对照差>3σ）→ **关闭**，不加第二候选。"
+  ],
+  "need_extra_evidence": [
+   "**逐类型电导/膜参数**（本连接组的 C/g_l/V_rest/τ_m）——当前多数类型缺直接测量。",
+   "**逐连接电导尺度**（计数->nS 的换算），最好来自本数据集或同源电生理。"
+  ],
+  "if_unavailable": "若上述证据无法取得，则**只能**在**声明约定+不确定性**下做小规模测试；**不得**为转弯效果编造参数。"
+ }
+}
