@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import sys
 
-from loop.visual_motor_audit import (STA_VPN, by_type, dn_target_set, ipsi_contra, load_data,
-                                    vpn_dn_edges)
+from loop.visual_motor_audit import (STA_VPN, by_type, dn_target_set, dn_target_set_by_body,
+                                    indirect_paths, ipsi_contra, load_data, vpn_dn_edges)
 
 RESULTS = []
 
@@ -36,6 +36,16 @@ def main() -> int:
     tgt = dn_target_set(D)
     sides = {v["side"] for v in tgt.values()}
     check("DN target set non-empty with L&R", len(tgt) > 10 and {"L", "R"} <= sides)
+
+    # 修正1：bodyId 为键保留同型多细胞 -> 数量应多于 by_type
+    tgtb = dn_target_set_by_body(D)
+    check("by-body targets >= by-type (no collapse)", len(tgtb) >= len(tgt))
+    check("by-body sides both present", {"L", "R"} <= {v["side"] for v in tgtb.values()})
+
+    # 修正2：二跳方向 = W[post,pre]，出权带符号
+    ip = indirect_paths(D, STA_VPN, list(tgt.keys()), top=5)
+    check("indirect paths non-empty", len(ip) > 0)
+    check("indirect reports signed out weight", all("out_w_signed" in r and "out_w_abs" in r for r in ip))
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))

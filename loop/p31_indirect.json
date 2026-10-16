@@ -1,62 +1,72 @@
 [
  {
-  "via_type": "CB1638",
-  "in_w": 0.025,
-  "out_w": 0.171
- },
- {
-  "via_type": "AVLP094",
-  "in_w": 0.044,
-  "out_w": 0.13
- },
- {
-  "via_type": "CB1638",
-  "in_w": 0.066,
-  "out_w": 0.128
- },
- {
-  "via_type": "CB1638",
-  "in_w": 0.061,
-  "out_w": 0.125
- },
- {
-  "via_type": "cL01",
-  "in_w": 0.001,
-  "out_w": 0.116
- },
- {
-  "via_type": "CB3905",
-  "in_w": 0.004,
-  "out_w": 0.086
- },
- {
-  "via_type": "CB3707",
-  "in_w": 0.024,
-  "out_w": 0.084
- },
- {
-  "via_type": "cL01",
-  "in_w": 0.001,
-  "out_w": 0.08
- },
- {
-  "via_type": "cL01",
-  "in_w": 0.005,
-  "out_w": 0.078
- },
- {
-  "via_type": "CB0527",
-  "in_w": 0.119,
-  "out_w": 0.076
+  "via_type": "AN_multi_28",
+  "in_w": 0.0024,
+  "out_w_signed": 0.358,
+  "out_w_abs": 0.358,
+  "n_dn_targets": 53
  },
  {
   "via_type": "AN_multi_28",
-  "in_w": 0.004,
-  "out_w": 0.075
+  "in_w": 0.0041,
+  "out_w_signed": 0.338,
+  "out_w_abs": 0.338,
+  "n_dn_targets": 57
  },
  {
-  "via_type": "CB0527",
-  "in_w": 0.106,
-  "out_w": 0.075
+  "via_type": "AN_multi_11",
+  "in_w": 0.0068,
+  "out_w_signed": -0.2701,
+  "out_w_abs": 0.2701,
+  "n_dn_targets": 84
+ },
+ {
+  "via_type": "PS108",
+  "in_w": 0.0082,
+  "out_w_signed": -0.2635,
+  "out_w_abs": 0.2635,
+  "n_dn_targets": 43
+ },
+ {
+  "via_type": "CB0442",
+  "in_w": 0.003,
+  "out_w_signed": -0.2626,
+  "out_w_abs": 0.2626,
+  "n_dn_targets": 49
+ },
+ {
+  "via_type": "PS010",
+  "in_w": 0.0275,
+  "out_w_signed": 0.2485,
+  "out_w_abs": 0.2485,
+  "n_dn_targets": 28
+ },
+ {
+  "via_type": "CB0442",
+  "in_w": 0.0076,
+  "out_w_signed": -0.2479,
+  "out_w_abs": 0.2479,
+  "n_dn_targets": 49
+ },
+ {
+  "via_type": "PS010",
+  "in_w": 0.0201,
+  "out_w_signed": 0.2472,
+  "out_w_abs": 0.2472,
+  "n_dn_targets": 29
+ },
+ {
+  "via_type": "PLP029",
+  "in_w": 0.1673,
+  "out_w_signed": -0.2459,
+  "out_w_abs": 0.2459,
+  "n_dn_targets": 35
+ },
+ {
+  "via_type": "AN_multi_11",
+  "in_w": 0.0095,
+  "out_w_signed": -0.2419,
+  "out_w_abs": 0.2419,
+  "n_dn_targets": 86
  }
 ]

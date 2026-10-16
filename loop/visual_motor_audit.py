@@ -30,6 +30,8 @@ def load_data():
         "cell_type": np.array([str(x) for x in meta["cell_type"]]),
         "side": np.array([str(x) for x in meta["side"]]),
         "superclass": np.array([str(x) for x in meta["superclass"]]),
+        "visual": np.asarray(meta["visual"]),
+        "azimuth": np.asarray(meta["azimuth"]),
         "W": sparse.load_npz(str(data / "weights.npz")).tocsr(),
     }
 
@@ -79,30 +81,34 @@ def ipsi_contra(edges):
 
 
 def indirect_paths(D, vpn_types, dn_types, max_hops=2, top=20):
-    """视觉→(中间)→下行 的**间接**路径（仅拓扑，不测活动）。"""
-    ct = D["cell_type"]; W = D["W"]
+    """视觉→(中间)→下行 的**间接**路径（仅拓扑）。**严格按 W[post,pre]**：
+
+      - `x` 从视觉来：`in_w = Σ_{v} W[x, v]`（x 的**入**权，源=视觉）→ 用 `W[:, vis_sel]` 的行 x；
+      - `x` 去下行：`out_w = Σ_{d} W[d, x]`（x 的**出**权，靶=下行）→ 用 `W[dn_sel, :]` 的**列** x。
+    权重**可正可负**（抑制为负）：`out_w` 同时给出**带符号和**与**绝对值和**，避免正负相消误解。
+    """
+    ct = D["cell_type"]; W = D["W"].tocsr()
     vis = group_idx(D, "visual_projection"); dn = group_idx(D, "descending_neuron")
     vis_sel = vis[np.isin(ct[vis], list(vpn_types))]
     dn_sel = dn[np.isin(ct[dn], list(dn_types))]
-    # 一跳：vis->X（对全部神经元）
+    M_in = W.tocsc()[:, vis_sel].tocsr()          # (n, n_vis) 入权：M_in[x,v]=W[x,v]
+    M_out = W[dn_sel, :].tocsc()                  # (n_dn, n) 出权：M_out[:,x]=W[dn,x]
+    rows = np.unique(M_in.tocoo().row)
     out = []
-    M1 = W.tocsc()[:, vis_sel]                        # (n, n_vis) 每个中间神经元从 vis 收的权重
-    # 取收到 vis 的神经元（col 非零）
-    rows = np.unique(M1.tocoo().row)
-    # 二跳：这些中间 -> dn
-    Wc = W  # csr
+    vis_set = set(vis_sel.tolist()); dn_set = set(dn_sel.tolist())
     for x in rows:
-        if x in set(vis_sel.tolist()) or x in set(dn_sel.tolist()):
+        if x in vis_set or x in dn_set:
             continue
-        w_in = M1.getrow(x).sum()
-        if w_in <= 0:
+        w_in = float(M_in.getrow(x).sum())
+        col = M_out.getcol(x)                     # 出权（x -> 下行）
+        if col.nnz == 0:
             continue
-        row = Wc.getrow(x)
-        hit = row.indices[np.isin(row.indices, dn_sel)]
-        if len(hit):
-            wt = row.data[np.isin(row.indices, dn_sel)].sum()
-            out.append({"via_type": ct[x], "in_w": round(float(w_in), 3), "out_w": round(float(wt), 3)})
-    out.sort(key=lambda r: -r["out_w"])
+        w_out_signed = float(col.data.sum())
+        w_out_abs = float(np.abs(col.data).sum())
+        out.append({"via_type": ct[x], "in_w": round(w_in, 4),
+                    "out_w_signed": round(w_out_signed, 4), "out_w_abs": round(w_out_abs, 4),
+                    "n_dn_targets": int(col.nnz)})
+    out.sort(key=lambda r: -r["out_w_abs"])
     return out[:top]
 
 
@@ -117,7 +123,7 @@ FALSE_MAX = 1.0          # 背景误触发上限(spikes/step)
 
 
 def dn_target_set(D, vpn_types=STA_VPN, min_w=0.0):
-    """解剖确定的下行靶集合（直接来自 STA_VPN，任一非零边即入），带侧别；**不用活动结果筛**。"""
+    """(旧) 以 **dn_type** 为键聚合的靶集合——会**丢失同型多细胞**。保留供对比。"""
     ed = vpn_dn_edges(D, min_w=min_w)
     tgt = {}
     for e in ed:
@@ -128,80 +134,132 @@ def dn_target_set(D, vpn_types=STA_VPN, min_w=0.0):
     return tgt
 
 
-def _dn_rate(brain, dn_idx, drive, n_steps, dt):
-    from flybrain import Trace
-    tr = Trace(brain, idx=dn_idx, tau=0.1)
-    cnt = 0
-    for _ in range(n_steps):
-        f = brain.step(eye_drive=drive)
-        cnt += int(np.isin(np.asarray(f), dn_idx).sum())
-        tr.observe(f)
-    return cnt / n_steps, tr.features()
+def dn_target_set_by_body(D, vpn_types=STA_VPN, min_w=0.0):
+    """**修正版**：以**原始 bodyId** 为唯一键，保留**左右全部实际相连**的靶细胞（同型多细胞不合并）。
+    **不按响应大小**筛。返回 {bodyId: {dn_type, side, w}}。"""
+    ed = vpn_dn_edges(D, min_w=min_w)
+    tgt = {}
+    for e in ed:
+        if e["vpn_type"] in vpn_types:
+            b = int(e["dn"])
+            tgt.setdefault(b, {"dn_type": e["dn_type"], "side": e["dn_side"], "w": 0.0, "body": b})
+            tgt[b]["w"] += e["w"]
+    return tgt
+
+
+GROUP_KEYS = ("photo", "LC4", "LPLC4", "LPLC2", "other_VPN", "DN_L", "DN_R")
+
+
+def _groups(D, dn_by_body):
+    ct = D["cell_type"]
+    vis = np.asarray(D["visual"])
+    vpn = group_idx(D, "visual_projection")
+    sta = np.isin(ct[vpn], list(STA_VPN))
+    idx_of = {int(b): i for i, b in enumerate(D["ids"].tolist())}
+    dnL = np.array([idx_of[v["body"]] for v in dn_by_body.values() if v["side"] == "L"], int)
+    dnR = np.array([idx_of[v["body"]] for v in dn_by_body.values() if v["side"] == "R"], int)
+    return {"photo": np.asarray(vis, int), "LC4": np.flatnonzero(ct == "LC4"),
+            "LPLC4": np.flatnonzero(ct == "LPLC4"), "LPLC2": np.flatnonzero(ct == "LPLC2"),
+            "other_VPN": vpn[~sta], "DN_L": dnL, "DN_R": dnR}
+
+
+def _run_segments(brain, groups, drive, pre=BASE_STEPS, stim=STIM_STEPS, post=POST_STEPS):
+    """**单次连续**跑 PRE(无驱动)→STIM(指定驱动)→POST(撤除)，段间**不 reset**；
+    同一 `brain.step()` 发放同时统计**全部组**（不先测一组再推进）。"""
+    total = pre + stim + post
+    counts = {g: np.zeros(total, np.int64) for g in groups}
+    for k in range(total):
+        dv = drive if (pre <= k < pre + stim) else None
+        f = np.asarray(brain.step(eye_drive=dv))
+        for g, idx in groups.items():
+            if len(idx):
+                counts[g][k] = int(np.isin(f, idx).sum())
+    return counts
+
+
+def _seg_stats(c, pre, stim):
+    pre_r = float(c[:pre].mean()); st_r = float(c[pre:pre + stim].mean()); po_r = float(c[pre + stim:].mean())
+    return pre_r, st_r, po_r
 
 
 def visual_response(D, *, seeds=RESP_SEEDS, device="cuda"):
-    """冻结检测：背景 / 左眼刺激 / 右眼刺激，测解剖确定的 DN 靶集合 ipsi vs contra。"""
+    """修正版：bodyId 键的左右全靶；连续 PRE/STIM/POST（不 reset）；同步多层计数（群体+每细胞）。"""
     from flybrain.brain import FlyBrain
     from flybrain.data import ensure_data
     data = ensure_data()
     meta = np.load(str(data / "brain.npz"))
     az = meta["azimuth"]; vis = meta["visual"]
-    left_mask = az < -0.3; right_mask = az > 0.3
-    tgt = dn_target_set(D)
-    dn_bodies = {t: v["body"] for t, v in tgt.items()}
-    # bodyId -> 全脑索引
-    allids = D["ids"]; idx_of = {int(b): i for i, b in enumerate(allids.tolist())}
-    dn_L = [idx_of[v["body"]] for v in tgt.values() if v["side"] == "L"]
-    dn_R = [idx_of[v["body"]] for v in tgt.values() if v["side"] == "R"]
+    Lm = az < -0.3; Rm = az > 0.3
+    tgt_body = dn_target_set_by_body(D)
+    tgt_type = dn_target_set(D)
+    groups = _groups(D, tgt_body)
     brain = FlyBrain(data=data, device=device, seed=seeds[0], batch=1, sensory_input=False)
     L = len(vis)
-    def drive(mask, amount):
-        d = np.zeros(L, np.float32); d[mask] = amount; return brain.xp.asarray(d)
-    drvL = drive(left_mask, STIM_A); drvR = drive(right_mask, STIM_A); drv0 = None
-    out = []
+    def drive(mask):
+        d = np.zeros(L, np.float32); d[mask] = STIM_A; return brain.xp.asarray(d)
+    drv = {"control": None, "left": drive(Lm), "right": drive(Rm)}
+    per = []
+    raw = {}
     for sd in seeds:
-        row = {"seed": sd}
-        for cond, drv, side in (("base", drv0, None), ("left_eye", drvL, "L"), ("right_eye", drvR, "R")):
-            brain.reset(sd)
-            _dn_rate(brain, np.array(dn_L + dn_R), drv, BASE_STEPS, brain.dt)   # warm BASE
-            rate, _ = _dn_rate(brain, np.array(dn_L + dn_R), drv, STIM_STEPS, brain.dt)
-            # 分侧：粗测 L/R 靶
-            brain.reset(sd)
-            _dn_rate(brain, np.array(dn_L + dn_R), drv, BASE_STEPS, brain.dt)
-            rL, _ = _dn_rate(brain, np.array(dn_L) if dn_L else np.array([0]), drv, STIM_STEPS, brain.dt)
-            rR, _ = _dn_rate(brain, np.array(dn_R) if dn_R else np.array([0]), drv, STIM_STEPS, brain.dt)
-            row[cond] = {"dn_rate": round(float(rate), 4), "L": round(float(rL), 4), "R": round(float(rR), 4)}
-        # ipsi(左眼→左DN) 与 contra(左眼→右DN)
-        row["left_ipsi"] = row["left_eye"]["L"]; row["left_contra"] = row["left_eye"]["R"]
-        row["right_ipsi"] = row["right_eye"]["R"]; row["right_contra"] = row["right_eye"]["L"]
-        row["baseL"] = row["base"]["L"]; row["baseR"] = row["base"]["R"]
-        row["ipsi_gt_contra"] = bool((row["left_ipsi"] - row["left_contra"] > 0)
-                                     and (row["right_ipsi"] - row["right_contra"] > 0))
-        out.append(row)
-    n_ok = sum(r["ipsi_gt_contra"] for r in out)
-    false_bg = float(np.mean([max(r["baseL"], r["baseR"]) for r in out]))
-    go = (n_ok >= STABLE_MIN) and (false_bg <= FALSE_MAX)
-    return {"dn_set": {t: tgt[t] for t in tgt}, "n_dn_L": len(dn_L), "n_dn_R": len(dn_R),
+        row = {"seed": sd, "seg": {}}
+        for cond in ("control", "left", "right"):
+            brain.reset(sd)                                  # 每条件仅一次 reset（段间不 reset）
+            c = _run_segments(brain, groups, drv[cond])
+            raw[f"{sd}_{cond}"] = np.array([c[g] for g in GROUP_KEYS])   # 原始逐步计数
+            res = {}
+            for g in GROUP_KEYS:
+                idx = groups[g]; n = max(1, len(idx))
+                pre_r, st_r, po_r = _seg_stats(c[g], BASE_STEPS, STIM_STEPS)
+                res[g] = {"n": int(len(idx)),
+                          "pop_pre": round(pre_r, 3), "pop_stim": round(st_r, 3), "pop_post": round(po_r, 3),
+                          "evoked_pop": round(st_r - pre_r, 3), "post_pop": round(po_r - st_r, 3),
+                          "cell_pre": round(pre_r / n, 4), "cell_stim": round(st_r / n, 4),
+                          "cell_post": round(po_r / n, 4),
+                          "evoked_cell": round((st_r - pre_r) / n, 4)}
+            row["seg"][cond] = res
+        # 判据（per-cell，避免左右细胞数不等造成假差异）
+        li = row["seg"]["left"]["DN_L"]["evoked_cell"]; lc = row["seg"]["left"]["DN_R"]["evoked_cell"]
+        ri = row["seg"]["right"]["DN_R"]["evoked_cell"]; rc = row["seg"]["right"]["DN_L"]["evoked_cell"]
+        row["left_ipsi_minus_contra_cell"] = round(li - lc, 4)
+        row["right_ipsi_minus_contra_cell"] = round(ri - rc, 4)
+        row["ipsi_gt_contra"] = bool((li - lc > 0) and (ri - rc > 0))
+        row["dnL_evoked_pop"] = row["seg"]["left"]["DN_L"]["evoked_pop"]
+        row["dnR_evoked_pop"] = row["seg"]["right"]["DN_R"]["evoked_pop"]
+        per.append(row)
+    n_ok = sum(r["ipsi_gt_contra"] for r in per)
+    # 原判据（RESP_MIN 按群体 DN 激发增量；FALSE_MAX 按对照段 DN 背景群体率——解释限制见报告）
+    resp_ok = all((r["dnL_evoked_pop"] >= RESP_MIN and r["dnR_evoked_pop"] >= RESP_MIN) for r in per)
+    false_bg = float(np.mean([max(r["seg"]["control"]["DN_L"]["pop_pre"], r["seg"]["control"]["DN_R"]["pop_pre"])
+                              for r in per]))
+    go = resp_ok and (n_ok >= STABLE_MIN) and (false_bg <= FALSE_MAX)
+    np.savez_compressed(os.path.join(HERE, "p31_raw.npz"), **raw)
+    return {"dn_targets_by_type": len(tgt_type), "dn_targets_by_body": len(tgt_body),
+            "n_dn_L": len(groups["DN_L"]), "n_dn_R": len(groups["DN_R"]),
             "params": {"STA_VPN": list(STA_VPN), "STIM_A": STIM_A, "seeds": seeds,
-                       "BASE/STIM/POST": [BASE_STEPS, STIM_STEPS, POST_STEPS],
-                       "RESP_MIN": RESP_MIN, "STABLE_MIN": STABLE_MIN, "FALSE_MAX": FALSE_MAX},
-            "per_seed": out, "ipsi_gt_contra_seeds": n_ok, "false_bg": round(false_bg, 4),
-            "verdict": "GO" if go else "NO-GO"}
+                       "PRE/STIM/POST": [BASE_STEPS, STIM_STEPS, POST_STEPS],
+                       "RESP_MIN": RESP_MIN, "STABLE_MIN": STABLE_MIN, "FALSE_MAX": FALSE_MAX,
+                       "sensory_input": False, "reset": "once per condition; none between segments"},
+            "per_seed": per, "ipsi_gt_contra_seeds": n_ok, "resp_min_ok": resp_ok,
+            "false_bg_pop": round(false_bg, 4), "verdict": "GO" if go else "NO-GO"}
 
 
 def _response_main(seeds, device):
     D = load_data()
     r = visual_response(D, seeds=seeds, device=device)
-    print(f"[P3-1 response] DN set={list(r['dn_set'])} L={r['n_dn_L']} R={r['n_dn_R']}")
+    print(f"[P3-1a] DN targets by_type={r['dn_targets_by_type']} by_body={r['dn_targets_by_body']} "
+          f"(L={r['n_dn_L']} R={r['n_dn_R']})")
     for row in r["per_seed"]:
-        print(f"  seed{row['seed']} base(L/R)={row['baseL']}/{row['baseR']} "
-              f"left_eye(L/R)={row['left_eye']['L']}/{row['left_eye']['R']} "
-              f"right_eye(L/R)={row['right_eye']['L']}/{row['right_eye']['R']} "
+        seg = row["seg"]["left"]
+        print(f"  seed{row['seed']} left: photo cell {seg['photo']['cell_pre']}->{seg['photo']['cell_stim']} "
+              f"({seg['photo']['evoked_cell']:+}) | otherVPN {seg['other_VPN']['cell_pre']}->{seg['other_VPN']['cell_stim']} "
+              f"| DN_L pop {seg['DN_L']['pop_pre']}->{seg['DN_L']['pop_stim']} DN_R pop {seg['DN_R']['pop_pre']}->{seg['DN_R']['pop_stim']}"
+              f" | ipsi-contra_cell={row['left_ipsi_minus_contra_cell']}/{row['right_ipsi_minus_contra_cell']} "
               f"ipsi>contra={row['ipsi_gt_contra']}")
-    print(f"  ipsi>contra seeds={r['ipsi_gt_contra_seeds']}/{len(seeds)} false_bg={r['false_bg']} -> {r['verdict']}")
+    print(f"  resp_min_ok={r['resp_min_ok']} ipsi>contra={r['ipsi_gt_contra_seeds']}/{len(seeds)} "
+          f"false_bg_pop={r['false_bg_pop']} -> {r['verdict']}")
     json.dump(r, open(os.path.join(HERE, "p31_response.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
-    print("wrote p31_response.json")
+    print("wrote p31_response.json + p31_raw.npz")
     return 0
 
 
