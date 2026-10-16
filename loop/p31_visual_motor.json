@@ -1,0 +1,260 @@
+{
+ "n_vpn": 9201,
+ "n_dn": 1314,
+ "n_edges": 25146,
+ "total_weight": 46.459,
+ "top_pairs": [
+  {
+   "dn_type": "DNp04",
+   "vpn_type": "LC4",
+   "w": 1.099
+  },
+  {
+   "dn_type": "DNp17",
+   "vpn_type": "VST2",
+   "w": 0.916
+  },
+  {
+   "dn_type": "DNg82",
+   "vpn_type": "LPLC4",
+   "w": 0.605
+  },
+  {
+   "dn_type": "DNp17",
+   "vpn_type": "VS1,VS2,VS3,VS4,VS5,VS6,VS7,VS8",
+   "w": 0.595
+  },
+  {
+   "dn_type": "DNpe008",
+   "vpn_type": "LPT28",
+   "w": 0.59
+  },
+  {
+   "dn_type": "DNge094",
+   "vpn_type": "LPT31",
+   "w": 0.576
+  },
+  {
+   "dn_type": "DNge094",
+   "vpn_type": "Nod1",
+   "w": 0.564
+  },
+  {
+   "dn_type": "DNg46",
+   "vpn_type": "VSm",
+   "w": 0.558
+  },
+  {
+   "dn_type": "DNpe008",
+   "vpn_type": "VST2",
+   "w": 0.539
+  },
+  {
+   "dn_type": "DNp02",
+   "vpn_type": "LC4",
+   "w": 0.524
+  },
+  {
+   "dn_type": "DNpe014",
+   "vpn_type": "MTe01b",
+   "w": 0.428
+  },
+  {
+   "dn_type": "DNp03",
+   "vpn_type": "LPLC4",
+   "w": 0.404
+  },
+  {
+   "dn_type": "DNp07",
+   "vpn_type": "LPLC4",
+   "w": 0.392
+  },
+  {
+   "dn_type": "DNb03",
+   "vpn_type": "LPT04_HST",
+   "w": 0.392
+  },
+  {
+   "dn_type": "DNb03",
+   "vpn_type": "H2",
+   "w": 0.386
+  },
+  {
+   "dn_type": "DNp03",
+   "vpn_type": "LPLC1",
+   "w": 0.386
+  },
+  {
+   "dn_type": "DNg36_b",
+   "vpn_type": "VSm",
+   "w": 0.365
+  },
+  {
+   "dn_type": "DNp17",
+   "vpn_type": "LPT04_HST",
+   "w": 0.349
+  },
+  {
+   "dn_type": "DNp01",
+   "vpn_type": "LC4",
+   "w": 0.344
+  },
+  {
+   "dn_type": "DNg79",
+   "vpn_type": "LPLC4",
+   "w": 0.343
+  },
+  {
+   "dn_type": "DNp11",
+   "vpn_type": "LC4",
+   "w": 0.343
+  },
+  {
+   "dn_type": "DNpe054",
+   "vpn_type": "VST2",
+   "w": 0.338
+  },
+  {
+   "dn_type": "DNp16",
+   "vpn_type": "MTe01b",
+   "w": 0.335
+  },
+  {
+   "dn_type": "DNpe008",
+   "vpn_type": "VST1",
+   "w": 0.333
+  },
+  {
+   "dn_type": "DNpe018",
+   "vpn_type": "aMe5",
+   "w": 0.331
+  },
+  {
+   "dn_type": "DNp04",
+   "vpn_type": "LPLC2",
+   "w": 0.323
+  },
+  {
+   "dn_type": "DNg40",
+   "vpn_type": "LPLC2",
+   "w": 0.314
+  },
+  {
+   "dn_type": "DNp20",
+   "vpn_type": "OCG01d",
+   "w": 0.311
+  },
+  {
+   "dn_type": "DNp57",
+   "vpn_type": "LPLC4",
+   "w": 0.304
+  },
+  {
+   "dn_type": "DNpe008",
+   "vpn_type": "VSm",
+   "w": 0.291
+  }
+ ],
+ "vpn_ipsi_contra": {
+  "MTe01b": {
+   "ipsi": 0.969,
+   "contra": 0.031,
+   "total": 3.89
+  },
+  "LPLC4": {
+   "ipsi": 0.995,
+   "contra": 0.005,
+   "total": 3.7
+  },
+  "LC4": {
+   "ipsi": 1.0,
+   "contra": 0.0,
+   "total": 3.08
+  },
+  "VSm": {
+   "ipsi": 0.978,
+   "contra": 0.022,
+   "total": 2.2
+  },
+  "VST2": {
+   "ipsi": 0.998,
+   "contra": 0.002,
+   "total": 2.2
+  },
+  "LPLC2": {
+   "ipsi": 0.998,
+   "contra": 0.002,
+   "total": 1.98
+  },
+  "LPT04_HST": {
+   "ipsi": 0.999,
+   "contra": 0.001,
+   "total": 1.55
+  },
+  "VS1,VS2,VS3,VS4,VS5,VS6,VS7,VS8": {
+   "ipsi": 0.975,
+   "contra": 0.025,
+   "total": 1.3
+  },
+  "LPLC1": {
+   "ipsi": 0.999,
+   "contra": 0.001,
+   "total": 1.19
+  },
+  "LPT28": {
+   "ipsi": 0.992,
+   "contra": 0.008,
+   "total": 1.04
+  },
+  "VST1": {
+   "ipsi": 0.984,
+   "contra": 0.016,
+   "total": 0.99
+  },
+  "OCG01d": {
+   "ipsi": 0.002,
+   "contra": 0.998,
+   "total": 0.89
+  },
+  "H2": {
+   "ipsi": 0.006,
+   "contra": 0.994,
+   "total": 0.87
+  },
+  "LPT31": {
+   "ipsi": 0.985,
+   "contra": 0.015,
+   "total": 0.86
+  },
+  "LLPC1": {
+   "ipsi": 0.934,
+   "contra": 0.066,
+   "total": 0.74
+  },
+  "LC9": {
+   "ipsi": 0.995,
+   "contra": 0.005,
+   "total": 0.71
+  },
+  "aMe5": {
+   "ipsi": 0.995,
+   "contra": 0.005,
+   "total": 0.71
+  },
+  "LC31a": {
+   "ipsi": 0.997,
+   "contra": 0.003,
+   "total": 0.69
+  },
+  "LC36": {
+   "ipsi": 0.8,
+   "contra": 0.2,
+   "total": 0.67
+  },
+  "Nod1": {
+   "ipsi": 0.0,
+   "contra": 1.0,
+   "total": 0.67
+  }
+ }
+}

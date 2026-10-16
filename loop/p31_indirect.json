@@ -1,0 +1,62 @@
+[
+ {
+  "via_type": "CB1638",
+  "in_w": 0.025,
+  "out_w": 0.171
+ },
+ {
+  "via_type": "AVLP094",
+  "in_w": 0.044,
+  "out_w": 0.13
+ },
+ {
+  "via_type": "CB1638",
+  "in_w": 0.066,
+  "out_w": 0.128
+ },
+ {
+  "via_type": "CB1638",
+  "in_w": 0.061,
+  "out_w": 0.125
+ },
+ {
+  "via_type": "cL01",
+  "in_w": 0.001,
+  "out_w": 0.116
+ },
+ {
+  "via_type": "CB3905",
+  "in_w": 0.004,
+  "out_w": 0.086
+ },
+ {
+  "via_type": "CB3707",
+  "in_w": 0.024,
+  "out_w": 0.084
+ },
+ {
+  "via_type": "cL01",
+  "in_w": 0.001,
+  "out_w": 0.08
+ },
+ {
+  "via_type": "cL01",
+  "in_w": 0.005,
+  "out_w": 0.078
+ },
+ {
+  "via_type": "CB0527",
+  "in_w": 0.119,
+  "out_w": 0.076
+ },
+ {
+  "via_type": "AN_multi_28",
+  "in_w": 0.004,
+  "out_w": 0.075
+ },
+ {
+  "via_type": "CB0527",
+  "in_w": 0.106,
+  "out_w": 0.075
+ }
+]
