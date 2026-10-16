@@ -20,10 +20,10 @@
  },
  "references": [
   {
-   "cite": "Groschner, Malis, Zuidinga & Borst 2022, Nature 602:92",
+   "cite": "Groschner, Malis, Zuidinga & Borst 2022, Nature 603(7899):119-123 [P9-1a 勘误：原写 602:92]",
    "title": "A biophysical account of multiplication by a single neuron",
    "doi": "10.1038/s41586-022-04428-3",
-   "use": "T4 **电导型**(passive conductance-based) 模型：E_exc(胆碱能)、E_inh(GluCl 分流抑制)、输入电阻测量"
+   "use": "T4 **电导型**(passive conductance-based) 模型：E_exc(胆碱能)、E_inh(GluCl 分流抑制)、输入电阻测量。**勘误/边界：该定标仅针对 T4，不可外推为全脑统一参数**。"
   },
   {
    "cite": "Seelig & Jayaraman 2015, Nat Neurosci 18:718",
