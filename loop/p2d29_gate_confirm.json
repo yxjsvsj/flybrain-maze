@@ -1,0 +1,12 @@
+{
+ "n_trials": 16,
+ "ns_complete": 0,
+ "collisions": 0,
+ "zf_complete": 0,
+ "gate": {
+  "GATE_COMPLETE": 12,
+  "of": 16,
+  "GATE_COLLISION": 0
+ },
+ "verdict": "FAIL"
+}

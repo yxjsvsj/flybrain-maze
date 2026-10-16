@@ -5,7 +5,8 @@ import sys
 
 import numpy as np
 
-from loop.p2d29_candidate import (DIR_KEEP_MIN, GAIN, REDUCE_MIN, SIGN, TAU_F, causal_lp, ns_turn)
+from loop.p2d29_candidate import (CONFIRM_SEEDS, DIR_KEEP_MIN, GAIN, REDUCE_MIN, SIGN, TAU_F,
+                                  causal_lp, ns_turn, summarize_gate)
 
 RESULTS = []
 
@@ -43,6 +44,22 @@ def main() -> int:
 
     # 门槛数值
     check("gate constants", REDUCE_MIN == 0.30 and DIR_KEEP_MIN == 0.60)
+
+    # 门槛只按 confirm（8 seed × 左右 = 16）计；screen 不计入
+    def row(seed, mode, real, cev=0, sc="must_left"):
+        return {"seed": seed, "scenario": sc, "mode": mode, "real_complete": real, "cev": cev}
+    per = []
+    for s in list(CONFIRM_SEEDS) + [64, 101, 202, 303]:        # confirm + screen
+        for sc in ("must_left", "must_right"):
+            for mode in ("NS", "POP", "ZERO", "FLIP"):
+                per.append(row(s, mode, False, sc=sc))
+    g = summarize_gate(per)
+    check("gate counts confirm-only (8 seeds x 2 = 16)", g["n_trials"] == 16)
+    check("gate FAIL when all fail", g["verdict"] == "FAIL")
+    # 若 screen 有成功也不影响门槛（不计入 confirm）
+    per2 = [row(s, "NS", (s in (64, 101)), sc=sc)
+            for s in list(CONFIRM_SEEDS) + [64, 101, 202, 303] for sc in ("must_left", "must_right")]
+    check("screen successes ignored by gate", summarize_gate(per2)["ns_complete"] == 0)
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))

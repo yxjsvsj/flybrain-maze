@@ -152,6 +152,25 @@ GATE_COMPLETE = 12         # ≥12/16
 GATE_COLLISION = 0
 
 
+def summarize_gate(per, confirm_seeds=tuple(CONFIRM_SEEDS)):
+    """门控**只按 8 个 confirm seed × 左右场景 = 16 次**计算（screen 不计入门槛）。
+
+    注意：旧 `_closed_main` 曾把 screen+confirm 混在一起（24 次）后套用"16 次"的门槛阈值——此处更正；
+    **不改门槛数值**（GATE_COMPLETE=12/16），**不重新挑选**，只用既有结果重算。
+    """
+    ns = [o for o in per if o["mode"] == "NS" and int(o["seed"]) in confirm_seeds]
+    zf = [o for o in per if o["mode"] in ("ZERO", "FLIP") and int(o["seed"]) in confirm_seeds]
+    comp = sum(bool(o["real_complete"]) for o in ns)
+    coll = sum(int(o["cev"]) for o in ns)
+    zfc = sum(bool(o["real_complete"]) for o in zf)
+    n = len(ns)
+    ok = (n == 2 * len(confirm_seeds)) and (comp >= GATE_COMPLETE) and (coll == GATE_COLLISION) and (zfc == 0)
+    return {"n_trials": n, "ns_complete": comp, "collisions": coll, "zf_complete": zfc,
+            "gate": {"GATE_COMPLETE": GATE_COMPLETE, "of": 2 * len(confirm_seeds),
+                     "GATE_COLLISION": GATE_COLLISION},
+            "verdict": "PASS" if ok else "FAIL"}
+
+
 def run_closedloop(cfg, brain, groups, dn, seed, rows, *, b0, mode="NS", seconds=40.0,
                    tof_hz=10.0, mpc=0.40, rig=None):
     from loop.decode import Decoder
@@ -238,17 +257,25 @@ def _closed_main(seeds, device, seconds):
                 out.append({"seed": sd, "scenario": sc, "mode": mode, **s})
                 print(f"  {sd} {sc:10s} {mode:4s} reach={str(s['reach'])[:1]} cev={s['cev']} "
                       f"headΔ={s['heading_deg']:+7.1f} real={str(s['real_complete'])[:1]} T={s['T']}")
-    ns = [o for o in out if o["mode"] == "NS"]
-    comp = sum(o["real_complete"] for o in ns)
-    coll = sum(o["cev"] for o in ns)
-    zf = [o for o in out if o["mode"] in ("ZERO", "FLIP")]
-    zf_comp = sum(o["real_complete"] for o in zf)
-    gate = (comp >= GATE_COMPLETE) and (coll == 0) and (zf_comp == 0)
-    verdict = "PASS" if gate else "FAIL"
-    print(f"[Part D] NS real_complete={comp}/16 collisions={coll} | ZERO/FLIP real_complete={zf_comp} -> {verdict}")
-    _json.dump({"verdict": verdict, "ns_complete": comp, "collisions": coll, "zf_complete": zf_comp,
-                "gate": {"GATE_COMPLETE": GATE_COMPLETE, "GATE_COLLISION": GATE_COLLISION},
+    # 门槛**只按 confirm（8 seed × 左右 = 16）**计算；screen 仅作探索性接线检查，不计入门槛。
+    g = summarize_gate(out)
+    verdict = g["verdict"]
+    print(f"[Part D gate] confirm-only: NS real_complete={g['ns_complete']}/{g['n_trials']} "
+          f"collisions={g['collisions']} ZERO/FLIP real_complete={g['zf_complete']} -> {verdict}")
+    _json.dump({"verdict": verdict, "gate_confirm_only": g,
+                "note": "gate computed on confirm seeds only (16); screen seeds are exploratory wiring checks",
                 "per": out}, open(os.path.join(HERE, "p2d29_closedloop.json"), "w", encoding="utf-8"),
+               ensure_ascii=False, indent=1)
+    return 0
+
+
+def _gate_from_json(path):
+    """**不重跑**：从既有 p2d29_closedloop.json 只按 confirm 重算门槛（归档）。"""
+    import json as _json
+    d = _json.load(open(path, encoding="utf-8"))
+    g = summarize_gate(d["per"])
+    print("[archive] confirm-only gate:", _json.dumps(g, ensure_ascii=False))
+    _json.dump(g, open(os.path.join(HERE, "p2d29_gate_confirm.json"), "w", encoding="utf-8"),
                ensure_ascii=False, indent=1)
     return 0
 
@@ -343,9 +370,12 @@ def main(argv=None) -> int:
     ap.add_argument("--open-loop", default="")
     ap.add_argument("--base-only", default="")
     ap.add_argument("--closed-loop", default="")
+    ap.add_argument("--gate-from-json", default="")
     ap.add_argument("--seconds", type=float, default=40.0)
     ap.add_argument("--device", default="cuda")
     a = ap.parse_args(argv)
+    if a.gate_from_json:
+        return _gate_from_json(a.gate_from_json)
     if a.closed_loop:
         return _closed_main([int(s) for s in a.closed_loop.split(",")], a.device, a.seconds)
     if a.base_only:
