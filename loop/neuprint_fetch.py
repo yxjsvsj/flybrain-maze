@@ -45,6 +45,12 @@ def load_targets(path: str = TARGETS) -> dict:
             "all_ids": ids, "group_of": group_of}
 
 
+TOKEN_FILES = (os.path.join(os.path.expanduser("~"), ".neuprint"),
+               os.path.join(os.path.expanduser("~"), ".config", "neuprint"),
+               os.path.join(os.path.expanduser("~"), ".cloudvolume", "secrets",
+                            "neuprint-secret.json"))
+
+
 def load_token(env: str = "NEUPRINT_TOKEN") -> str | None:
     """只取执行机上合法配置的凭据；取不到返回 None（不申请、不猜、不落盘）。"""
     tok = os.environ.get(env) or os.environ.get("NEUPRINT_APPLICATION_CREDENTIALS")
@@ -56,10 +62,7 @@ def load_token(env: str = "NEUPRINT_TOKEN") -> str | None:
             except Exception:                       # noqa: BLE001
                 pass
         return tok or None
-    for p in (os.path.join(os.path.expanduser("~"), ".neuprint"),
-              os.path.join(os.path.expanduser("~"), ".config", "neuprint"),
-              os.path.join(os.path.expanduser("~"), ".cloudvolume", "secrets",
-                           "neuprint-secret.json")):
+    for p in TOKEN_FILES:
         if os.path.isfile(p):
             try:
                 d = json.load(open(p, "r", encoding="utf-8"))

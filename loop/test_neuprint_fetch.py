@@ -45,10 +45,14 @@ def main() -> int:
     check("group_of covers all", len(t["group_of"]) == 88)
     check("dataset == male-cns:v1.0", t["dataset"] == "male-cns:v1.0")
 
+    import loop.neuprint_fetch as nf
     saved = {k: os.environ.pop(k, None) for k in ("NEUPRINT_TOKEN", "NEUPRINT_APPLICATION_CREDENTIALS")}
+    saved_files = nf.TOKEN_FILES
+    nf.TOKEN_FILES = ()                              # 隔离本机 ~/.neuprint（否则会读到真实 token）
     try:
         check("no token -> None", load_token() is None)
     finally:
+        nf.TOKEN_FILES = saved_files
         for k, v in saved.items():
             if v is not None:
                 os.environ[k] = v
