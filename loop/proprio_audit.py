@@ -88,10 +88,19 @@ def main() -> int:
                   f"到motor={len(ds & motor)}")
         else:
             print("\n== 精确 T4/T5: 无命中（连接组无该命名）")
-        # vnc_sensory -> vnc_motor（本体/机械感 -> 运动）
-        vs = np.flatnonzero(sc == "vnc_sensory").tolist()
-        ds, _ = downstream(csc, vs, depth=2)
-        print(f"== vnc_sensory n={len(vs)} 2跳下游={len(ds)} 到DN={len(ds & dn)} 到motor={len(ds & motor)}")
+        # vnc_sensory 的实际细胞类别与身份依据
+        vs = np.flatnonzero(sc == "vnc_sensory")
+        vsc = ct[vs]
+        names, cnts = np.unique(vsc, return_counts=True)
+        order = np.argsort(-cnts)
+        leg_like = [n for n in names if any(k in str(n).lower() for k in
+                    ("lg", "leg", "fe", "tr", "ti", "ta", "cho", "camp", "bristle", "hair", "proprio"))]
+        print(f"\n== vnc_sensory 实际细胞类别（n={len(vs)}，{len(names)} 类；前 18）==")
+        for i in order[:18]:
+            print(f"    {str(names[i]):24s} n={int(cnts[i])}")
+        print(f"  腿/机械感样命名命中 {len(leg_like)} 类（含 'lg'/'cho'/'camp'/'hair' 等，**粗粒度、非确认本体感受器**）")
+        print("  身份依据等级：vnc_sensory=超类注释[连接组事实]；'本体感觉'=**人工推断**；无 chordotonal/campaniform 标签")
+        print("  注入性质：**每步双侧 ±K 电压偏置 v**（人工），**非**已标定的生理 yaw 输入")
 
     print("\n== 候选通路关键词命中 ==")
     csc = (b.indptr, b.indices)
