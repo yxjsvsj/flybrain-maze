@@ -271,7 +271,7 @@ def reanalyze(outdir, dt=0.02):
                "net_turn", "turn_osc_hz", "frac_sat_any", "frac_preclip_over1", "D_std",
                "bg_turn_absmean", "corr_sizeLR_turn", "attrib"]
     with open(os.path.join(HERE, "p2d28_events.csv"), "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=ev_cols); w.writeheader()
+        w = csv.DictWriter(fh, fieldnames=ev_cols, lineterminator="\n"); w.writeheader()
         for m in res:
             w.writerow({k: m.get(k, "") for k in ev_cols})
     return res
@@ -342,7 +342,7 @@ def main(argv=None) -> int:
             all_met.append(met)
             with open(os.path.join(a.outdir, f"trace_{sd}_{sc}.csv"), "w", newline="",
                       encoding="utf-8") as fh:
-                w = csv.DictWriter(fh, fieldnames=COLS); w.writeheader()
+                w = csv.DictWriter(fh, fieldnames=COLS, lineterminator="\n"); w.writeheader()
                 for r in recs:
                     w.writerow({k: r.get(k) for k in COLS})
             print(f"{sd:5d} {sc:10s} reach={str(s['reach'])[:1]} bestD={s['bestD']:3d} "
