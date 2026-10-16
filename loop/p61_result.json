@@ -1,0 +1,219 @@
+{
+ "frozen": {
+  "interface": "5-way ToF -> LPLC2/LC4 sensory injection (per-sensor azimuth weighting)",
+  "angles": {
+   "L": 70.0,
+   "FL": 30.0,
+   "F": 0.0,
+   "FR": -30.0,
+   "R": -70.0
+  },
+  "ORDER": [
+   "L",
+   "FL",
+   "F",
+   "FR",
+   "R"
+  ],
+  "seeds": [
+   11,
+   12,
+   13,
+   14,
+   15
+  ],
+  "PRE/STIM/POST": [
+   25,
+   50,
+   25
+  ],
+  "TOF_HZ": 10.0,
+  "conds": [
+   [
+    "L",
+    "near"
+   ],
+   [
+    "L",
+    "away"
+   ],
+   [
+    "L",
+    "approach"
+   ],
+   [
+    "FL",
+    "near"
+   ],
+   [
+    "FL",
+    "away"
+   ],
+   [
+    "FL",
+    "approach"
+   ],
+   [
+    "F",
+    "near"
+   ],
+   [
+    "F",
+    "away"
+   ],
+   [
+    "F",
+    "approach"
+   ],
+   [
+    "FR",
+    "near"
+   ],
+   [
+    "FR",
+    "away"
+   ],
+   [
+    "FR",
+    "approach"
+   ],
+   [
+    "R",
+    "near"
+   ],
+   [
+    "R",
+    "away"
+   ],
+   [
+    "R",
+    "approach"
+   ],
+   [
+    "none",
+    "none"
+   ]
+  ],
+  "K_SIG": 3.0,
+  "dn_targets": {
+   "L": 32,
+   "R": 31
+  },
+  "note": "artificial ToF->neural sensory conversion; NOT the natural retina"
+ },
+ "per_seed": [
+  {
+   "seed": 11,
+   "sigma_L": 0.0534,
+   "near_L_LPLC2L": 0.17894,
+   "near_L_LPLC2R": 0.03604,
+   "near_L_effective": true,
+   "near_FL_LPLC2L": 0.16489,
+   "near_FL_LPLC2R": 0.17824,
+   "near_FL_effective": true,
+   "near_F_LPLC2L": 0.16277,
+   "near_F_LPLC2R": 0.20044,
+   "near_F_effective": true,
+   "near_FR_LPLC2L": 0.16,
+   "near_FR_LPLC2R": 0.20176,
+   "near_FR_effective": true,
+   "near_R_LPLC2L": 0.05319,
+   "near_R_LPLC2R": 0.20637,
+   "near_R_effective": true,
+   "DN_L_approachL": 0.015,
+   "DN_R_approachR": 0.01484,
+   "DN_lateral_ok": false
+  },
+  {
+   "seed": 12,
+   "sigma_L": 0.05881,
+   "near_L_LPLC2L": 0.19809,
+   "near_L_LPLC2R": 0.02923,
+   "near_L_effective": true,
+   "near_FL_LPLC2L": 0.1666,
+   "near_FL_LPLC2R": 0.17495,
+   "near_FL_effective": false,
+   "near_F_LPLC2L": 0.16191,
+   "near_F_LPLC2R": 0.19143,
+   "near_F_effective": true,
+   "near_FR_LPLC2L": 0.15936,
+   "near_FR_LPLC2R": 0.19363,
+   "near_FR_effective": true,
+   "near_R_LPLC2L": 0.06638,
+   "near_R_LPLC2R": 0.1967,
+   "near_R_effective": true,
+   "DN_L_approachL": 0.01562,
+   "DN_R_approachR": 0.01355,
+   "DN_lateral_ok": false
+  },
+  {
+   "seed": 13,
+   "sigma_L": 0.04239,
+   "near_L_LPLC2L": 0.17596,
+   "near_L_LPLC2R": 0.03033,
+   "near_L_effective": true,
+   "near_FL_LPLC2L": 0.16638,
+   "near_FL_LPLC2R": 0.17626,
+   "near_FL_effective": true,
+   "near_F_LPLC2L": 0.1634,
+   "near_F_LPLC2R": 0.19187,
+   "near_F_effective": true,
+   "near_FR_LPLC2L": 0.16,
+   "near_FR_LPLC2R": 0.19407,
+   "near_FR_effective": true,
+   "near_R_LPLC2L": 0.06085,
+   "near_R_LPLC2R": 0.19692,
+   "near_R_effective": true,
+   "DN_L_approachL": 0.01688,
+   "DN_R_approachR": 0.0129,
+   "DN_lateral_ok": false
+  },
+  {
+   "seed": 14,
+   "sigma_L": 0.04919,
+   "near_L_LPLC2L": 0.17489,
+   "near_L_LPLC2R": 0.02286,
+   "near_L_effective": true,
+   "near_FL_LPLC2L": 0.16851,
+   "near_FL_LPLC2R": 0.17187,
+   "near_FL_effective": true,
+   "near_F_LPLC2L": 0.16553,
+   "near_F_LPLC2R": 0.18264,
+   "near_F_effective": true,
+   "near_FR_LPLC2L": 0.16255,
+   "near_FR_LPLC2R": 0.18462,
+   "near_FR_effective": true,
+   "near_R_LPLC2L": 0.0566,
+   "near_R_LPLC2R": 0.19011,
+   "near_R_effective": true,
+   "DN_L_approachL": 0.0175,
+   "DN_R_approachR": 0.01226,
+   "DN_lateral_ok": false
+  },
+  {
+   "seed": 15,
+   "sigma_L": 0.04564,
+   "near_L_LPLC2L": 0.17234,
+   "near_L_LPLC2R": 0.03516,
+   "near_L_effective": true,
+   "near_FL_LPLC2L": 0.1683,
+   "near_FL_LPLC2R": 0.1756,
+   "near_FL_effective": true,
+   "near_F_LPLC2L": 0.1634,
+   "near_F_LPLC2R": 0.19604,
+   "near_F_effective": true,
+   "near_FR_LPLC2L": 0.16128,
+   "near_FR_LPLC2R": 0.19692,
+   "near_FR_effective": true,
+   "near_R_LPLC2L": 0.05872,
+   "near_R_LPLC2R": 0.20264,
+   "near_R_effective": true,
+   "DN_L_approachL": 0.01813,
+   "DN_R_approachR": 0.01355,
+   "DN_lateral_ok": false
+  }
+ ],
+ "all5_effective_seeds": 4,
+ "DN_lateral_ok_seeds": 0,
+ "verdict": "NO-GO"
+}
