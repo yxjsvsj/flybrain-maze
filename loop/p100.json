@@ -1,0 +1,202 @@
+{
+ "audit": {
+  "counts": {
+   "KC": 4064,
+   "MBON": 97,
+   "DAN(PPL/PAM)": 340,
+   "visual_projection": 9201,
+   "descending_neuron": 1314
+  },
+  "KC_to_MBON": {
+   "edges": 61210,
+   "sumW": 56.178
+  },
+  "DAN_to_KC": {
+   "edges": 129113,
+   "sumW": 423.474
+  },
+  "DAN_to_MBON": {
+   "edges": 3160,
+   "sumW": 4.846
+  },
+  "visual_projection_to_KC": {
+   "edges": 1616,
+   "sumW": 17.164
+  },
+  "visual_projection_to_MBON": {
+   "edges": 303,
+   "sumW": 0.146
+  },
+  "MBON_to_DN": {
+   "edges": 409,
+   "sumW": 0.258
+  },
+  "KC_to_DN": {
+   "edges": 152,
+   "sumW": 0.08
+  },
+  "LPLC2_LC4_to_KC": {
+   "edges": 0,
+   "sumW": 0.0
+  },
+  "LPLC2_LC4_to_MBON": {
+   "edges": 1,
+   "sumW": 0.0
+  },
+  "LPLC2_LC4_to_DAN": {
+   "edges": 0,
+   "sumW": 0.0
+  },
+  "visual_to_KC_top_types": [
+   [
+    "aMe12",
+    2.57
+   ],
+   [
+    "aMe26",
+    2.03
+   ],
+   [
+    "MTe30",
+    1.9
+   ],
+   [
+    "LTe25",
+    1.75
+   ],
+   [
+    "MTe32",
+    1.29
+   ],
+   [
+    "aMe20",
+    0.95
+   ],
+   [
+    "LTe02",
+    0.8
+   ],
+   [
+    "MTe38",
+    0.66
+   ],
+   [
+    "LTe16",
+    0.63
+   ],
+   [
+    "MTe40",
+    0.58
+   ]
+  ],
+  "direction": "W[post,pre]（row=post, col=pre）"
+ },
+ "teacher_student": {
+  "teacher_privileged": [
+   "地图/栅格",
+   "目标坐标",
+   "真实位姿(全局)",
+   "Dijkstra 最短路径与动作"
+  ],
+  "student_inputs_only": [
+   "五路 ToF 距离 + 其时间变化",
+   "自身神经活动产生的内部状态",
+   "自身运动指令反馈"
+  ],
+  "student_forbidden_inputs": [
+   "地图",
+   "全局真值位姿",
+   "目标方向",
+   "Dijkstra 路径",
+   "老师动作(作为推理输入)"
+  ],
+  "supervision": "训练阶段可提供**明确标注的监督/奖励**给学习系统；**禁止**把'正确左/右转'直接当**感觉输入**或以之作为**测试**期的神经命令。",
+  "pomdp": {
+   "not_identifiable_from_5tof": [
+    "已探索/未探索状态(纯 ToF 帧序列可能混淆)",
+    "全局朝向/漂移",
+    "目标相对可达性(门后/走廊尽头)",
+    "死胡同 vs 环路(局部相似)"
+   ],
+   "implications": "学生**无法复现**拥有全地图的教师；需要内部记忆/目标线索。**但任何显式目标/航向输入被禁止** → 可辨识性缺口必须在**脑内状态**中解决，而非外部注入。"
+  }
+ },
+ "proposal": {
+  "mechanism": "**DA 调制的三因素 KC→MBON 突触可塑性**：ΔW = η · e_ij · (D(t) − D0)，`e_ij`=KC→MBON 资格迹(局部、因果)，`D(t)`=DAN 多巴胺信号(奖励/惩罚)，`D0`=基线。",
+  "literature": [
+   {
+    "cite": "Heisenberg 2003, Nat Rev Neurosci 4:266",
+    "doi": "10.1038/nrn1054",
+    "phenomenon": "MB 为联想学习中心（果蝇）",
+    "evidence": "behavioral/genetic"
+   },
+   {
+    "cite": "Aso et al. 2014, eLife 3:e04577",
+    "doi": "10.7554/eLife.04577",
+    "phenomenon": "KC→MBON 与 DAN 的解剖与功能分区",
+    "evidence": "anatomy+function"
+   },
+   {
+    "cite": "Hige et al. 2015, Neuron 85:1341",
+    "doi": "10.1016/j.neuron.2014.12.045",
+    "phenomenon": "DA 门控 KC→MBON 可塑性",
+    "evidence": "electrophysiology"
+   },
+   {
+    "cite": "Aso & Rubin 2016, Curr Biol 26:R225",
+    "doi": "10.1016/j.cub.2016.01.046",
+    "phenomenon": "DAN 的价值/强化编码",
+    "evidence": "review+behavior"
+   }
+  ],
+  "freeze_spec": {
+   "plastic_edges": "**仅**真实存在的 KC→MBON 边（`W[post,pre]`, bodyId 逐一记录）；**不新建连接**。",
+   "sign": "KC→MBON 为兴奋(ACh)；更新方向由 DA 符号决定(KC 可正可负门控)。",
+   "bounds": "ΔW ∈ [−Δmax, +Δmax]（Δmax 与 g_unit 同类未定标，**标为未知**）。",
+   "timescale": "资格迹 τ_e（文献量级，**待定标**）；DA 信号时间尺度由训练产生。",
+   "learning_rate": "η **未知**（无本数据集定标）→ **禁止**按训练成功率挑 η。",
+   "modulator": "DAN 群体（PPL1/PAM，bodyId 记录）；**训练**阶段由教师奖励生成 DA。",
+   "W_readonly": "官方 `W` **永久只读**；学习只写**独立 ΔW 覆盖层**。",
+   "decoder_frozen": "运动解码器必须**训练前冻结且有神经依据的固定解码器**；**不得**用外部读出头学教师标签再称'脑内学习'。"
+  }
+ },
+ "decision": {
+  "verdict": "NO-GO",
+  "reason": "按 §3.1：五路 ToF（当前感觉靶）→ 学习回路**缺必要连接**（0 边）；且学习回路→下行运动很弱；加之 g_unit 未定标。**不得随意改选全部突触**。",
+  "blockers": [
+   "**P6 的 ToF 感觉靶(LPLC2/LC4) → 学习回路(KC/MBON/DAN) 权重≈0**（边 1、Σw 0.000）：五路 ToF 当前**接不到**学习回路。",
+   "学习回路 → 下行运动 很弱：MBON→DN {'edges': 409, 'sumW': 0.258}，KC→DN {'edges': 152, 'sumW': 0.08}。",
+   "COBA 绝对电导 g_unit 仍未知（P9-1b1 科学 NO-GO）→ **不得自动解锁真实神经训练**。"
+  ],
+  "alternative_note": "存在**其它**视觉投射(motion VPN: [('aMe12', 2.57), ('aMe26', 2.03), ('MTe30', 1.9), ('LTe25', 1.75), ('MTe32', 1.29)]) → KC 的通路(visual_projection→KC {'edges': 1616, 'sumW': 17.164})；但将其作为 ToF 感觉靶属**另立方案**，本轮**不**据此 GO，也不复活已关闭路线。",
+  "distinction": {
+   "literature_function": "KC→MBON/DAN 有**学习功能**的实验证据（果蝇）。",
+   "anatomy_path": "连接组**存在** KC→MBON/DAN 路径（真实边）。",
+   "learns_navigation": "**不能**由此推断该路径能学会**导航**——尤其 ToF→学习回路**无连接**。"
+  }
+ },
+ "ablation": {
+  "train_test_separation": "训练数据与迷宫**测试集严格分离**；教师示范/反馈/塑性更新**仅**在训练阶段。",
+  "independent_test_process": "测试从**独立学生进程**启动：**不加载** Dijkstra/地图/教师标签/特权输入；以**日志、接口检查与断言**证明老师不存在。",
+  "freeze_dW": "训练后 ΔW **冻结并保存**；与**未训练**的同一连接组对比。",
+  "ablations": [
+   "关闭神经输出",
+   "恢复 ΔW=0(原始 W)",
+   "打乱训练反馈",
+   "冻结可塑突触",
+   "纯教师上限(Dijkstra)",
+   "相同五路 ToF 的简单工程基线"
+  ],
+  "metrics": [
+   "独立迷宫完成率",
+   "碰撞",
+   "开始转弯",
+   "左右方向",
+   "结束转弯",
+   "恢复直行",
+   "**是否只是记住训练地图**"
+  ],
+  "validity": "成功必须依赖**真实神经活动 + 内部学习 ΔW**；一旦测试期出现**外部 Dijkstra/导航记忆/老师动作/隐藏目标**→**判定无效**。",
+  "goal": "不以'完全模仿最短路径'为唯一目标；区分**可达出口的局部避障学习** 与 **真正全局最短路径规划**。"
+ }
+}
