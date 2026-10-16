@@ -59,11 +59,45 @@ def window_series(counts_time, angles, window=WINDOW, R_valid=R_VALID, min_spk=M
 
 
 def longest_valid_run(ph):
+    """相位有效（非 NaN）的最长连续窗数。"""
     best = cur = 0
     for x in ph:
         cur = cur + 1 if x == x else 0        # NaN != NaN
         best = max(best, cur)
     return best
+
+
+def longest_true_run(flags):
+    best = cur = 0
+    for f in flags:
+        cur = cur + 1 if f else 0
+        best = max(best, cur)
+    return best
+
+
+def obs_flags(counts_time, angles, window=WINDOW):
+    """观察段每窗两套标记：phase_valid(R≥0.20 & 发放≥MIN_SPK) 与 bump(R≥0.30 & 发放≥MIN_SPK)。"""
+    W = window_sums(counts_time, window)
+    n0 = (PRE + CUE) // window
+    pv, bp = [], []
+    for w in W[n0:]:
+        if w.sum() < MIN_SPK:
+            pv.append(False); bp.append(False); continue
+        R, _ = pop_vector(w, angles)
+        pv.append(R >= R_VALID)
+        bp.append(R >= BUMP_R)
+    return pv, bp
+
+
+def spatial_shuffle_control(counts_time, angles, n_perm=1000, seed=0):
+    """**空间角标签打乱**对照：把 46 个 EPG 的角标签随机置换 n_perm 次，重算观察段群体 R。"""
+    pooled = counts_time[PRE + CUE:].sum(0)
+    obs_R, _ = pop_vector(pooled, angles)
+    rng = np.random.default_rng(seed)
+    null = np.array([pop_vector(pooled, rng.permutation(angles))[0] for _ in range(n_perm)])
+    p = (1.0 + float((null >= obs_R).sum())) / (1.0 + n_perm)
+    return {"obs_R": round(obs_R, 4), "null_median": round(float(np.median(null)), 4),
+            "null_p95": round(float(np.percentile(null, 95)), 4), "p": round(p, 4)}
 
 
 def angular_profile(counts_pooled, angles, nbins=NBINS):
@@ -104,20 +138,28 @@ def circ_mean_deg(ph):
 
 
 def trial_metrics(counts_time, angles):
-    """counts_time: (TOTAL, n_epg)。返回逐试验指标。"""
+    """counts_time: (TOTAL, n_epg)。返回逐试验指标。
+
+    **区分**：`phase_valid_duration_s`（相位有效：R≥R_VALID=0.20）与
+    `bump_sustain_duration_s`（真·峰保持：R≥BUMP_R=0.30 且窗内发放≥MIN_SPK 连续）。
+    """
     Rs, ph = window_series(counts_time, angles)
     nw_pre, nw_cue = PRE // WINDOW, CUE // WINDOW
     obs = slice(nw_pre + nw_cue, len(Rs))
     R_obs, ph_obs = Rs[obs], ph[obs]
     valid_rate = float(np.mean(~np.isnan(ph_obs))) if len(ph_obs) else 0.0
-    sustain_w = longest_valid_run(ph_obs)
+    phase_valid_dur = longest_valid_run(ph_obs) * WIN_S
+    pv_flags, bump_flags = obs_flags(counts_time, angles)
+    bump_dur = longest_true_run(bump_flags) * WIN_S
     pooled = counts_time[(nw_pre + nw_cue) * WINDOW:].sum(0)
     hist = angular_profile(pooled, angles)
-    return {"pre_medianR": round(float(np.median(Rs[:nw_pre])), 4) if nw_pre else None,
+    return {"pre_spikes": int(counts_time[:PRE].sum()),
+            "pre_medianR": round(float(np.median(Rs[:nw_pre])), 4) if nw_pre else None,
             "cue_medianR": round(float(np.median(Rs[nw_pre:nw_pre + nw_cue])), 4),
             "obs_medianR": round(float(np.median(R_obs)), 4) if len(R_obs) else None,
             "valid_rate": round(valid_rate, 3),
-            "sustain_s": round(sustain_w * WIN_S, 2),
+            "phase_valid_duration_s": round(phase_valid_dur, 2),
+            "bump_sustain_duration_s": round(bump_dur, 2),
             "final_phase_deg": round(circ_mean_deg(ph_obs[-10:]), 1),
             "n_peaks": n_peaks(hist), "fwhm_deg": round(fwhm_deg(hist), 1),
             "n_spikes_obs": int(pooled.sum())}

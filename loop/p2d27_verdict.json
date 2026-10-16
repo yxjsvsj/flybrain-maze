@@ -2,45 +2,61 @@
  "verdict": "PARTIAL",
  "summary_confirm": {
   "nocue": {
-   "obs_medianR_med": 0.1219,
-   "cue_medianR_med": 0.1325,
-   "sustain_med": 0.35,
-   "valid_rate_med": 0.35,
-   "frac_sustain_ge_1s": 0.0,
-   "frac_obsR_ge_BUMPr": 0.0
+   "obs_medianR": 0.1219,
+   "cue_medianR": 0.1325,
+   "phase_valid_duration_s_med": 0.35,
+   "bump_sustain_duration_s_med": 0.2,
+   "frac_bump_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0,
+   "shuffle_p_med": 0.001
   },
   "cue0": {
-   "obs_medianR_med": 0.1534,
-   "cue_medianR_med": 0.291,
-   "sustain_med": 0.3,
-   "valid_rate_med": 0.34,
-   "frac_sustain_ge_1s": 0.0,
-   "frac_obsR_ge_BUMPr": 0.0
+   "obs_medianR": 0.1534,
+   "cue_medianR": 0.291,
+   "phase_valid_duration_s_med": 0.3,
+   "bump_sustain_duration_s_med": 0.1,
+   "frac_bump_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0,
+   "shuffle_p_med": 0.001
   },
   "cue120": {
-   "obs_medianR_med": 0.1441,
-   "cue_medianR_med": 0.2836,
-   "sustain_med": 0.4,
-   "valid_rate_med": 0.32,
-   "frac_sustain_ge_1s": 0.0,
-   "frac_obsR_ge_BUMPr": 0.0
+   "obs_medianR": 0.1441,
+   "cue_medianR": 0.2836,
+   "phase_valid_duration_s_med": 0.4,
+   "bump_sustain_duration_s_med": 0.15,
+   "frac_bump_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0,
+   "shuffle_p_med": 0.001
   },
   "diffuse": {
-   "obs_medianR_med": 0.1472,
-   "cue_medianR_med": 0.0673,
-   "sustain_med": 0.25,
-   "valid_rate_med": 0.4,
-   "frac_sustain_ge_1s": 0.0,
-   "frac_obsR_ge_BUMPr": 0.0
+   "obs_medianR": 0.1472,
+   "cue_medianR": 0.0673,
+   "phase_valid_duration_s_med": 0.25,
+   "bump_sustain_duration_s_med": 0.15,
+   "frac_bump_sustain_ge_1s": 0.0,
+   "frac_obsR_ge_BUMPr": 0.0,
+   "shuffle_p_med": 0.001
   }
  },
+ "pre_segment": {
+  "median_pre_spikes": 14,
+  "median_pre_medianR": 0.0
+ },
  "position_separation_deg": [],
- "max_obs_medianR": 0.1824,
- "max_cue_medianR": 0.9891,
- "any_localized_ge0.30": true,
+ "any_bump_sustain_ge_1s": false,
+ "any_localized_ge_0.30": true,
+ "shuffle_control": {
+  "nocue": 0.001,
+  "cue0": 0.001,
+  "cue120": 0.001,
+  "diffuse": 0.001
+ },
  "criterion": {
+  "R_VALID": 0.2,
   "BUMP_R": 0.3,
+  "MIN_SPK": 3,
   "SUSTAIN_MIN_S": 1.0,
   "PHASE_SEP_MIN": 90.0
- }
+ },
+ "note": "sensory_input=True (this round); analysis recomputed from saved timeseries only"
 }

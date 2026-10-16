@@ -11,7 +11,8 @@ import numpy as np
 
 from loop.state_probe import (BUMP_R, MIN_SPK, OBS, PRE, CUE, R_VALID, TOTAL, WINDOW,
                               angular_profile, circ_mean_deg, fwhm_deg, longest_valid_run,
-                              n_peaks, pop_vector, trial_metrics, window_series)
+                              n_peaks, pop_vector, spatial_shuffle_control, trial_metrics,
+                              window_series)
 
 RESULTS = []
 
@@ -62,17 +63,37 @@ def main() -> int:
     cue_only = ct.copy(); cue_only[PRE + CUE:] = 0        # 撤除后无活动
     m_sus = trial_metrics(sus, ang)
     m_cue = trial_metrics(cue_only, ang)
-    check("sustained bump -> sustain > 1s", m_sus["sustain_s"] >= 1.0)
-    check("cue-only -> sustain 0", m_cue["sustain_s"] == 0.0)
+    check("sustained bump -> bump_sustain > 1s", m_sus["bump_sustain_duration_s"] >= 1.0)
+    check("cue-only -> bump_sustain 0", m_cue["bump_sustain_duration_s"] == 0.0)
 
     # 保持时长函数
     check("longest_valid_run counts streak", longest_valid_run([np.nan, 0.1, 0.2, 0.3, np.nan, 0.5]) == 3)
 
-    # 空间打乱 -> 相位消失
+    # 空间角标签打乱对照（真实现，非 or True）
     rng = np.random.default_rng(3)
-    ang_sh = rng.permutation(ang)
-    R3, _ = pop_vector(ct.sum(0), ang_sh[np.argsort(np.argsort(ang))])
-    check("shuffle can change R", abs(R3 - R) > 1e-6 or True)
+    check("shuffle drops localized-bump R", pop_vector(ct.sum(0), rng.permutation(ang))[0] < R * 0.5)
+    ctrl = spatial_shuffle_control(ct, ang, n_perm=300, seed=0)
+    check("shuffle control: obs above null p95", ctrl["obs_R"] > ctrl["null_p95"])
+    check("shuffle control: localized bump significant", ctrl["p"] < 0.05)
+    ctrl_u = spatial_shuffle_control(np.ones((TOTAL, len(ang)), int), ang, n_perm=200, seed=0)
+    check("shuffle control: uniform not localized", ctrl_u["obs_R"] < 0.15)
+
+    # 区分 phase_valid(R>=0.20) 与 bump_sustain(R>=0.30)
+    m = trial_metrics(ct, ang)
+    check("strong bump: both durations ~5s",
+          m["phase_valid_duration_s"] >= 4.5 and m["bump_sustain_duration_s"] >= 4.5)
+    mc = trial_metrics(cue_only, ang)
+    check("cue-only: both durations 0",
+          mc["phase_valid_duration_s"] == 0 and mc["bump_sustain_duration_s"] == 0)
+    check("phase_valid_duration >= bump_sustain_duration",
+          m["phase_valid_duration_s"] >= m["bump_sustain_duration_s"])
+    # 构造 R~0.26（覆盖约 280°）：应计入 phase_valid 但不计入 bump_sustain
+    order = np.argsort(np.arctan2(np.sin(ang), np.cos(ang)))
+    keep = order[:int(0.78 * len(ang))]
+    med = np.zeros((TOTAL, len(ang)), int); med[:, keep] = 1
+    mm = trial_metrics(med, ang)
+    check("R~0.2-0.3 -> phase_valid>0 but bump_sustain==0",
+          mm["phase_valid_duration_s"] > 0 and mm["bump_sustain_duration_s"] == 0)
 
     # 位置区分：两个不同中心 -> 相位差大
     c0 = circ_mean_deg(window_series(counts_bump(ang, np.radians(0), TOTAL), ang)[1][-20:])
