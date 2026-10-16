@@ -1,0 +1,254 @@
+{
+ "convention": "W[post,pre]; inputs = row W[cell,:]",
+ "LC10a_to_DNa02_direct": {
+  "n_edges": 0,
+  "w_sum": 0.0,
+  "w_pos": 0.0,
+  "w_neg": 0.0
+ },
+ "note_direct": "direct edge remains 0; this does NOT mean all sensory->steering paths are absent",
+ "DNa02_inputs_L": {
+  "cb_intrinsic": {
+   "edges": 779,
+   "pos": 0.5178,
+   "neg": -0.2858,
+   "alg": 0.2321,
+   "abs": 0.8036
+  },
+  "descending_neuron": {
+   "edges": 88,
+   "pos": 0.0715,
+   "neg": -0.0058,
+   "alg": 0.0657,
+   "abs": 0.0773
+  },
+  "ascending_neuron": {
+   "edges": 59,
+   "pos": 0.063,
+   "neg": -0.0063,
+   "alg": 0.0567,
+   "abs": 0.0693
+  },
+  "visual_projection": {
+   "edges": 82,
+   "pos": 0.0152,
+   "neg": -0.0096,
+   "alg": 0.0056,
+   "abs": 0.0248
+  },
+  "vnc_intrinsic": {
+   "edges": 109,
+   "pos": 0.0028,
+   "neg": -0.0202,
+   "alg": -0.0174,
+   "abs": 0.0231
+  },
+  "vnc_sensory": {
+   "edges": 12,
+   "pos": 0.0014,
+   "neg": 0.0,
+   "alg": 0.0014,
+   "abs": 0.0014
+  },
+  "visual_centrifugal": {
+   "edges": 5,
+   "pos": 0.0002,
+   "neg": -0.0001,
+   "alg": 0.0,
+   "abs": 0.0003
+  },
+  "vnc_motor": {
+   "edges": 4,
+   "pos": 0.0001,
+   "neg": -0.0,
+   "alg": 0.0001,
+   "abs": 0.0002
+  }
+ },
+ "DNa02_inputs_R": {
+  "cb_intrinsic": {
+   "edges": 838,
+   "pos": 0.5128,
+   "neg": -0.2956,
+   "alg": 0.2172,
+   "abs": 0.8083
+  },
+  "descending_neuron": {
+   "edges": 83,
+   "pos": 0.0684,
+   "neg": -0.0055,
+   "alg": 0.0629,
+   "abs": 0.0739
+  },
+  "ascending_neuron": {
+   "edges": 58,
+   "pos": 0.0562,
+   "neg": -0.0069,
+   "alg": 0.0493,
+   "abs": 0.0631
+  },
+  "visual_projection": {
+   "edges": 97,
+   "pos": 0.0197,
+   "neg": -0.0107,
+   "alg": 0.0091,
+   "abs": 0.0304
+  },
+  "vnc_intrinsic": {
+   "edges": 102,
+   "pos": 0.0024,
+   "neg": -0.0203,
+   "alg": -0.018,
+   "abs": 0.0227
+  },
+  "visual_centrifugal": {
+   "edges": 8,
+   "pos": 0.0002,
+   "neg": -0.0004,
+   "alg": -0.0002,
+   "abs": 0.0006
+  },
+  "vnc_sensory": {
+   "edges": 8,
+   "pos": 0.0006,
+   "neg": 0.0,
+   "alg": 0.0006,
+   "abs": 0.0006
+  },
+  "vnc_motor": {
+   "edges": 5,
+   "pos": 0.0001,
+   "neg": -0.0001,
+   "alg": -0.0,
+   "abs": 0.0002
+  },
+  "cb_motor": {
+   "edges": 2,
+   "pos": 0.0002,
+   "neg": 0.0,
+   "alg": 0.0002,
+   "abs": 0.0002
+  }
+ },
+ "DNa02_outputs_note": "old report's 'top inputs' were actually OUTPUTS (column); see P70A_REPORT",
+ "LC10a_two_hop_to_DNa02": {
+  "n_candidates": 293,
+  "top": [
+   {
+    "x_bodyId": 10005,
+    "x_type": "AOTU019",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.242,
+    "x_to_tgt": -0.0124
+   },
+   {
+    "x_bodyId": 10070,
+    "x_type": "AOTU019",
+    "x_super": "cb_intrinsic",
+    "x_side": "L",
+    "src_to_x": 0.2209,
+    "x_to_tgt": -0.012
+   },
+   {
+    "x_bodyId": 11625,
+    "x_type": "DNae005",
+    "x_super": "descending_neuron",
+    "x_side": "R",
+    "src_to_x": 0.0001,
+    "x_to_tgt": 0.0106
+   },
+   {
+    "x_bodyId": 531863,
+    "x_type": "AOTU012",
+    "x_super": "cb_intrinsic",
+    "x_side": "L",
+    "src_to_x": 0.1792,
+    "x_to_tgt": 0.0091
+   },
+   {
+    "x_bodyId": 516361,
+    "x_type": "AOTU025",
+    "x_super": "cb_intrinsic",
+    "x_side": "L",
+    "src_to_x": 0.3249,
+    "x_to_tgt": 0.0086
+   },
+   {
+    "x_bodyId": 519926,
+    "x_type": "AOTU025",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.3058,
+    "x_to_tgt": 0.0081
+   },
+   {
+    "x_bodyId": 10406,
+    "x_type": "AOTU012",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.1962,
+    "x_to_tgt": 0.0068
+   },
+   {
+    "x_bodyId": 18745,
+    "x_type": "LAL300m",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.1049,
+    "x_to_tgt": 0.006
+   },
+   {
+    "x_bodyId": 513888,
+    "x_type": "LAL028,LAL029",
+    "x_super": "cb_intrinsic",
+    "x_side": "L",
+    "src_to_x": 0.0031,
+    "x_to_tgt": 0.0048
+   },
+   {
+    "x_bodyId": 20755,
+    "x_type": "LAL300m",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.0861,
+    "x_to_tgt": 0.0047
+   },
+   {
+    "x_bodyId": 18026,
+    "x_type": "CB0359",
+    "x_super": "cb_intrinsic",
+    "x_side": "R",
+    "src_to_x": 0.3992,
+    "x_to_tgt": 0.0044
+   },
+   {
+    "x_bodyId": 99043,
+    "x_type": "LAL028,LAL029",
+    "x_super": "cb_intrinsic",
+    "x_side": "L",
+    "src_to_x": 0.2471,
+    "x_to_tgt": 0.0043
+   }
+  ]
+ },
+ "visual_to_DN_ipsi_contra": {
+  "contra": 9.97,
+  "ipsi": 47.13
+ },
+ "three_functions": {
+  "obstacle_triggers_turning": {
+   "supported": false,
+   "evidence": "机制候选：LC10a->DNa02 直接边=0；DNa02<-visual_projection 净 w=0.0146（pos 0.0349/neg -0.0203 近相消）≪ DNa02<-cb_intrinsic 绝对权和 0.808。**动力学能力未验证。**"
+  },
+  "left_right_selection": {
+   "supported": false,
+   "evidence": "visual->DN 同侧主导 {'contra': 9.97, 'ipsi': 47.13}（但靶为 looming/逃逸 DN）；LC10a->DNa02 直接边=0。左右选择是**动态竞争**，静态连接不构成证据。"
+  },
+  "return_to_neutral": {
+   "supported": false,
+   "evidence": "回正/结束转弯是**动力学**性质；静态连接不可证，机制候选亦不足（本轮不运行）。"
+  }
+ },
+ "verdict_scope": "original NO-GO applies to the DIRECT LC10a->DNa02 edge and to strong visual->steering; weak 2-hop exists -> mechanism candidate pending approval, gate NOT auto-opened"
+}

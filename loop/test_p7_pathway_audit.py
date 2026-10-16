@@ -3,8 +3,19 @@ from __future__ import annotations
 
 import sys
 
-from loop.p7_pathway_audit import audit, conn, three_functions
+import numpy as np
+from scipy import sparse
+
+from loop.p7_pathway_audit import (audit, conn, inputs_by_superclass, three_functions, top_inputs,
+                                   two_hop)
 from loop.visual_motor_audit import load_data
+
+
+def _dirD():
+    """有向合成：W[1,0]=5 (A->B), W[2,1]=3 (B->C)。"""
+    W = sparse.csr_matrix(np.array([[0.0, 0, 0], [5.0, 0, 0], [0.0, 3.0, 0]]))
+    return {"cell_type": np.array(["A", "B", "C"]), "superclass": np.array(["sA", "sB", "sC"]),
+            "side": np.array(["L", "L", "L"]), "ids": np.array([0, 1, 2]), "W": W}
 
 RESULTS = []
 
@@ -36,6 +47,17 @@ def main() -> int:
     check("return-to-neutral NOT supported (static)", F["return_to_neutral"]["supported"] is False)
     # conn 方向自洽：DNa02 <- LC10a 与 LC10a <- DNa02 之和一致（都是 0）
     check("conn symmetric-zero", conn(D, ["DNa02"], ["LC10a"])["w_sum"] == conn(D, ["LC10a"], ["DNa02"])["w_sum"])
+
+    # 有向合成矩阵：行=输入、列=输出，不得颠倒
+    d = _dirD()
+    ins = inputs_by_superclass(d, "B")
+    check("input row: B receives from sA (not sC)", "sA" in ins and "sC" not in ins)
+    check("input weight uses W[B,A]", ins["sA"]["pos"] == 5.0 and ins["sA"]["edges"] == 1)
+    check("top_inputs row-based", top_inputs(d, "B")[0] == ("sA", 5.0))
+    # 两跳 A->B->C
+    hits, n = two_hop(d, ["A"], ["C"])
+    check("two_hop finds B", n == 1 and hits[0]["x_type"] == "B"
+          and hits[0]["src_to_x"] == 5.0 and hits[0]["x_to_tgt"] == 3.0)
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))
