@@ -114,42 +114,55 @@
    {
     "substeps": 50,
     "dts_ms": 0.4,
-    "ms_per_step": 583.9,
+    "ms_per_step": 549.7,
     "spikes": 1653,
     "traced_peak_mem_MB": 12.38,
     "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
-    "spike_err_vs_ref": 8.23463687150838
+    "spike_err_vs_ref": 8.23463687150838,
+    "ms_per_step_source": "original measurement at commit 2f12217",
+    "ms_per_step_remeasure_eb47a58": 583.9,
+    "ms_per_step_remeasure_source": "re-run of loop/p9_calibration.py when adding the tracemalloc field (commit eb47a58); timing-only, non-deterministic; spikes/errors unchanged"
    },
    {
     "substeps": 100,
     "dts_ms": 0.2,
-    "ms_per_step": 998.6,
+    "ms_per_step": 793.2,
     "spikes": 215,
     "traced_peak_mem_MB": 12.2,
     "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
-    "spike_err_vs_ref": 0.2011173184357542
+    "spike_err_vs_ref": 0.2011173184357542,
+    "ms_per_step_source": "original measurement at commit 2f12217",
+    "ms_per_step_remeasure_eb47a58": 998.6,
+    "ms_per_step_remeasure_source": "re-run of loop/p9_calibration.py when adding the tracemalloc field (commit eb47a58); timing-only, non-deterministic; spikes/errors unchanged"
    },
    {
     "substeps": 500,
     "dts_ms": 0.04,
-    "ms_per_step": 4166.2,
+    "ms_per_step": 3611.9,
     "spikes": 182,
     "traced_peak_mem_MB": 12.19,
     "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
-    "spike_err_vs_ref": 0.01675977653631285
+    "spike_err_vs_ref": 0.01675977653631285,
+    "ms_per_step_source": "original measurement at commit 2f12217",
+    "ms_per_step_remeasure_eb47a58": 4166.2,
+    "ms_per_step_remeasure_source": "re-run of loop/p9_calibration.py when adding the tracemalloc field (commit eb47a58); timing-only, non-deterministic; spikes/errors unchanged"
    },
    {
     "substeps": 2000,
     "dts_ms": 0.01,
-    "ms_per_step": 14977.8,
+    "ms_per_step": 12883.9,
     "spikes": 179,
     "traced_peak_mem_MB": 12.2,
     "mem_note": "tracemalloc **测量窗口内**追踪内存峰值，**非**完整进程峰值",
-    "spike_err_vs_ref": 0.0
+    "spike_err_vs_ref": 0.0,
+    "ms_per_step_source": "original measurement at commit 2f12217",
+    "ms_per_step_remeasure_eb47a58": 14977.8,
+    "ms_per_step_remeasure_source": "re-run of loop/p9_calibration.py when adding the tracemalloc field (commit eb47a58); timing-only, non-deterministic; spikes/errors unchanged"
    }
   ],
   "W_mem_MB": 12.67,
-  "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；**全部为合成网络基准，未做全脑实测**；由 nnz 比例外推的全脑耗时仅为**粗略资源推算**"
+  "note": "substeps=50 **未达** 强耦合链所需精度；参考=最大 substeps；**全部为合成网络基准，未做全脑实测**；由 nnz 比例外推的全脑耗时仅为**粗略资源推算**",
+  "measurement_note": "perf rows: ms_per_step 来自原始测量(commit 2f12217)；traced_peak_mem_MB 为 eb47a58 增补字段；ms_per_step_remeasure_eb47a58 为 eb47a58 的另一次计时(仅计时抖动，spikes/spike_err 不变)，未覆盖历史值"
  },
  "decision": {
   "engineering": {
