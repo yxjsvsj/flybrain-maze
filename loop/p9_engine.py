@@ -59,7 +59,9 @@ def architecture():
     return {
         "neuron": "C_i dV_i/dt = -g_l,i (V_i - E_l,i) - g_exc,i (V_i - E_exc) - g_inh,i (V_i - E_inh) + I_noise,i",
         "synapse": "d g_x,i/dt = -g_x,i / tau_syn,x + sum_j w_ij * s_j(t)；w 符号来自**递质预测**（兴奋->g_exc，抑制->g_inh）",
-        "spike": "V_i>=V_th -> spike，V_i<-V_reset，不应期（同 flybrain 接口）；**释放计算取复位前 V**",
+        "spike": "V_i>=V_th -> spike、V_i<-V_reset、不应期（同 flybrain 接口）；**发放为脉冲事件**——"
+                  "COBA 以 **spike 事件**驱动突触电导（`g += g_unit·(W@S)`），**不使用复位前 V 的连续释放**；"
+                  "P8 未定标渐变释放**已关闭**，不重用。",
         "key_change": "由'电流型、瞬时、全同参数'改为'**电导型 + 反转电位 + 突触时间常数**'；"
                       "抑制为**分流(shunting)**（不是简单负电流）→ 非线性积分、正确驱动力 (E-V)。",
         "not_a_gain": "机制解释**不**是'增益更强故 DN 发放'，而是：分流抑制与驱动力 (E-V) 改变**积分/门控**；"
