@@ -67,14 +67,24 @@ def load_approval_config(path=None):
         return {"valid": False, "reason": "approval protocol version mismatch", "status": None}
     status = cfg.get("status")
     if status == "APPROVED":
-        v = cfg.get("value")
-        if not (isinstance(v, (int, float)) and math.isfinite(float(v)) and float(v) >= 0):
-            return {"valid": False, "reason": "approved threshold invalid", "status": status}
         if not cfg.get("rule") or not cfg.get("approved_by") or not cfg.get("approved_at"):
             return {"valid": False, "reason": "approval metadata incomplete", "status": status}
-        return {"valid": True, "status": status, "threshold": float(v), "config": cfg}
+        mode = cfg.get("mode")
+        if mode == "A":
+            if cfg.get("value") is not None:
+                return {"valid": False, "reason": "Mode A must not define a threshold", "status": status}
+            return {"valid": True, "status": status, "mode": "A", "threshold": None,
+                    "run_authorized": True, "canonical_pass_allowed": False, "config": cfg}
+        if mode == "B":
+            v = cfg.get("value")
+            if not (isinstance(v, (int, float)) and math.isfinite(float(v)) and float(v) >= 0):
+                return {"valid": False, "reason": "approved threshold invalid", "status": status}
+            return {"valid": True, "status": status, "mode": "B", "threshold": float(v),
+                    "run_authorized": True, "canonical_pass_allowed": True, "config": cfg}
+        return {"valid": False, "reason": "unknown approval mode", "status": status}
     if status in ("PENDING_APPROVAL", "REJECTED"):
-        return {"valid": True, "status": status, "threshold": None, "config": cfg}
+        return {"valid": True, "status": status, "mode": None, "threshold": None,
+                "run_authorized": False, "canonical_pass_allowed": False, "config": cfg}
     return {"valid": False, "reason": "unknown approval status", "status": status}
 
 
@@ -193,6 +203,10 @@ def _adjudicate_raw_with_threshold(payload, eligibility_threshold, approval=None
     if not (result["kc"]["diff_mean"] > 0 and kc_p < ALPHA
             and result["kc"]["relative"] >= 0.05 and kc_ci["ci_low"] > 0):
         result.update(state="SENSORY_NO_EFFECT", reasons=["KC primary endpoint failed"])
+        return result
+    if approval is not None and approval.get("mode") == "A":
+        result.update(state="INCONCLUSIVE",
+                      reasons=["Mode A: exploratory only; canonical A0_PASS disabled; eligibility threshold PENDING_APPROVAL"])
         return result
     result.update(state="A0_PASS", reasons=["all pre-registered gates met"])
     return result

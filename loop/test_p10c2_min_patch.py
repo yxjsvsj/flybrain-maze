@@ -48,15 +48,27 @@ def test_tiny_exact_p():
         check(f"invalid input rejected {bad[:1]}", ok)
 
 
-def test_approval_default_pending():
+def test_approval_mode_a():
     ap = load_approval_config(APPROVAL_CONFIG_PATH)
     check("formal config valid", ap["valid"] is True)
-    check("status PENDING_APPROVAL", ap["status"] == "PENDING_APPROVAL")
-    check("no production threshold", ap["threshold"] is None)
+    check("status APPROVED", ap["status"] == "APPROVED")
+    check("mode A", ap.get("mode") == "A")
+    check("run authorized", ap.get("run_authorized") is True)
+    check("canonical PASS disabled", ap.get("canonical_pass_allowed") is False)
+    check("no production threshold (Mode A)", ap["threshold"] is None)
     r = adjudicate_raw(make_payload("pass"))
-    check("production default -> INCONCLUSIVE", r["state"] == "INCONCLUSIVE")
+    check("Mode A -> INCONCLUSIVE", r["state"] == "INCONCLUSIVE")
     check("threshold status PENDING_APPROVAL", r["eligibility"]["threshold_status"] == "PENDING_APPROVAL")
-    check("no A0_PASS without approval", r["state"] != "A0_PASS")
+    check("never A0_PASS in Mode A", r["state"] != "A0_PASS")
+    # temp PENDING config still blocks
+    p = _write_cfg({"protocol_version": "P10-C2-0a/v1", "status": "PENDING_APPROVAL",
+                    "mode": None, "rule": None, "value": None, "approved_by": None,
+                    "approved_at": None})
+    try:
+        r = adjudicate_raw(make_payload("pass"), approval_config_path=p)
+        check("pending config -> INCONCLUSIVE", r["state"] == "INCONCLUSIVE")
+    finally:
+        os.remove(p)
 
 
 def _write_cfg(cfg):
@@ -70,8 +82,9 @@ def _write_cfg(cfg):
 
 
 def test_approval_paths():
-    base = {"protocol_version": "P10-C2-0a/v1", "status": "APPROVED", "rule": "min_evoked_mean",
-            "value": 0.01, "approved_by": "unit-test", "approved_at": "2026-01-01T00:00:00Z"}
+    base = {"protocol_version": "P10-C2-0a/v1", "status": "APPROVED", "mode": "B",
+            "rule": "min_evoked_mean", "value": 0.01,
+            "approved_by": "unit-test", "approved_at": "2026-01-01T00:00:00Z"}
     p = _write_cfg(base)
     try:
         r = adjudicate_raw(make_payload("pass"), approval_config_path=p)
@@ -93,6 +106,13 @@ def test_approval_paths():
     try:
         r = adjudicate_raw(make_payload("pass"), approval_config_path=p)
         check("wrong version -> INCONCLUSIVE", r["state"] == "INCONCLUSIVE")
+    finally:
+        os.remove(p)
+    # Mode A must not define a threshold
+    p = _write_cfg({**base, "mode": "A"})
+    try:
+        r = adjudicate_raw(make_payload("pass"), approval_config_path=p)
+        check("Mode A with value -> INCONCLUSIVE", r["state"] == "INCONCLUSIVE")
     finally:
         os.remove(p)
     # incomplete approval metadata
@@ -127,7 +147,7 @@ def test_resource_and_verdicts():
 def main() -> int:
     print("=========== p10c2 minimal patch ===========")
     test_tiny_exact_p()
-    test_approval_default_pending()
+    test_approval_mode_a()
     test_approval_paths()
     test_synthetic_isolated()
     test_resource_and_verdicts()

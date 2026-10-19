@@ -1,9 +1,9 @@
-# P10-C2 一次性无学习 A0：审批请求（**未批准；未运行**）
+# P10-C2 一次性无学习 A0：审批记录（**已批准 Mode A；已运行一次**）
 
-**授权状态：NOT GRANTED。**
-本文件仅为**审批请求**，不构成用户批准。正式审批配置
-`loop/p10c2_eligibility_threshold_approval.json` 仍为 **PENDING_APPROVAL**、`value=null`、`approved_by=null`。
-未获批准前 `training_authorized=False`，**不得运行 A0**。
+**授权状态：APPROVED — Mode A（用户书面批准）。**
+本文件记录用户对 **Mode A** 的书面批准与运行范围；`canonical_pass_allowed=false`。正式审批配置
+`loop/p10c2_eligibility_threshold_approval.json` 已更新为 **APPROVED / mode=A / threshold=null**（checksum `ac822321...7d8874`，approved_at `2026-10-19T05:14:03Z`）。
+一次性 A0 已按批准运行（见 `loop/P10C2_A0_RESULT.md`）；`training_authorized=False` 仍成立。
 **自行填写 `approved_by` 或重算 checksum 不构成授权。**
 
 ## 0. 请用户逐项书面选择/确认

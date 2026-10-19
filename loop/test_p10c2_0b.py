@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 
-from loop.p10c2_0b_adjudication import (adjudicate_raw, make_payload, resource_budget, selftest, verdicts)
+from loop.p10c2_0b_adjudication import (adjudicate_raw, _adjudicate_raw_with_threshold, make_payload, resource_budget, selftest, verdicts)
 from loop.p10c2_0b_exact_stats import (BOOTSTRAP_SEED, sign_flip_p, sign_flip_p_enum)
 
 RESULTS = []
@@ -80,7 +80,7 @@ def test_raw_computation():
     payload = make_payload("pass")
     # 原始 payload 不含手填 p/effect
     check("raw payload has no hand-filled p", all("p" not in r for r in payload["records"]))
-    r = adjudicate_raw(payload, eligibility_threshold=0.01)
+    r = _adjudicate_raw_with_threshold(payload, 0.01)
     check("computed from raw -> PASS", r["state"] == "A0_PASS")
     check("entrance p computed", isinstance(r["entrance"]["p"], float) and r["entrance"]["p"] < 0.05)
     check("KC p computed", isinstance(r["kc"]["p"], float) and r["kc"]["p"] < 0.05)
