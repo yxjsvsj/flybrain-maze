@@ -1,0 +1,64 @@
+{
+ "checks": {
+  "w_readonly": {
+   "weights_path": "C:\\Users\\yang\\fly-data\\weights.npz",
+   "brain_path": "C:\\Users\\yang\\fly-data\\brain.npz",
+   "weights_sha16": "c29919aa44069a27",
+   "brain_sha16": "cc9bd1ecd00bd703",
+   "weights_match": true,
+   "brain_match": true,
+   "ok": true
+  },
+  "p1_freeze": {
+   "ok": true,
+   "stdout": "",
+   "returncode": 0
+  },
+  "history_verdicts": {
+   "p100": {
+    "go": null,
+    "verdict": null
+   },
+   "p100a": {
+    "overturned": false,
+    "verdict": "NO-GO（维持）"
+   },
+   "p100b": {
+    "go": false,
+    "structural": "存在"
+   },
+   "p100c": {
+    "go": false,
+    "learning": "否（NO-GO 维持）"
+   },
+   "p100d": {
+    "go": false,
+    "learning": "NO-GO"
+   }
+  },
+  "no_training": {
+   "ok": true,
+   "hits": []
+  },
+  "protocol": {
+   "ok": true,
+   "missing": [],
+   "not_overclaimed": true
+  },
+  "evidence_matrix": {
+   "ok": true,
+   "missing": []
+  },
+  "history_no_go": true,
+  "all_static_ok": true
+ },
+ "dual_verdict": {
+  "Biological": "NO-GO",
+  "Computational_Hypothesis": "GO (conditional, proposal only)",
+  "go_biological": false,
+  "go_computational": true,
+  "training_authorized": false,
+  "meaning": "Computational GO 仅表示值得另行申请有限真实连接组计算假设实验；不授权本轮训练，不推翻 Biological NO-GO。"
+ },
+ "note": "静态门控；不训练、不跑动力学、不控车。默认仍 NO-GO（生物）；计算假设仅提案。"
+}
