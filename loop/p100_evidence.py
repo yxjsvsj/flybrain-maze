@@ -26,7 +26,8 @@ def block(D, rows, cols):
     """直接块：边数 / Σw / Σ|w| / 正权贡献 / 负权贡献。"""
     if not len(rows) or not len(cols):
         return {"edges": 0, "sumW": 0.0, "absW": 0.0, "posW": 0.0, "negW": 0.0, "pos_edges": 0, "neg_edges": 0}
-    M = D["W"][rows][:, cols]
+    M = D["W"][rows][:, cols].copy()
+    M.eliminate_zeros()
     d = M.data
     return {"edges": int(M.nnz), "sumW": round(float(d.sum()), 4), "absW": round(float(np.abs(d).sum()), 4),
             "posW": round(float(d[d > 0].sum()), 4), "negW": round(float(d[d < 0].sum()), 4),
@@ -34,30 +35,45 @@ def block(D, rows, cols):
 
 
 def two_hop(D, src_idx, tgt_idx, top=8):
-    """`src -> X -> tgt` 间接路径统计（严格 W[post,pre]）：X 收 src(`W[X,src]`) 且 X 送 tgt(`W[tgt,X]`)。"""
-    W = D["W"].tocsr()
+    """`src -> X -> tgt` 两跳统计（严格 W[post,pre]）：X 收 src(`W[X,src]`) 且 X 送 tgt(`W[tgt,X]`)。
+
+    **语义修正（P10-0b）**：严格区分
+    - `n_intermediate`：不同的中间神经元数（不是路径数）；
+    - `n_paths`：不同两跳路径数 `(source, intermediate, target)` 且两段均非零；
+    - `signed_product`：两跳带符号权重乘积累计 `Σ_x (Σ_s W[x,s])·(Σ_t W[t,x])`；
+    - `abs_product`：两跳绝对权重乘积累计 `Σ_x (Σ_s |W[x,s]|)·(Σ_t |W[t,x]|)`；
+    - `sum_w_in/sum_w_out`：输入段/输出段各自的权重和（不是路径数）。
+    """
+    W = D["W"].tocsr().copy()
+    W.eliminate_zeros()
     if not len(src_idx) or not len(tgt_idx):
-        return {"n_intermediate": 0, "n_path_edges": 0, "sum_w_in": 0.0, "sum_w_out": 0.0, "top": []}
+        return {"n_intermediate": 0, "n_paths": 0, "sum_w_in": 0.0, "sum_w_out": 0.0,
+                "signed_product": 0.0, "abs_product": 0.0, "top": []}
     Wsrc = W.tocsc()[:, src_idx]                     # (n, |src|)  W[X, src]
     recv = np.unique(Wsrc.tocoo().row)
-    # X -> tgt 汇总
     out_col = W[tgt_idx][:, :].tocsc()               # (|tgt|, n); 列 x = W[tgt, x]
-    cand = []
+    cand, n_paths, signed_p, abs_p = [], 0, 0.0, 0.0
     for x in recv:
         col = out_col.getcol(x)
         if col.nnz == 0:
             continue
-        w_in = float(W[x, src_idx].sum())
-        w_out = float(col.data.sum())
-        cand.append((int(x), w_in, w_out))
+        seg_in = W.getrow(x)[0, src_idx]             # W[x, src]
+        w_in = float(seg_in.data.sum());  a_in = float(np.abs(seg_in.data).sum())
+        w_out = float(col.data.sum());    a_out = float(np.abs(col.data).sum())
+        n_paths += int(seg_in.nnz) * int(col.nnz)    # (s, x, t) 两段均非零
+        signed_p += w_in * w_out
+        abs_p += a_in * a_out
+        cand.append((int(x), w_in, w_out, int(seg_in.nnz), int(col.nnz)))
     cand.sort(key=lambda t: -abs(t[2]))
     return {"n_intermediate": len(cand),
-            "n_path_edges": int(sum(1 for _ in cand)),
+            "n_paths": n_paths,
             "sum_w_in": round(float(sum(c[1] for c in cand)), 4),
             "sum_w_out": round(float(sum(c[2] for c in cand)), 4),
+            "signed_product": round(float(signed_p), 4),
+            "abs_product": round(float(abs_p), 4),
             "top": [{"x_bodyId": int(D["ids"][c[0]]), "x_type": str(D["cell_type"][c[0]]),
-                     "x_side": str(D["side"][c[0]]), "w_in": round(c[1], 4), "w_out": round(c[2], 4)}
-                    for c in cand[:top]]}
+                     "x_side": str(D["side"][c[0]]), "w_in": round(c[1], 4), "w_out": round(c[2], 4),
+                     "deg_in": c[3], "deg_out": c[4]} for c in cand[:top]]}
 
 
 def audit(D=None):
