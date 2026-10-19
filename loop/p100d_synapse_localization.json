@@ -1,0 +1,1177 @@
+{
+ "data": {
+  "dataset": "male-cns:v1.0",
+  "source": "official neuPrint fetch_synapse_connections (source+target)",
+  "api": "fetch_synapse_connections(source, target, min_total_weight=1)",
+  "weight": "W[post,pre], signed L1-normalized relative, no units"
+ },
+ "layers": {
+  "n_KC": 320,
+  "n_MBON": 95,
+  "n_DAN": 340
+ },
+ "side_aware_stats": {
+  "n_edges": 4533,
+  "overlap_merged_sides": 4533,
+  "overlap_full_roi": 4486,
+  "n_cross_side_lost": 47,
+  "cross_side_examples": [
+   {
+    "kc_bodyId": 65347,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 66865,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 69224,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 69713,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 70111,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 71326,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 73337,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 78363,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 79299,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 83091,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 83914,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   },
+   {
+    "kc_bodyId": 86850,
+    "mbon_bodyId": 12918,
+    "merged_only": [
+     "b1"
+    ],
+    "full_overlap": []
+   }
+  ],
+  "note": "47 条左右合并后重叠、保留完整 ROI 后不重叠 -> 跨侧候选；**未删除**，但需同源突触数据证明。"
+ },
+ "n_pairs_selected": 10,
+ "pairs": [
+  {
+   "kc": 137302,
+   "mb": 519128,
+   "target_lobe": "g",
+   "target_side": "L",
+   "shared_full_rois": [
+    "g2(L)",
+    "g3(L)",
+    "g4(L)",
+    "g5(L)"
+   ],
+   "kind": "simple_path",
+   "n_synapses": 25,
+   "complete": true,
+   "roi_counts": {
+    "gL(L)": 24,
+    "CentralBrain-unspecified": 1
+   },
+   "compartment_pre": [
+    "axon"
+   ],
+   "compartment_post": [
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.756,
+   "confidence_pre_median": 0.91,
+   "coords_sample": [
+    {
+     "x": 49295,
+     "y": 15950,
+     "z": 15501,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 48837,
+     "y": 16237,
+     "z": 15523,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 49189,
+     "y": 16297,
+     "z": 15398,
+     "roi": "gL(L)"
+    }
+   ]
+  },
+  {
+   "kc": 19788,
+   "mb": 10495,
+   "target_lobe": "g",
+   "target_side": "L",
+   "shared_full_rois": [
+    "g1(L)",
+    "g2(L)",
+    "g3(L)",
+    "g4(L)",
+    "g5(L)"
+   ],
+   "kind": "positive",
+   "n_synapses": 24,
+   "complete": true,
+   "roi_counts": {
+    "gL(L)": 24
+   },
+   "compartment_pre": [
+    "axon"
+   ],
+   "compartment_post": [
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.763,
+   "confidence_pre_median": 0.93,
+   "coords_sample": [
+    {
+     "x": 49828,
+     "y": 15799,
+     "z": 15071,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 49856,
+     "y": 15722,
+     "z": 14856,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 50103,
+     "y": 15434,
+     "z": 14692,
+     "roi": "gL(L)"
+    }
+   ]
+  },
+  {
+   "kc": 18540,
+   "mb": 10013,
+   "target_lobe": "g",
+   "target_side": "R",
+   "shared_full_rois": [
+    "b'1(R)",
+    "b'2(R)",
+    "g3(R)",
+    "g4(R)",
+    "g5(R)"
+   ],
+   "kind": "positive",
+   "n_synapses": 113,
+   "complete": true,
+   "roi_counts": {
+    "gL(R)": 55,
+    "CRE(R)": 49,
+    "CentralBrain-unspecified": 8,
+    "b'L(R)": 1
+   },
+   "compartment_pre": [
+    "axon"
+   ],
+   "compartment_post": [
+    "cell-body-fiber",
+    "dendrite",
+    "linker"
+   ],
+   "confidence_pre_min": 0.7,
+   "confidence_pre_median": 0.937,
+   "coords_sample": [
+    {
+     "x": 45803,
+     "y": 17513,
+     "z": 16564,
+     "roi": "b'L(R)"
+    },
+    {
+     "x": 46871,
+     "y": 16948,
+     "z": 16431,
+     "roi": "gL(R)"
+    },
+    {
+     "x": 46615,
+     "y": 16985,
+     "z": 16382,
+     "roi": "gL(R)"
+    }
+   ]
+  },
+  {
+   "kc": 44069,
+   "mb": 10704,
+   "target_lobe": "a",
+   "target_side": "L",
+   "shared_full_rois": [
+    "a1(L)",
+    "b'1(L)",
+    "g1(L)",
+    "g2(L)",
+    "g3(L)",
+    "g4(L)",
+    "g5(L)"
+   ],
+   "kind": "positive",
+   "n_synapses": 31,
+   "complete": true,
+   "roi_counts": {
+    "gL(L)": 30,
+    "CentralBrain-unspecified": 1
+   },
+   "compartment_pre": [
+    "dendrite"
+   ],
+   "compartment_post": [
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.721,
+   "confidence_pre_median": 0.921,
+   "coords_sample": [
+    {
+     "x": 60223,
+     "y": 20084,
+     "z": 20242,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 59910,
+     "y": 20308,
+     "z": 20096,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 60164,
+     "y": 20191,
+     "z": 20041,
+     "roi": "gL(L)"
+    }
+   ]
+  },
+  {
+   "kc": 52267,
+   "mb": 11805,
+   "target_lobe": "a",
+   "target_side": "R",
+   "shared_full_rois": [
+    "a'1(R)",
+    "a'2(R)",
+    "a1(R)",
+    "b'1(R)",
+    "g2(R)"
+   ],
+   "kind": "positive",
+   "n_synapses": 4,
+   "complete": true,
+   "roi_counts": {
+    "b'L(R)": 2,
+    "aL(R)": 1,
+    "gL(R)": 1
+   },
+   "compartment_pre": [
+    "axon",
+    "dendrite"
+   ],
+   "compartment_post": [
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.895,
+   "confidence_pre_median": 0.9175,
+   "coords_sample": [
+    {
+     "x": 37384,
+     "y": 18130,
+     "z": 17672,
+     "roi": "aL(R)"
+    },
+    {
+     "x": 38884,
+     "y": 17357,
+     "z": 17318,
+     "roi": "b'L(R)"
+    },
+    {
+     "x": 38152,
+     "y": 17683,
+     "z": 17066,
+     "roi": "b'L(R)"
+    }
+   ]
+  },
+  {
+   "kc": 21778,
+   "mb": 10704,
+   "target_lobe": "b",
+   "target_side": "L",
+   "shared_full_rois": [
+    "a'3(L)",
+    "b'2(L)",
+    "b2(L)",
+    "g1(L)",
+    "g2(L)",
+    "g3(L)",
+    "g4(L)",
+    "g5(L)"
+   ],
+   "kind": "positive",
+   "n_synapses": 57,
+   "complete": true,
+   "roi_counts": {
+    "gL(L)": 55,
+    "CentralBrain-unspecified": 2
+   },
+   "compartment_pre": [
+    "axon",
+    "dendrite"
+   ],
+   "compartment_post": [
+    "axon",
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.712,
+   "confidence_pre_median": 0.939,
+   "coords_sample": [
+    {
+     "x": 61700,
+     "y": 19354,
+     "z": 20512,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 61684,
+     "y": 19389,
+     "z": 20498,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 61312,
+     "y": 19170,
+     "z": 19828,
+     "roi": "gL(L)"
+    }
+   ]
+  },
+  {
+   "kc": 18540,
+   "mb": 10704,
+   "target_lobe": "b",
+   "target_side": "R",
+   "shared_full_rois": [
+    "a'3(R)",
+    "b'1(R)",
+    "b'2(R)",
+    "b1(R)",
+    "g1(R)",
+    "g2(R)",
+    "g3(R)",
+    "g4(R)",
+    "g5(R)"
+   ],
+   "kind": "positive",
+   "n_synapses": 1,
+   "complete": true,
+   "roi_counts": {
+    "bL(R)": 1
+   },
+   "compartment_pre": [
+    "axon"
+   ],
+   "compartment_post": [
+    "axon"
+   ],
+   "confidence_pre_min": 0.784,
+   "confidence_pre_median": 0.784,
+   "coords_sample": [
+    {
+     "x": 41089,
+     "y": 20017,
+     "z": 16356,
+     "roi": "bL(R)"
+    }
+   ]
+  },
+  {
+   "kc": 21778,
+   "mb": 28622,
+   "target_lobe": "a'",
+   "target_side": "L",
+   "shared_full_rois": [
+    "a'3(L)"
+   ],
+   "kind": "positive",
+   "n_synapses": 5,
+   "complete": true,
+   "roi_counts": {
+    "CentralBrain-unspecified": 4,
+    "a'L(L)": 1
+   },
+   "compartment_pre": [
+    "axon"
+   ],
+   "compartment_post": [
+    "dendrite"
+   ],
+   "confidence_pre_min": 0.735,
+   "confidence_pre_median": 0.9,
+   "coords_sample": [
+    {
+     "x": 57724,
+     "y": 8256,
+     "z": 21950,
+     "roi": "a'L(L)"
+    },
+    {
+     "x": 58645,
+     "y": 7710,
+     "z": 21938,
+     "roi": "CentralBrain-unspecified"
+    },
+    {
+     "x": 58632,
+     "y": 7494,
+     "z": 21890,
+     "roi": "CentralBrain-unspecified"
+    }
+   ]
+  },
+  {
+   "kc": 21778,
+   "mb": 10495,
+   "target_lobe": "b'",
+   "target_side": "L",
+   "shared_full_rois": [
+    "b'2(L)",
+    "g1(L)",
+    "g2(L)",
+    "g3(L)",
+    "g4(L)",
+    "g5(L)"
+   ],
+   "kind": "positive",
+   "n_synapses": 78,
+   "complete": true,
+   "roi_counts": {
+    "gL(L)": 72,
+    "CentralBrain-unspecified": 3,
+    "CRE(L)": 3
+   },
+   "compartment_pre": [
+    "axon",
+    "dendrite"
+   ],
+   "compartment_post": [
+    "axon",
+    "cell-body-fiber",
+    "dendrite",
+    "linker"
+   ],
+   "confidence_pre_min": 0.729,
+   "confidence_pre_median": 0.924,
+   "coords_sample": [
+    {
+     "x": 60141,
+     "y": 20019,
+     "z": 19396,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 62028,
+     "y": 19162,
+     "z": 18831,
+     "roi": "gL(L)"
+    },
+    {
+     "x": 62281,
+     "y": 18664,
+     "z": 18683,
+     "roi": "gL(L)"
+    }
+   ]
+  },
+  {
+   "kc": 18540,
+   "mb": 10079,
+   "kind": "negative_control",
+   "target_lobe": null,
+   "target_side": null,
+   "n_synapses": 0,
+   "complete": true,
+   "roi_counts": {}
+  }
+ ],
+ "n_positive_pairs_localized": 9,
+ "n_negative_controls_zero": 1,
+ "dan_localization": [
+  {
+   "kc": 137302,
+   "mb": 519128,
+   "synapse_rois": [
+    "CentralBrain-unspecified",
+    "gL(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 39617,
+     "type": "PAM07"
+    },
+    {
+     "bodyId": 47196,
+     "type": "PAM07"
+    }
+   ],
+   "B_n_dan": 187,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 19788,
+   "mb": 10495,
+   "synapse_rois": [
+    "gL(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 39617,
+     "type": "PAM07"
+    },
+    {
+     "bodyId": 47196,
+     "type": "PAM07"
+    }
+   ],
+   "B_n_dan": 187,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 18540,
+   "mb": 10013,
+   "synapse_rois": [
+    "CRE(R)",
+    "CentralBrain-unspecified",
+    "b'L(R)",
+    "gL(R)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 12902,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 28434,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 37845,
+     "type": "PAM04"
+    }
+   ],
+   "B_n_dan": 311,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 44069,
+   "mb": 10704,
+   "synapse_rois": [
+    "CentralBrain-unspecified",
+    "gL(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 39617,
+     "type": "PAM07"
+    },
+    {
+     "bodyId": 47196,
+     "type": "PAM07"
+    }
+   ],
+   "B_n_dan": 187,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 52267,
+   "mb": 11805,
+   "synapse_rois": [
+    "aL(R)",
+    "b'L(R)",
+    "gL(R)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 12902,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 14225,
+     "type": "PPL105"
+    },
+    {
+     "bodyId": 14705,
+     "type": "PPL107"
+    },
+    {
+     "bodyId": 21145,
+     "type": "PPL104"
+    },
+    {
+     "bodyId": 28434,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    }
+   ],
+   "B_n_dan": 317,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 21778,
+   "mb": 10704,
+   "synapse_rois": [
+    "CentralBrain-unspecified",
+    "gL(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 39617,
+     "type": "PAM07"
+    },
+    {
+     "bodyId": 47196,
+     "type": "PAM07"
+    }
+   ],
+   "B_n_dan": 187,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 18540,
+   "mb": 10704,
+   "synapse_rois": [
+    "bL(R)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 12902,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 14705,
+     "type": "PPL107"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 28434,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 37845,
+     "type": "PAM04"
+    },
+    {
+     "bodyId": 46794,
+     "type": "PAM04"
+    }
+   ],
+   "B_n_dan": 104,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 21778,
+   "mb": 28622,
+   "synapse_rois": [
+    "CentralBrain-unspecified",
+    "a'L(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 10753,
+     "type": "PPL201"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 14225,
+     "type": "PPL105"
+    },
+    {
+     "bodyId": 21145,
+     "type": "PPL104"
+    },
+    {
+     "bodyId": 109793,
+     "type": "PAM04"
+    },
+    {
+     "bodyId": 341512,
+     "type": "PAM04"
+    },
+    {
+     "bodyId": 512326,
+     "type": "PPL105"
+    },
+    {
+     "bodyId": 515048,
+     "type": "PPL104"
+    },
+    {
+     "bodyId": 519616,
+     "type": "PPL107"
+    }
+   ],
+   "B_n_dan": 11,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 21778,
+   "mb": 10495,
+   "synapse_rois": [
+    "CRE(L)",
+    "CentralBrain-unspecified",
+    "gL(L)"
+   ],
+   "A_synapse_localized": true,
+   "B_dan_same_lobe": [
+    {
+     "bodyId": 11327,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 11618,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 11752,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 11900,
+     "type": "PPL101"
+    },
+    {
+     "bodyId": 13428,
+     "type": "PPL102"
+    },
+    {
+     "bodyId": 14182,
+     "type": "PPL103"
+    },
+    {
+     "bodyId": 15310,
+     "type": "PPL108"
+    },
+    {
+     "bodyId": 29565,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 32865,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 36624,
+     "type": "PAM10"
+    },
+    {
+     "bodyId": 39617,
+     "type": "PAM07"
+    },
+    {
+     "bodyId": 47196,
+     "type": "PAM07"
+    }
+   ],
+   "B_n_dan": 187,
+   "B_specific": false,
+   "B_specificity": "non-discriminative (broad lobe coverage)",
+   "C_local_spatial": "未查询（需 DAN 释放点坐标；本轮仅 lobe 级）",
+   "D_functional": "MISSING（无受体/生理证据）"
+  },
+  {
+   "kc": 18540,
+   "mb": 10079,
+   "A_synapse_localized": false,
+   "B_dan_same_lobe": [],
+   "C_local_spatial": "N/A",
+   "D_functional": "MISSING"
+  }
+ ],
+ "literature_corrigendum": {
+  "wrong_doi": "10.1016/j.neuron.2014.12.045",
+  "wrong_citation": "Hige et al. 2015, Neuron 85:1341",
+  "correct_citation": "Hige et al. (2015), Heterosynaptic Plasticity Underlies Aversive Olfactory Learning in Drosophila, Neuron 88(5):985-998",
+  "correct_doi": "10.1016/j.neuron.2015.11.003",
+  "affected_files": [
+   "loop/P100_REPORT.md",
+   "loop/p10_design.py",
+   "loop/P100C_DAN_COMPARTMENT_REVIEW.md",
+   "loop/p100c_dan_compartment.py"
+  ],
+  "policy": "独立勘误；不静默覆盖冻结历史结果。"
+ },
+ "grading": {
+  "Synapse_Localization": "部分（9 对阳性；lobe 级 ROI，非全部 4533 边）",
+  "Compartment_Assignment": "非特异/部分（lobe 级 gL/aL/bL/a'L/b'L，非 fine g1-g5）",
+  "DAN_Release_Co_localization": "有证据但非特异（B：同 lobe+side，187-317 DAN；C 未做；D 无）",
+  "Functional_DA_Modulation": "未验证",
+  "g_unit_Calibration": "未解决（P9-1b1）",
+  "Variable_goal_Identifiability": "仍受限（P10-0a）",
+  "Learning_Readiness": "NO-GO"
+ },
+ "stop": "若有限查询仍不足以建立具体突触—DAN 对应，记录缺口并停止该审计分支；不扩大到全脑。",
+ "go": false
+}

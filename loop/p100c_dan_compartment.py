@@ -24,17 +24,21 @@ MB_COMPARTMENTS = {"a1", "a2", "a3", "b1", "b2", "g1", "g2", "g3", "g4", "g5",
 TOKEN_PATH = os.path.join(os.path.expanduser("~"), ".neuprint")
 
 
-def _base(roi: str) -> str:
-    return re.sub(r"\((L|R)\)$", "", str(roi))
+def _base(roi: str, keep_side: bool = False) -> str:
+    """ROI 规范化。`keep_side=True` 时**保留完整 ROI**（如 `g1(L)`），不合并左右。"""
+    return str(roi) if keep_side else re.sub(r"\((L|R)\)$", "", str(roi))
 
 
-def mb_comps(roi_rows, kind):
-    """从逐神经元 ROI 计数取蘑菇体区室（kind=pre/post）。"""
+def mb_comps(roi_rows, kind, keep_side: bool = False):
+    """从逐神经元 ROI 计数取蘑菇体区室（kind=pre/post）。
+
+    `keep_side=False`（旧行为，P10-0c）：合并 `(L)/(R)`；`keep_side=True`（P10-0d）：**保留完整 ROI**。
+    """
     col = "pre" if kind == "pre" else "post"
     out = set()
     for r in roi_rows:
         if _base(r["roi"]) in MB_COMPARTMENTS and int(r.get(col, 0) or 0) > 0:
-            out.add(_base(r["roi"]))
+            out.add(str(r["roi"]) if keep_side else _base(r["roi"]))
     return out
 
 
