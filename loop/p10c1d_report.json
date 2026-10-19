@@ -1,0 +1,366 @@
+{
+ "a0": {
+  "measurement_id": "A0-20261019T113303",
+  "protocol": {
+   "seeds": [
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "steps": 200,
+   "amount": 0.6,
+   "tau_e": 0.5,
+   "stim_window": [
+    50,
+    150
+   ],
+   "recover_stim_window": [
+    0,
+    100
+   ],
+   "comparison_window": [
+    50,
+    100
+   ],
+   "baseline_window": [
+    0,
+    50
+   ],
+   "entrance": "LPLC2/LC4 only",
+   "dW": 0,
+   "learning": false
+  },
+  "rows": [
+   {
+    "seed": 11,
+    "condition": "none",
+    "kc_baseline": 0.167812,
+    "kc_stim": 0.288875,
+    "kc_recovery": 0.288188,
+    "mb_baseline": 0.258526,
+    "mb_stim": 0.655789,
+    "e_nonzero_frac": 0.338628,
+    "e_mean": 5.990521
+   },
+   {
+    "seed": 11,
+    "condition": "stim",
+    "kc_baseline": 0.167812,
+    "kc_stim": 0.288812,
+    "kc_recovery": 0.287688,
+    "mb_baseline": 0.258526,
+    "mb_stim": 0.654105,
+    "e_nonzero_frac": 0.340393,
+    "e_mean": 5.985392
+   },
+   {
+    "seed": 11,
+    "condition": "recover",
+    "kc_baseline": 0.165063,
+    "kc_stim": 0.288312,
+    "kc_recovery": 0.288008,
+    "mb_baseline": 0.265263,
+    "mb_stim": 0.652421,
+    "e_nonzero_frac": 0.341716,
+    "e_mean": 6.004084
+   },
+   {
+    "seed": 12,
+    "condition": "none",
+    "kc_baseline": 0.537562,
+    "kc_stim": 0.939625,
+    "kc_recovery": 0.938563,
+    "mb_baseline": 0.522316,
+    "mb_stim": 0.913263,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.555315
+   },
+   {
+    "seed": 12,
+    "condition": "stim",
+    "kc_baseline": 0.537562,
+    "kc_stim": 0.940188,
+    "kc_recovery": 0.93875,
+    "mb_baseline": 0.522316,
+    "mb_stim": 0.914737,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.585049
+   },
+   {
+    "seed": 12,
+    "condition": "recover",
+    "kc_baseline": 0.53825,
+    "kc_stim": 0.939937,
+    "kc_recovery": 0.939609,
+    "mb_baseline": 0.523368,
+    "mb_stim": 0.915158,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.641395
+   },
+   {
+    "seed": 13,
+    "condition": "none",
+    "kc_baseline": 0.564875,
+    "kc_stim": 0.941063,
+    "kc_recovery": 0.93975,
+    "mb_baseline": 0.551368,
+    "mb_stim": 0.915368,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.609453
+   },
+   {
+    "seed": 13,
+    "condition": "stim",
+    "kc_baseline": 0.564875,
+    "kc_stim": 0.94075,
+    "kc_recovery": 0.940313,
+    "mb_baseline": 0.551368,
+    "mb_stim": 0.916842,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.641146
+   },
+   {
+    "seed": 13,
+    "condition": "recover",
+    "kc_baseline": 0.564937,
+    "kc_stim": 0.940375,
+    "kc_recovery": 0.940391,
+    "mb_baseline": 0.550526,
+    "mb_stim": 0.914737,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.655393
+   },
+   {
+    "seed": 14,
+    "condition": "none",
+    "kc_baseline": 0.532625,
+    "kc_stim": 0.942062,
+    "kc_recovery": 0.94025,
+    "mb_baseline": 0.513684,
+    "mb_stim": 0.915579,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.660905
+   },
+   {
+    "seed": 14,
+    "condition": "stim",
+    "kc_baseline": 0.532625,
+    "kc_stim": 0.941375,
+    "kc_recovery": 0.9415,
+    "mb_baseline": 0.513684,
+    "mb_stim": 0.915368,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.618795
+   },
+   {
+    "seed": 14,
+    "condition": "recover",
+    "kc_baseline": 0.533562,
+    "kc_stim": 0.94125,
+    "kc_recovery": 0.941289,
+    "mb_baseline": 0.514316,
+    "mb_stim": 0.913895,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.673278
+   },
+   {
+    "seed": 15,
+    "condition": "none",
+    "kc_baseline": 0.57925,
+    "kc_stim": 0.940625,
+    "kc_recovery": 0.939875,
+    "mb_baseline": 0.570105,
+    "mb_stim": 0.916632,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.637979
+   },
+   {
+    "seed": 15,
+    "condition": "stim",
+    "kc_baseline": 0.57925,
+    "kc_stim": 0.940625,
+    "kc_recovery": 0.942062,
+    "mb_baseline": 0.570105,
+    "mb_stim": 0.916,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.75264
+   },
+   {
+    "seed": 15,
+    "condition": "recover",
+    "kc_baseline": 0.57925,
+    "kc_stim": 0.93875,
+    "kc_recovery": 0.938633,
+    "mb_baseline": 0.570737,
+    "mb_stim": 0.916,
+    "e_nonzero_frac": 1.0,
+    "e_mean": 22.665256
+   }
+  ],
+  "paired": {
+   "kc_diff_mean": -0.0001,
+   "kc_diff_values": [
+    -6.3e-05,
+    0.000563,
+    -0.000313,
+    -0.000687,
+    0.0
+   ],
+   "kc_perm_p": 0.625,
+   "kc_relative": -0.00021,
+   "mb_diff_mean": 8.42e-05,
+   "e_nonzero_diff_mean": 0.000353,
+   "sign_consistency": 3
+  },
+  "stim_effect_repeatable": false,
+  "eligibility_discernible": false,
+  "eligibility_saturated_by_spontaneous": true,
+  "a0_go": false,
+  "a0_verdict": "FAIL",
+  "reason": "固定刺激未产生可重复 KC 活动差异/可辨认资格迹；资格迹被自发发放饱和。按预注册：不得增强刺激、注入 KC 或换机制挽救。"
+ },
+ "s1_s2_structural_audit": {
+  "n_MBON": 95,
+  "row_L1": {
+   "mean": 1.0,
+   "median": 1.0,
+   "min": 1.0,
+   "max": 1.0
+  },
+  "plastic_abs": {
+   "mean": 0.041548,
+   "median": 0.027725,
+   "min": 0.001481,
+   "max": 0.395882
+  },
+  "nonplastic_abs": {
+   "mean": 0.958452,
+   "median": 0.972275,
+   "min": 0.604118,
+   "max": 0.998519
+  },
+  "saturation": {
+   "mean": 0.041548,
+   "max": 0.395882
+  },
+  "budgetA": {
+   "definition": "budget = original plastic abs sum",
+   "mean_headroom": 0.0,
+   "n_mbon_zero_positive_headroom": 95,
+   "redistribution_space_mean": 0.041548,
+   "answer": "**是**：全部 95 个 MBON 无正向净增长余量，只能减弱或重新分配"
+  },
+  "budgetB": {
+   "definition": "budget = original per-post L1 (1.0)",
+   "mean_headroom": 0.958452,
+   "n_mbon_positive_headroom": 95,
+   "redistribution_space_mean": 1.0,
+   "answer": "**否**：非可塑余量充足，正向增长可行且保持逐后 L1<=1"
+  },
+  "recommendation": "S1 的预算定义是决定性问题：Budget A 会抑制全部正向增长；Budget B 保留余量。两者均 PENDING_APPROVAL，不按导航成功率选择。"
+ },
+ "sandbox": {
+  "S1": {
+   "checks": {
+    "only_approved": true,
+    "no_new_edges": true,
+    "excitatory_nonneg": true,
+    "inhibitory_nonpos": true,
+    "unapproved_bit_identical": true,
+    "effective_equals_Weff_minus_W": true,
+    "dW_separate": true
+   },
+   "zero_semantics": {
+    "official_edge_exists": 3,
+    "effective_weight_zero_but_edge_exists": 1,
+    "anatomical_edge_deleted": 0,
+    "note": "功能沉默（W_eff=0）不等于解剖边删除。"
+   },
+   "persistence": {
+    "ok": true,
+    "max_abs_err": 0.0
+   }
+  },
+  "S2": {
+   "checks": {
+    "only_approved": true,
+    "no_new_edges": true,
+    "excitatory_nonneg": true,
+    "inhibitory_nonpos": true,
+    "unapproved_bit_identical": true,
+    "effective_equals_Weff_minus_W": true,
+    "dW_separate": true
+   },
+   "zero_semantics": {
+    "official_edge_exists": 3,
+    "effective_weight_zero_but_edge_exists": 1,
+    "anatomical_edge_deleted": 0,
+    "note": "功能沉默（W_eff=0）不等于解剖边删除。"
+   },
+   "persistence": {
+    "ok": true,
+    "max_abs_err": 0.0
+   }
+  },
+  "frozen_eval": {
+   "frozen_eval_stable": true,
+   "retains_learned_dW": true
+  },
+  "ablation_zero": {
+   "delta_zero": true,
+   "Weff_equals_W": true
+  }
+ },
+ "resource_consistency": {
+  "historical_measurement_id": "LIF-C1B-f8c2b0e1dd07",
+  "historical_source": "loop/p10c1b_report.json",
+  "class1_no_stimulus_ms": 1.3626,
+  "class2_fixed_stimulus_ms": 1.5682,
+  "used_per_step_ms": 1.5682,
+  "overhead_factor": 2.0,
+  "est_hours_1890": 3.293,
+  "formula_est_hours": 3.29322,
+  "peak_mem_MB": 1083.72,
+  "consistent": true,
+  "class3": "UNKNOWN (eligibility/dW/teacher not implemented)",
+  "policy": "历史记录冻结；新复测只能追加新 measurement_id，不覆盖旧值。"
+ },
+ "modulation_identity": {
+  "teacher_derived_modulation": {
+   "D_t": "external teacher/reward label",
+   "value_range": [
+    -1,
+    1
+   ],
+   "status": "computational hypothesis; training-time only",
+   "biological": false
+  },
+  "actual_DAN_activity": {
+   "measured": false,
+   "source": null,
+   "note": "本轮未观测真实 DAN 发放；如未来观测须注明数据来源"
+  },
+  "biological_correspondence": {
+   "evidence": "NONE",
+   "note": "不得把外部奖励标签称为已实现的生物多巴胺信号"
+  },
+  "separation": "teacher labels separate from sensory input; test-time has no teacher",
+  "dijkstra": "not implemented; not called for neural updates"
+ },
+ "verdicts": {
+  "A0_Sensory_Transmission": "NO-GO",
+  "Synthetic_Plasticity_Kernel": "GO",
+  "S1_Mathematical_Feasibility": "GO",
+  "S2_Mathematical_Feasibility": "GO",
+  "Level_A_Design": "NO-GO",
+  "Level_A_Execution": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "note": "A0 FAIL -> A Design NO-GO；合成内核通过 != 真实突触更新已实现；真实 ΔW 未批准/未实现 -> A Execution NO-GO。"
+ },
+ "training_authorized": false
+}

@@ -1,0 +1,222 @@
+{
+ "measurement_id": "A0-20261019T113303",
+ "protocol": {
+  "seeds": [
+   11,
+   12,
+   13,
+   14,
+   15
+  ],
+  "steps": 200,
+  "amount": 0.6,
+  "tau_e": 0.5,
+  "stim_window": [
+   50,
+   150
+  ],
+  "recover_stim_window": [
+   0,
+   100
+  ],
+  "comparison_window": [
+   50,
+   100
+  ],
+  "baseline_window": [
+   0,
+   50
+  ],
+  "entrance": "LPLC2/LC4 only",
+  "dW": 0,
+  "learning": false
+ },
+ "rows": [
+  {
+   "seed": 11,
+   "condition": "none",
+   "kc_baseline": 0.167812,
+   "kc_stim": 0.288875,
+   "kc_recovery": 0.288188,
+   "mb_baseline": 0.258526,
+   "mb_stim": 0.655789,
+   "e_nonzero_frac": 0.338628,
+   "e_mean": 5.990521
+  },
+  {
+   "seed": 11,
+   "condition": "stim",
+   "kc_baseline": 0.167812,
+   "kc_stim": 0.288812,
+   "kc_recovery": 0.287688,
+   "mb_baseline": 0.258526,
+   "mb_stim": 0.654105,
+   "e_nonzero_frac": 0.340393,
+   "e_mean": 5.985392
+  },
+  {
+   "seed": 11,
+   "condition": "recover",
+   "kc_baseline": 0.165063,
+   "kc_stim": 0.288312,
+   "kc_recovery": 0.288008,
+   "mb_baseline": 0.265263,
+   "mb_stim": 0.652421,
+   "e_nonzero_frac": 0.341716,
+   "e_mean": 6.004084
+  },
+  {
+   "seed": 12,
+   "condition": "none",
+   "kc_baseline": 0.537562,
+   "kc_stim": 0.939625,
+   "kc_recovery": 0.938563,
+   "mb_baseline": 0.522316,
+   "mb_stim": 0.913263,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.555315
+  },
+  {
+   "seed": 12,
+   "condition": "stim",
+   "kc_baseline": 0.537562,
+   "kc_stim": 0.940188,
+   "kc_recovery": 0.93875,
+   "mb_baseline": 0.522316,
+   "mb_stim": 0.914737,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.585049
+  },
+  {
+   "seed": 12,
+   "condition": "recover",
+   "kc_baseline": 0.53825,
+   "kc_stim": 0.939937,
+   "kc_recovery": 0.939609,
+   "mb_baseline": 0.523368,
+   "mb_stim": 0.915158,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.641395
+  },
+  {
+   "seed": 13,
+   "condition": "none",
+   "kc_baseline": 0.564875,
+   "kc_stim": 0.941063,
+   "kc_recovery": 0.93975,
+   "mb_baseline": 0.551368,
+   "mb_stim": 0.915368,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.609453
+  },
+  {
+   "seed": 13,
+   "condition": "stim",
+   "kc_baseline": 0.564875,
+   "kc_stim": 0.94075,
+   "kc_recovery": 0.940313,
+   "mb_baseline": 0.551368,
+   "mb_stim": 0.916842,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.641146
+  },
+  {
+   "seed": 13,
+   "condition": "recover",
+   "kc_baseline": 0.564937,
+   "kc_stim": 0.940375,
+   "kc_recovery": 0.940391,
+   "mb_baseline": 0.550526,
+   "mb_stim": 0.914737,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.655393
+  },
+  {
+   "seed": 14,
+   "condition": "none",
+   "kc_baseline": 0.532625,
+   "kc_stim": 0.942062,
+   "kc_recovery": 0.94025,
+   "mb_baseline": 0.513684,
+   "mb_stim": 0.915579,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.660905
+  },
+  {
+   "seed": 14,
+   "condition": "stim",
+   "kc_baseline": 0.532625,
+   "kc_stim": 0.941375,
+   "kc_recovery": 0.9415,
+   "mb_baseline": 0.513684,
+   "mb_stim": 0.915368,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.618795
+  },
+  {
+   "seed": 14,
+   "condition": "recover",
+   "kc_baseline": 0.533562,
+   "kc_stim": 0.94125,
+   "kc_recovery": 0.941289,
+   "mb_baseline": 0.514316,
+   "mb_stim": 0.913895,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.673278
+  },
+  {
+   "seed": 15,
+   "condition": "none",
+   "kc_baseline": 0.57925,
+   "kc_stim": 0.940625,
+   "kc_recovery": 0.939875,
+   "mb_baseline": 0.570105,
+   "mb_stim": 0.916632,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.637979
+  },
+  {
+   "seed": 15,
+   "condition": "stim",
+   "kc_baseline": 0.57925,
+   "kc_stim": 0.940625,
+   "kc_recovery": 0.942062,
+   "mb_baseline": 0.570105,
+   "mb_stim": 0.916,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.75264
+  },
+  {
+   "seed": 15,
+   "condition": "recover",
+   "kc_baseline": 0.57925,
+   "kc_stim": 0.93875,
+   "kc_recovery": 0.938633,
+   "mb_baseline": 0.570737,
+   "mb_stim": 0.916,
+   "e_nonzero_frac": 1.0,
+   "e_mean": 22.665256
+  }
+ ],
+ "paired": {
+  "kc_diff_mean": -0.0001,
+  "kc_diff_values": [
+   -6.3e-05,
+   0.000563,
+   -0.000313,
+   -0.000687,
+   0.0
+  ],
+  "kc_perm_p": 0.625,
+  "kc_relative": -0.00021,
+  "mb_diff_mean": 8.42e-05,
+  "e_nonzero_diff_mean": 0.000353,
+  "sign_consistency": 3
+ },
+ "stim_effect_repeatable": false,
+ "eligibility_discernible": false,
+ "eligibility_saturated_by_spontaneous": true,
+ "a0_go": false,
+ "a0_verdict": "FAIL",
+ "reason": "固定刺激未产生可重复 KC 活动差异/可辨认资格迹；资格迹被自发发放饱和。按预注册：不得增强刺激、注入 KC 或换机制挽救。"
+}
