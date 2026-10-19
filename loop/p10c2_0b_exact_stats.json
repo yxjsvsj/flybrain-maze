@@ -1,0 +1,55 @@
+{
+ "selftest": {
+  "cases": {
+   "all_zero_2": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "cancel_2": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "one_zero": {
+    "p": 0.5,
+    "in_range": true
+   },
+   "multi_zero": {
+    "p": 0.75,
+    "in_range": true
+   },
+   "tiny": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "duplicates": {
+    "p": 0.625,
+    "in_range": true
+   }
+  },
+  "enum_agree_4_16": true,
+  "permutation_invariant": true,
+  "positive_scaling_invariant": true,
+  "n25_p": 0.940127,
+  "n25_in_range": true,
+  "rejects_empty": true,
+  "rejects_nonfinite": true
+ },
+ "power": {
+  "n20": {
+   "power": 0.781,
+   "mc_se": 0.0092,
+   "sims": 2000,
+   "seed": 20260,
+   "distribution": "N(dz,1) paired differences"
+  },
+  "n22": {
+   "power": 0.831,
+   "mc_se": 0.0084,
+   "sims": 2000,
+   "seed": 20260,
+   "distribution": "N(dz,1) paired differences"
+  }
+ },
+ "power_normal_n20": 0.8281619116822643,
+ "power_t_n20": 0.7874021926435848
+}

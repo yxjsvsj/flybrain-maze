@@ -1,0 +1,102 @@
+{
+ "protocol_version": "P10-C2-0a/v1",
+ "exact_stats": {
+  "cases": {
+   "all_zero_2": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "cancel_2": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "one_zero": {
+    "p": 0.5,
+    "in_range": true
+   },
+   "multi_zero": {
+    "p": 0.75,
+    "in_range": true
+   },
+   "tiny": {
+    "p": 1.0,
+    "in_range": true
+   },
+   "duplicates": {
+    "p": 0.625,
+    "in_range": true
+   }
+  },
+  "enum_agree_4_16": true,
+  "permutation_invariant": true,
+  "positive_scaling_invariant": true,
+  "n25_p": 0.940127,
+  "n25_in_range": true,
+  "rejects_empty": true,
+  "rejects_nonfinite": true
+ },
+ "power_recheck": {
+  "n20": {
+   "power": 0.781,
+   "mc_se": 0.0092,
+   "sims": 2000,
+   "seed": 20260,
+   "distribution": "N(dz,1) paired differences"
+  },
+  "n22": {
+   "power": 0.831,
+   "mc_se": 0.0084,
+   "sims": 2000,
+   "seed": 20260,
+   "distribution": "N(dz,1) paired differences"
+  },
+  "power_normal_n20": 0.8282,
+  "power_t_n20": 0.7874,
+  "note": "0.831 is KC single-primary hypothetical power, NOT joint A0 power"
+ },
+ "adjudication": {
+  "cases": {
+   "A0_PASS": "A0_PASS",
+   "INPUT_INVALID": "INPUT_INVALID",
+   "METRIC_INVALID": "METRIC_INVALID",
+   "SENSORY_NO_EFFECT": "SENSORY_NO_EFFECT",
+   "INCONCLUSIVE": "INCONCLUSIVE",
+   "PENDING_APPROVAL": "INCONCLUSIVE",
+   "summary_only": "INCONCLUSIVE",
+   "duplicate": "INCONCLUSIVE",
+   "missing_condition": "INCONCLUSIVE",
+   "version_mismatch": "INCONCLUSIVE"
+  },
+  "all_correct": true
+ },
+ "resource": {
+  "lif_steps": 30000,
+  "core_lif_s": 39.0,
+  "init_rebuild_s": 75.0,
+  "eligibility_s": 20.0,
+  "save_stats_s": 5.0,
+  "total_min": 2.317,
+  "worst_case_2x_min": 4.633,
+  "cap_min": 15.0,
+  "cap_MB": 2048,
+  "class3_learning": "UNKNOWN",
+  "old_doc_error": "39,000 steps / 50.7 s was WRONG; correct 30,000 steps / 39.0 s",
+  "ready": true
+ },
+ "verdicts": {
+  "Exact_P_Algorithm_Fixed": true,
+  "Primary_Power_At_n22_ge_0.80": true,
+  "Raw_Record_Adjudication": true,
+  "Eligibility_Threshold": "PENDING_APPROVAL",
+  "Resource_Consistent_And_Ready": true,
+  "Ready_To_Request_One_A0": true,
+  "A0_Executed": false,
+  "Level_A_Execution": "NO-GO (approval/run pending)",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false
+ },
+ "a0_executed": false,
+ "training_authorized": false
+}
