@@ -173,7 +173,7 @@ def close_job(job):
         kernel32.CloseHandle(job)
 
 
-def launch_suspended(mode_args, log_path):
+def launch_suspended(mode_args, log_path, script_path=None):
     """CREATE_SUSPENDED：子进程在执行任何用户代码前被创建。"""
     log_h = kernel32.CreateFileW(log_path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                  None, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, None)
@@ -181,7 +181,8 @@ def launch_suspended(mode_args, log_path):
         return None
     si = STARTUPINFO(); si.cb = ctypes.sizeof(si); si.dwFlags = STARTF_USESTDHANDLES
     si.hStdOutput = log_h; si.hStdError = log_h; si.hStdInput = kernel32.GetStdHandle(-10)
-    cmd = f'"{sys.executable}" -u "{os.path.abspath(__file__)}" ' + " ".join(mode_args)
+    script = script_path or os.path.abspath(__file__)
+    cmd = f'"{sys.executable}" -u "{script}" ' + " ".join(mode_args)
     buf = ctypes.create_unicode_buffer(cmd)
     pi = PROCESS_INFORMATION()
     ok = kernel32.CreateProcessW(None, buf, None, None, True,
@@ -214,12 +215,12 @@ def wait_exit(pi, timeout_ms=30000):
     return int(code.value)
 
 
-def run_under_job(limit_bytes, mode_args, wall_cap_s, mem_cap_mib, log_path):
+def run_under_job(limit_bytes, mode_args, wall_cap_s, mem_cap_mib, log_path, script_path=None):
     """一次运行；超时/超内存 -> 终止 Job；不重试。"""
     job, ok = create_job(limit_bytes)
     if not ok:
         return {"ok": False, "reason": "job_creation_failed"}
-    launched = launch_suspended(mode_args, log_path)
+    launched = launch_suspended(mode_args, log_path, script_path)
     if not launched:
         close_job(job)
         return {"ok": False, "reason": "create_suspended_failed"}

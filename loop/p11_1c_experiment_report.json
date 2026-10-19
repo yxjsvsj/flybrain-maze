@@ -1,0 +1,765 @@
+{
+ "protocol": "P11-1c/v1",
+ "status": "INCONCLUSIVE",
+ "authorization": {
+  "granted": true,
+  "reason": null,
+  "config": {
+   "protocol": "P11-1c/v1",
+   "status": "APPROVED",
+   "approved_by": "user (chat approval: P11-1c)",
+   "approved_at_date": "2026-10-19",
+   "approved_at_exact": "NOT RECORDED",
+   "signature": "none; chat text (not cryptographic)",
+   "authorization_text": "我批准 P11-1c：完整 MaleCNS，25 个 seeds（101–125），每个 seed 400 步，仅 none 条件，总计 10,000 步。原始神经参数和 W 不变、ΔW=0，15 分钟与 2 GiB 硬上限。必须先通过进程资源隔离和完整 SHA-256 安全检查。不批准训练、Dijkstra、B/C 或实体控车。",
+   "scope": {
+    "full_brain": "MaleCNS v1.0",
+    "n_neurons": 166700,
+    "nnz": 25582938,
+    "seeds": [
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125
+    ],
+    "conditions": [
+     "none"
+    ],
+    "steps": 400,
+    "total_steps": 10000,
+    "params": {
+     "dt": 0.02,
+     "tau": 0.1,
+     "gain": 3.0,
+     "tonic": 0.14,
+     "noise_hz": 1.2,
+     "noise_amp": 0.22
+    },
+    "W_readonly": true,
+    "dW": 0,
+    "learning": false,
+    "mem_cap_GiB": 2.0,
+    "wall_cap_min": 15,
+    "one_run": true,
+    "no_training": true,
+    "no_dijkstra": true,
+    "no_B_C": true,
+    "no_robot": true
+   },
+   "checksum": "ba324bde4523d642acce6e2861576dc9ab55ffac5b533ada2af1e52cf6c14091"
+  }
+ },
+ "authorization_text": "我批准 P11-1c：完整 MaleCNS，25 个 seeds（101–125），每个 seed 400 步，仅 none 条件，总计 10,000 步。原始神经参数和 W 不变、ΔW=0，15 分钟与 2 GiB 硬上限。必须先通过进程资源隔离和完整 SHA-256 安全检查。不批准训练、Dijkstra、B/C 或实体控车。",
+ "status_note": "child completed 25/25; parent post-processing crashed before writing the report, so the Job peak-memory metric was lost. Per the one-run rule the child was NOT rerun. Science comparison below is from the saved per-seed arrays.",
+ "run_commit": "7978938cb797a99992dd2cc837cdc7ba1ed6d651",
+ "script_sha256": "27b121f11f5b5413bfd094a481c0834cf8f9252364e42caf7c4ef8d8caa6fd6d",
+ "hashes": {
+  "brain.npz": {
+   "sha256": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "full_equal": true
+  },
+  "weights.npz": {
+   "sha256": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c",
+   "full_equal": true
+  },
+  "ok": true
+ },
+ "hashes_ok": true,
+ "SAFETY_PRECHECK": "PASS",
+ "safety_note": "the child was launched only after the synthetic safety selftest passed; the 2 GiB Job limit was assigned before resume",
+ "RESOURCE": "INCONCLUSIVE",
+ "resource_note": "child completed; Job peak committed memory was not captured before the parent crash; NOT re-run",
+ "COMPLETENESS": "25/25",
+ "reconstructed_child_wall_s": 152.54,
+ "wall_cap_s": 900.0,
+ "mem_cap_GiB": 2.0,
+ "child": {
+  "ok": true,
+  "init_s": 9.7534,
+  "n_neurons": 166700,
+  "nnz": 25582938,
+  "n_KC": 4064,
+  "n_MBON": 97,
+  "n_matched_KC": 320,
+  "n_matched_MBON": 95,
+  "seeds": [
+   {
+    "seed": 101,
+    "wall_s": 15.161,
+    "finite": true,
+    "kc_fired_mean": 3888.45,
+    "mb_fired_mean": 85.62
+   },
+   {
+    "seed": 102,
+    "wall_s": 5.933,
+    "finite": true,
+    "kc_fired_mean": 3885.85,
+    "mb_fired_mean": 85.62
+   },
+   {
+    "seed": 103,
+    "wall_s": 5.954,
+    "finite": true,
+    "kc_fired_mean": 3886.29,
+    "mb_fired_mean": 85.5
+   },
+   {
+    "seed": 104,
+    "wall_s": 8.038,
+    "finite": true,
+    "kc_fired_mean": 3891.63,
+    "mb_fired_mean": 85.63
+   },
+   {
+    "seed": 105,
+    "wall_s": 5.995,
+    "finite": true,
+    "kc_fired_mean": 3888.89,
+    "mb_fired_mean": 85.55
+   },
+   {
+    "seed": 106,
+    "wall_s": 5.628,
+    "finite": true,
+    "kc_fired_mean": 3897.61,
+    "mb_fired_mean": 85.74
+   },
+   {
+    "seed": 107,
+    "wall_s": 5.176,
+    "finite": true,
+    "kc_fired_mean": 3894.02,
+    "mb_fired_mean": 85.77
+   },
+   {
+    "seed": 108,
+    "wall_s": 8.322,
+    "finite": true,
+    "kc_fired_mean": 3898.7,
+    "mb_fired_mean": 85.79
+   },
+   {
+    "seed": 109,
+    "wall_s": 5.334,
+    "finite": true,
+    "kc_fired_mean": 3897.34,
+    "mb_fired_mean": 85.74
+   },
+   {
+    "seed": 110,
+    "wall_s": 7.109,
+    "finite": true,
+    "kc_fired_mean": 3880.83,
+    "mb_fired_mean": 85.49
+   },
+   {
+    "seed": 111,
+    "wall_s": 6.429,
+    "finite": true,
+    "kc_fired_mean": 3878.56,
+    "mb_fired_mean": 85.39
+   },
+   {
+    "seed": 112,
+    "wall_s": 5.214,
+    "finite": true,
+    "kc_fired_mean": 3890.3,
+    "mb_fired_mean": 85.58
+   },
+   {
+    "seed": 113,
+    "wall_s": 5.295,
+    "finite": true,
+    "kc_fired_mean": 3899.83,
+    "mb_fired_mean": 85.84
+   },
+   {
+    "seed": 114,
+    "wall_s": 7.285,
+    "finite": true,
+    "kc_fired_mean": 3889.35,
+    "mb_fired_mean": 85.44
+   },
+   {
+    "seed": 115,
+    "wall_s": 5.207,
+    "finite": true,
+    "kc_fired_mean": 3892.53,
+    "mb_fired_mean": 85.65
+   },
+   {
+    "seed": 116,
+    "wall_s": 4.058,
+    "finite": true,
+    "kc_fired_mean": 3892.79,
+    "mb_fired_mean": 85.65
+   },
+   {
+    "seed": 117,
+    "wall_s": 3.905,
+    "finite": true,
+    "kc_fired_mean": 3898.37,
+    "mb_fired_mean": 85.77
+   },
+   {
+    "seed": 118,
+    "wall_s": 4.023,
+    "finite": true,
+    "kc_fired_mean": 3875.9,
+    "mb_fired_mean": 85.47
+   },
+   {
+    "seed": 119,
+    "wall_s": 4.458,
+    "finite": true,
+    "kc_fired_mean": 3891.26,
+    "mb_fired_mean": 85.34
+   },
+   {
+    "seed": 120,
+    "wall_s": 4.2,
+    "finite": true,
+    "kc_fired_mean": 3910.41,
+    "mb_fired_mean": 86.03
+   },
+   {
+    "seed": 121,
+    "wall_s": 3.742,
+    "finite": true,
+    "kc_fired_mean": 3890.85,
+    "mb_fired_mean": 85.62
+   },
+   {
+    "seed": 122,
+    "wall_s": 4.564,
+    "finite": true,
+    "kc_fired_mean": 3876.76,
+    "mb_fired_mean": 85.4
+   },
+   {
+    "seed": 123,
+    "wall_s": 4.146,
+    "finite": true,
+    "kc_fired_mean": 3882.18,
+    "mb_fired_mean": 85.38
+   },
+   {
+    "seed": 124,
+    "wall_s": 3.96,
+    "finite": true,
+    "kc_fired_mean": 3886.52,
+    "mb_fired_mean": 85.5
+   },
+   {
+    "seed": 125,
+    "wall_s": 3.651,
+    "finite": true,
+    "kc_fired_mean": 3893.35,
+    "mb_fired_mean": 85.62
+   }
+  ],
+  "device": "cpu",
+  "versions": {
+   "python": "3.13.1",
+   "numpy": "2.5.3",
+   "scipy": "1.18.1",
+   "flybrain": "0.1.0"
+  }
+ },
+ "comparison": {
+  "full_4064_KC": {
+   "per_seed_mean": [
+    1.0,
+    1.0,
+    1.0,
+    0.999999,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.999999,
+    0.999999,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "mean": 1.0,
+   "sd": 0.0,
+   "ge_0.85": 1.0,
+   "ge_0.95": 1.0,
+   "median": 1.0
+  },
+  "full_matched_320_KC": {
+   "per_seed_mean": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "mean": 1.0,
+   "sd": 0.0,
+   "ge_0.85": 1.0,
+   "ge_0.95": 1.0,
+   "median": 1.0
+  },
+  "subnet_320_KC": {
+   "per_seed_mean": [
+    0.940156,
+    0.941391,
+    0.940719,
+    0.941125,
+    0.939812,
+    0.911734,
+    0.940156,
+    0.940047,
+    0.939359,
+    0.940547,
+    0.938172,
+    0.939078,
+    0.940172,
+    0.288219,
+    0.941156,
+    0.939672,
+    0.939719,
+    0.939688,
+    0.940437,
+    0.939734,
+    0.941156,
+    0.940125,
+    0.939812,
+    0.911719,
+    0.941063
+   ],
+   "mean": 0.911799,
+   "sd": 0.130152,
+   "ge_0.85": 0.86325,
+   "ge_0.95": 0.86225,
+   "median": 0.940047
+  },
+  "full_97_MBON": {
+   "per_seed_mean": [
+    0.923196,
+    0.92299,
+    0.923041,
+    0.922371,
+    0.922268,
+    0.922062,
+    0.922732,
+    0.922732,
+    0.92268,
+    0.923093,
+    0.922732,
+    0.921701,
+    0.92201,
+    0.922371,
+    0.922526,
+    0.922423,
+    0.922784,
+    0.922835,
+    0.922165,
+    0.922887,
+    0.92232,
+    0.923351,
+    0.922371,
+    0.922835,
+    0.921546
+   ],
+   "mean": 0.922561,
+   "sd": 0.000451,
+   "ge_0.85": 0.85567,
+   "ge_0.95": 0.845773,
+   "median": 0.92268
+  },
+  "full_matched_95_MBON": {
+   "per_seed_mean": [
+    0.933211,
+    0.933158,
+    0.933158,
+    0.932474,
+    0.932526,
+    0.932316,
+    0.932474,
+    0.933,
+    0.932895,
+    0.933263,
+    0.932632,
+    0.932,
+    0.932474,
+    0.932579,
+    0.932737,
+    0.932421,
+    0.932789,
+    0.932737,
+    0.932368,
+    0.933105,
+    0.932526,
+    0.933368,
+    0.932474,
+    0.932842,
+    0.931737
+   ],
+   "mean": 0.932691,
+   "sd": 0.000398,
+   "ge_0.85": 0.873684,
+   "ge_0.95": 0.863579,
+   "median": 0.932632
+  },
+  "subnet_95_MBON": {
+   "per_seed_mean": [
+    0.915105,
+    0.915526,
+    0.915579,
+    0.915368,
+    0.917053,
+    0.61779,
+    0.915421,
+    0.915105,
+    0.91621,
+    0.915789,
+    0.915632,
+    0.915895,
+    0.915895,
+    0.656105,
+    0.915684,
+    0.916,
+    0.915737,
+    0.915368,
+    0.916263,
+    0.915632,
+    0.915316,
+    0.915579,
+    0.915684,
+    0.617947,
+    0.915105
+   ],
+   "mean": 0.881472,
+   "sd": 0.094761,
+   "ge_0.85": 0.813053,
+   "ge_0.95": 0.783158,
+   "median": 0.915579
+  },
+  "difference_matched_320_KC": {
+   "per_seed": [
+    0.059844,
+    0.058609,
+    0.059281,
+    0.058875,
+    0.060188,
+    0.088266,
+    0.059844,
+    0.059953,
+    0.060641,
+    0.059453,
+    0.061828,
+    0.060922,
+    0.059828,
+    0.711781,
+    0.058844,
+    0.060328,
+    0.060281,
+    0.060312,
+    0.059563,
+    0.060266,
+    0.058844,
+    0.059875,
+    0.060188,
+    0.088281,
+    0.058937
+   ],
+   "mean": 0.088201,
+   "sd": 0.130152,
+   "ci": {
+    "method": "percentile bootstrap",
+    "resamples": 10000,
+    "seed": 20261,
+    "ci_low": 0.05989752,
+    "ci_high": 0.14159823
+   }
+  },
+  "startup_bins_KC": {
+   "full_mean": [
+    0.146263,
+    0.99913,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.999999,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.999999,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "subnet_mean": [
+    0.029619,
+    0.818456,
+    0.899119,
+    0.910531,
+    0.912213,
+    0.912044,
+    0.912162,
+    0.911756,
+    0.911675,
+    0.911719,
+    0.911762,
+    0.911219,
+    0.911806,
+    0.911844,
+    0.912,
+    0.911775,
+    0.912087,
+    0.912269,
+    0.912187,
+    0.911919
+   ]
+  },
+  "startup_bins_MBON": {
+   "full_mean": [
+    0.124309,
+    0.920454,
+    0.922433,
+    0.922392,
+    0.922783,
+    0.922783,
+    0.922433,
+    0.922804,
+    0.922639,
+    0.922742,
+    0.922227,
+    0.922515,
+    0.922536,
+    0.922103,
+    0.922825,
+    0.922371,
+    0.922,
+    0.922701,
+    0.922969,
+    0.922495
+   ],
+   "subnet_mean": [
+    0.02539,
+    0.778968,
+    0.861937,
+    0.878758,
+    0.881516,
+    0.881705,
+    0.881431,
+    0.881453,
+    0.881431,
+    0.881347,
+    0.881116,
+    0.88181,
+    0.881895,
+    0.881495,
+    0.881031,
+    0.881284,
+    0.881916,
+    0.881537,
+    0.882105,
+    0.881347
+   ]
+  },
+  "noise_pairing": "same seed label only; full vs subnet N differ -> per-neuron noise NOT paired"
+ },
+ "raw_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_1c_full\\20261019T153322",
+ "manifest": {
+  "101.npz": {
+   "sha256": "e602fca46f59d12aeb741732cbe8dea92f26748661672c9d93ffe6d8142f3522",
+   "bytes": 6664
+  },
+  "102.npz": {
+   "sha256": "b4aba0fb70335144ade4c5655b1d8f8263a54c2233f587df55a2fec1e2098496",
+   "bytes": 7082
+  },
+  "103.npz": {
+   "sha256": "6f7604c2141d5a4082a01c5a7833aea55c79de25fbb0ab0af5d55f508c9d92bb",
+   "bytes": 7592
+  },
+  "104.npz": {
+   "sha256": "70803f56906549895acfaea5a3cdbbb204d38db8c20a8c959fc7164dffd0727b",
+   "bytes": 6649
+  },
+  "105.npz": {
+   "sha256": "890e097c7bbb6656754c5963ea44f6df91a667cf1dab0e54eb1dc92a94466537",
+   "bytes": 7995
+  },
+  "106.npz": {
+   "sha256": "4fda3f97f8d2b76dd7a0e42fc45a0feea97b3719ccf2d3086482df252b8f55a4",
+   "bytes": 6601
+  },
+  "107.npz": {
+   "sha256": "dd58404cf9603065aee7df1a0513196e21c0a9974f741e9dd5088a003cc4e024",
+   "bytes": 7492
+  },
+  "108.npz": {
+   "sha256": "e44084592a6da8cfef7cadd7d3da0132fd5db6d905635c7f1004f277cea1ad0e",
+   "bytes": 6890
+  },
+  "109.npz": {
+   "sha256": "e41574d6a7e6c9c7fd5b006a47e4798cf2d13bc533fccc41f5b98553a634e7b0",
+   "bytes": 6743
+  },
+  "110.npz": {
+   "sha256": "8ad0d295781e8cce1028d1ef29de6caf2375133cc2bee018456d408349236d5e",
+   "bytes": 6927
+  },
+  "111.npz": {
+   "sha256": "96133fc85721b856c6c4815cd2393454649574e94b51f84350670286da990779",
+   "bytes": 7364
+  },
+  "112.npz": {
+   "sha256": "03ea5ef510a88d2d18df58e4109310b0e7b6992217e7e9d126267b3741eec661",
+   "bytes": 6901
+  },
+  "113.npz": {
+   "sha256": "7e77e0bbfba16b8a848a2b67004b5707a5c4c779a1e78f94f3002535671a3b96",
+   "bytes": 6563
+  },
+  "114.npz": {
+   "sha256": "56d88ec994c0b8c907cb782cabf6f749d28da3a594158314d3be60213234e0bc",
+   "bytes": 8429
+  },
+  "115.npz": {
+   "sha256": "cde7350efa04e5df1320891828352eef574f5fd93e2fca3c01a68520b2085f98",
+   "bytes": 7239
+  },
+  "116.npz": {
+   "sha256": "6225c610f5e221e0c9fe746285c70473c4ca159c724fa084d975297de69a6f71",
+   "bytes": 6615
+  },
+  "117.npz": {
+   "sha256": "ad43477fb0ae125a76d077b13e694cc3e097ad8e9b4fbfdcff633967e035d8ae",
+   "bytes": 6903
+  },
+  "118.npz": {
+   "sha256": "7d0bd071e4fa8270c39187b4212912b6cf881d0cdcc41fe708ef43842da1877d",
+   "bytes": 7702
+  },
+  "119.npz": {
+   "sha256": "3a5ba4746dd2d4a38f088eefcf0ed21aa90692e2415ebcda1bee8d5a1aa0e92b",
+   "bytes": 11920
+  },
+  "120.npz": {
+   "sha256": "4364f9848b220326d97296411c9385acb905a2f4c6536633203912614aeac775",
+   "bytes": 6377
+  },
+  "121.npz": {
+   "sha256": "c59f863a3620fdc04704e87e5daba3403653b053b901250dfe4952a6c8c21939",
+   "bytes": 7099
+  },
+  "122.npz": {
+   "sha256": "cc27bb1fda0b736d9bbc4f359579af2cfc14018b65ec84073a51e7816ae22d1f",
+   "bytes": 6529
+  },
+  "123.npz": {
+   "sha256": "3d4510a613550aa3bbefbbbd85554b35d74a85e6b4377e325d4edea9a2ed6c10",
+   "bytes": 7956
+  },
+  "124.npz": {
+   "sha256": "81b79d422bdb3125c2f610bc11a46f5ad3286bf85cb6b5289682eb88795e646f",
+   "bytes": 7515
+  },
+  "125.npz": {
+   "sha256": "4036f0332a5a3848701fcdc9dd211160430035b95403ba38fec5a067a0d5661d",
+   "bytes": 7043
+  },
+  "child_result.json": {
+   "sha256": "f76bed930633a37b146c5bf3eabb431f13ff63ca86f641820f7aed913a556dff",
+   "bytes": 2701
+  },
+  "experiment.log": {
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0
+  },
+  "ids.npz": {
+   "sha256": "c542c23757f1d3c7f599cdca58d974c95f464f025a2aec3541fd6b3234035ba2",
+   "bytes": 1371460
+  },
+  "matched_ids.json": {
+   "sha256": "fc27e51fa13a54aeebe1a5b47ae157e1e26b1f8fa6fa1f678c274f53a02a9315",
+   "bytes": 3094
+  }
+ },
+ "manifest_sha256": "7c943a254bc65f5f4cbea0387ed54394f43ac5b5a40303c1894446bdf92de3a8",
+ "FULL_BRAIN_BASELINE": "HIGH",
+ "FULL_VS_SUBNET_DIFFERENCE": "OBSERVED",
+ "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+ "verdicts": {
+  "SAFETY_PRECHECK": "PASS",
+  "RESOURCE": "INCONCLUSIVE",
+  "COMPLETENESS": "25/25",
+  "FULL_BRAIN_BASELINE": "HIGH",
+  "FULL_VS_SUBNET_DIFFERENCE": "OBSERVED",
+  "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+  "Training_Authorization": false,
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO"
+ },
+ "training_authorized": false
+}
