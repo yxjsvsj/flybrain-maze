@@ -164,22 +164,142 @@ def run_lif_benchmark(repeats=2, warmup=5, batches=(10, 50, 100), timeout_s=120.
         shutil.rmtree(td, ignore_errors=True)
 
 
-def resource_budget(per_step_ms, max_steps_per_trial=2000, budget_hours=24.0, peak_mem_mb=None):
-    trials_70 = 7 * 10
-    trials_1890 = 27 * trials_70
-    def hours(n):
-        return round(n * max_steps_per_trial * (per_step_ms / 1000.0) / 3600.0, 3)
-    est70, est1890 = hours(trials_70), hours(trials_1890)
-    mem_ok = peak_mem_mb is None or peak_mem_mb <= 2048.0
-    ok = (est1890 <= budget_hours) and mem_ok
-    return {"per_step_ms": per_step_ms, "max_steps_per_trial": max_steps_per_trial,
+def run_stimulus_benchmark(steps_list=(10, 50, 100), amount=0.6, warmup=5,
+                           timeout_s=120.0, mem_cap_mb=2048.0):
+    """固定 LPLC2/LC4 刺激（送入既定感觉通路），**无学习**；短时前向性能。"""
+    from flybrain import FlyBrain
+    sub = build_subnet(); ver = verify_subnet(sub)
+    D, union, Wsub, A = sub["D"], sub["union"], sub["Wsub"], sub["A"]
+    lp_pos = np.searchsorted(union, A["LP"])
+    if not np.all(union[lp_pos] == A["LP"]):
+        return {"ok": False, "error": "LP not fully in subnet"}
+    td = tempfile.mkdtemp(prefix="p10c1c_stim_")
+    try:
+        np.savez(os.path.join(td, "brain.npz"),
+                 ids=D["ids"][union], visual=np.zeros(0, np.int32), azimuth=np.zeros(0, np.float32),
+                 cell_type=D["cell_type"][union], side=D["side"][union],
+                 positions=(D["positions"][union] if D.get("positions") is not None
+                            else np.zeros((len(union), 3), np.float32)),
+                 superclass=D["superclass"][union])
+        sp.save_npz(os.path.join(td, "weights.npz"), Wsub)
+        b = FlyBrain(data=td, device="cpu", batch=1, seed=7, dt=0.020)
+        t0 = time.perf_counter(); t_w = time.perf_counter()
+        for _ in range(warmup):
+            b.step(inject=[(lp_pos, amount)])
+        warm_s = time.perf_counter() - t_w
+        out = {}; abnormal = []
+        for nb in steps_list:
+            ts, fired = [], []
+            for _ in range(nb):
+                t = time.perf_counter()
+                f = b.step(inject=[(lp_pos, amount)])
+                ts.append(time.perf_counter() - t)
+                fired.append(int(len(f)))
+                if time.perf_counter() - t0 > timeout_s:
+                    abnormal.append("timeout"); break
+                if not np.isfinite(b.v).all():
+                    abnormal.append("non-finite-v")
+            out[str(nb)] = {"median_ms": round(float(np.median(ts)) * 1000, 4) if ts else None,
+                            "p95_ms": round(float(np.percentile(ts, 95)) * 1000, 4) if ts else None,
+                            "fired_mean": round(float(np.mean(fired)), 2) if fired else None,
+                            "fired_max": int(max(fired)) if fired else None,
+                            "abnormal_firing": bool(max(fired) > 0.5 * b.n) if fired else False}
+            if time.perf_counter() - t0 > timeout_s:
+                break
+        peak = _peak_memory_mb()
+        return {"ok": True, "verification": ver, "warmup_s": round(warm_s, 4),
+                "batches": out, "abnormal": abnormal, "peak_mem_MB": peak,
+                "mem_cap_exceeded": (peak or 0) > mem_cap_mb,
+                "stimulus": {"target": "LPLC2/LC4 (LP)", "amount": amount,
+                             "n_targets": int(len(lp_pos)), "learning": False},
+                "note": "固定感觉通路刺激下的 LIF 前向；无学习、无闭环。"}
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
+
+
+def _benchmark_problems(bench, label, min_samples=10):
+    if bench is None:
+        return [f"{label}: no measured result"]
+    if not bench.get("ok"):
+        return [f"{label}: not ok"]
+    problems = []
+    n_samples = 0
+    if bench.get("runs"):
+        for r in bench["runs"]:
+            for nb, b in (r.get("batches") or {}).items():
+                n_samples += int(float(nb))
+                if b.get("abnormal_firing"):
+                    problems.append(f"{label}: abnormal firing")
+            if "timeout" in (r.get("abnormal") or []):
+                problems.append(f"{label}: timeout")
+            if "non-finite-v" in (r.get("abnormal") or []):
+                problems.append(f"{label}: non-finite neural state")
+    else:
+        for nb, b in (bench.get("batches") or {}).items():
+            n_samples += int(float(nb))
+            if b.get("abnormal_firing"):
+                problems.append(f"{label}: abnormal firing")
+        if "timeout" in (bench.get("abnormal") or []):
+            problems.append(f"{label}: timeout")
+        if "non-finite-v" in (bench.get("abnormal") or []):
+            problems.append(f"{label}: non-finite neural state")
+    if n_samples < min_samples:
+        problems.append(f"{label}: insufficient samples ({n_samples})")
+    if bench.get("mem_cap_exceeded"):
+        problems.append(f"{label}: memory cap exceeded")
+    return problems
+
+
+def resource_budget(per_step_ms=None, benchmark=None, stimulus_benchmark=None,
+                    max_steps_per_trial=2000, budget_hours=24.0, min_samples=10,
+                    overhead_factor=2.0):
+    """实测必需；缺失/超时/非有限/超内存/样本不足 => resource_ready=False。"""
+    problems = _benchmark_problems(benchmark, "no-stimulus", min_samples)
+    if stimulus_benchmark is not None:
+        problems += _benchmark_problems(stimulus_benchmark, "fixed-stimulus", min_samples)
+    if per_step_ms is None and benchmark and benchmark.get("ok"):
+        vals = [r["batches"].get("100", r["batches"].get("50", {})).get("median_ms")
+                for r in benchmark.get("runs", [])]
+        vals = [v for v in vals if v is not None and np.isfinite(v)]
+        if vals:
+            per_step_ms = float(np.median(vals))
+    if per_step_ms is None or not np.isfinite(per_step_ms) or per_step_ms <= 0:
+        problems.append("no valid per-step time (0/None/non-finite forbidden)")
+        per_step_ms = None
+    stim_ms = None
+    if stimulus_benchmark and stimulus_benchmark.get("ok"):
+        vals = [b.get("median_ms") for b in (stimulus_benchmark.get("batches") or {}).values()]
+        vals = [v for v in vals if v is not None and np.isfinite(v)]
+        if vals:
+            stim_ms = float(np.median(vals))
+    used_ms = max([v for v in (per_step_ms, stim_ms) if v is not None], default=None)
+    peaks = [b.get("peak_mem_MB") for b in (benchmark, stimulus_benchmark) if b]
+    peaks = [p for p in peaks if p]
+    peak = max(peaks) if peaks else None
+    mem_ok = peak is not None and peak <= 2048.0
+    if not mem_ok:
+        problems.append("peak memory missing or > 2048 MB")
+    trials_70, trials_1890 = 7 * 10, 27 * 70
+    def hours(n, ms):
+        return round(n * max_steps_per_trial * (ms / 1000.0) / 3600.0 * overhead_factor, 3) if ms else None
+    est70 = hours(trials_70, used_ms)
+    est1890 = hours(trials_1890, used_ms)
+    ok = (len(problems) == 0 and used_ms is not None and mem_ok
+          and est1890 is not None and est1890 <= budget_hours)
+    return {"class1_no_stimulus_ms": per_step_ms, "class2_fixed_stimulus_ms": stim_ms,
+            "class3_eligibility_dw_teacher": "UNKNOWN (not implemented)",
+            "used_per_step_ms": used_ms, "overhead_factor": overhead_factor,
+            "overhead_note": "class3 未实现；预算用预注册开销因子估计，**不是**完整训练实测。",
+            "measured_samples": sum(int(float(nb)) for r in (benchmark or {}).get("runs", [])
+                                    for nb in (r.get("batches") or {})),
+            "max_steps_per_trial": max_steps_per_trial,
             "trials_70": trials_70, "trials_1890": trials_1890,
             "grid_clarification": ("27 参数点 × 70 trial = 1,890 次试验（若逐条件执行）；"
                                    "预注册未选择子集，**不得**事后缩减网格并声称原预注册通过。"),
             "est_hours_70": est70, "est_hours_1890": est1890,
-            "peak_mem_MB": peak_mem_mb, "budget_hours": budget_hours,
-            "resource_ready": bool(ok),
-            "reason": None if ok else "预算/内存超限或缺失"}
+            "peak_mem_MB": peak, "budget_hours": budget_hours,
+            "resource_ready": bool(ok), "problems": problems,
+            "reason": None if ok else "; ".join(problems)}
 
 
 def dw_spec_check():
@@ -296,11 +416,13 @@ def main(argv=None) -> int:
     if bench.get("ok"):
         b100 = bench["runs"][0]["batches"].get("100") or bench["runs"][0]["batches"].get("50")
         per_step = b100["median_ms"]
-    budget = resource_budget(per_step or 0.0, peak_mem_mb=bench.get("peak_mem_MB"))
+    stim = run_stimulus_benchmark()
+    budget = resource_budget(benchmark=bench, stimulus_benchmark=stim)
     dw = dw_spec_check()
     iso = isolation_suite()
     report = {
-        "decoder_freeze": freeze, "benchmark": bench, "resource_budget": budget,
+        "decoder_freeze": freeze, "benchmark": bench, "stimulus_benchmark": stim,
+        "resource_budget": budget,
         "dw_spec_safety": dw, "isolation": iso,
         "verdicts": {
             "Biological": "NO-GO",

@@ -1,0 +1,235 @@
+{
+ "dw_invariants": {
+  "candidate_implementable": true,
+  "strategies": {
+   "S1": {
+    "only_approved_modified": true,
+    "no_new_edges": true,
+    "excitatory_nonnegative": true,
+    "inhibitory_nonpositive": true,
+    "unapproved_bit_identical": true,
+    "direction_preserved": true,
+    "l1_row_before": [
+     0.0,
+     0.5,
+     0.3,
+     0.2
+    ],
+    "l1_row_after": [
+     0.0,
+     0.0,
+     0.3,
+     0.2
+    ],
+    "l1_preserved": true,
+    "dW_separate_object": true
+   },
+   "S2": {
+    "only_approved_modified": true,
+    "no_new_edges": true,
+    "excitatory_nonnegative": true,
+    "inhibitory_nonpositive": true,
+    "unapproved_bit_identical": true,
+    "direction_preserved": true,
+    "l1_row_before": [
+     0.0,
+     0.5,
+     0.3,
+     0.2
+    ],
+    "l1_row_after": [
+     0.0,
+     0.0,
+     0.9,
+     0.2
+    ],
+    "l1_preserved": false,
+    "dW_separate_object": true
+   },
+   "training_off_zero": true,
+   "official_W_untouched": true
+  }
+ },
+ "l1_strategies": {
+  "S1_plastic_budget": {
+   "rule": "逐突触后：仅对**可塑边**施加绝对预算（原始可塑边 Σ|W|）；超出则缩放可塑边 ΔW；未批准边逐位不变。",
+   "effect": "保留原 L1 上界；局部（逐后）、确定、可重复；可能削弱学习幅度并耦合可塑边。",
+   "pending_approval": true
+  },
+  "S2_allow_l1_exceed": {
+   "rule": "不重归一化；允许逐后 L1 超出原始归一化范围，列为**单独计算模型假设**。",
+   "effect": "最简单、局部、可重复；但偏离原始归一化模型，结果不能直接与原始 L1 模型比较。",
+   "pending_approval": true
+  },
+  "note": "两策略均**未选择、未应用**；需书面批准其一或另行方案。"
+ },
+ "modulation_protocol": {
+  "mechanism": "dW = eta * eligibility * (D - D0)",
+  "D_t": {
+   "type": "分段常数、训练期标注调制标签（教师/奖励）",
+   "range": [
+    -1.0,
+    1.0
+   ],
+   "D0": 0.0,
+   "source": "teacher/reward label, NOT sensory input; training-time only",
+   "not_biological_calibration": true
+  },
+  "eligibility": {
+   "init": "e(0)=0 at trial start",
+   "update": "e(t+1)=e(t)*exp(-dt/tau_e) + pre_trace(t)*post_trace(t)",
+   "reset": "trial start e=0; after-trial reset per preregistration",
+   "causal": true,
+   "no_future_info": true,
+   "tau_e_grid_s": [
+    0.1,
+    0.5,
+    1.0
+   ]
+  },
+  "params": {
+   "eta_grid": [
+    1e-05,
+    0.0001,
+    0.001
+   ],
+   "delta_max_grid": [
+    0.01,
+    0.05,
+    0.1
+   ],
+   "D0": 0.0,
+   "source": "computational hypotheses; no biological calibration"
+  },
+  "separation": "modulation labels are separate from sensory inputs; teacher actions never fed as sensory or test-time neural commands"
+ },
+ "subnet_validity": {
+  "n_neurons": 23218,
+  "nnz": 3549643,
+  "candidate_KC_MBON": 4533,
+  "preserved": {
+   "LP_LPLC2_LC4": 311,
+   "X": 10931,
+   "KC_in_chain": 320,
+   "MBON": 95,
+   "Y": 11340,
+   "DN": 1285,
+   "DAN": 340
+  },
+  "truncation": {
+   "lost_incoming_edges": 4201146,
+   "lost_incoming_weight": 4238.44,
+   "note": "外部入边被截断；不得宣称为全脑功能"
+  },
+  "q1_interpretable": true,
+  "q1_reason": "可作为**截断子网固定刺激计算假设**：在 LPLC2/LC4 注入固定刺激（**不注入 KC**），经真实 2 跳到 KC、经真实 KC→MBON 可塑边；但不是全脑。",
+  "q2_effect": "缺失 3,744 个 KC、2 个 MBON 及子网外输入会改变 KC/MBON 活动与资格迹；因此学习曲线/幅度只能作为截断子网现象。",
+  "q3_sensory_preserved": true,
+  "q3_note": "LPLC2/LC4 保留；但其上游视觉输入被截断，故用固定刺激替代（明确标注）。",
+  "q4_truncated_only": [
+   "学习幅度/曲线",
+   "DAN 调制效应的绝对值",
+   "MBON 输出统计",
+   "资格迹时间常数辨识"
+  ],
+  "q5_full_brain_recheck": [
+   "调制对 KC→MBON 的因果效应",
+   "与完整 DAN/MBON 群体的交互",
+   "任何全脑功能声明"
+  ],
+  "interpretability_ok": true
+ },
+ "resource_gate": {
+  "measured": {
+   "class1_no_stimulus_ms": 1.3626,
+   "class2_fixed_stimulus_ms": 1.5682,
+   "class3_eligibility_dw_teacher": "UNKNOWN (not implemented)",
+   "used_per_step_ms": 1.5682,
+   "overhead_factor": 2.0,
+   "overhead_note": "class3 未实现；预算用预注册开销因子估计，**不是**完整训练实测。",
+   "measured_samples": 320,
+   "max_steps_per_trial": 2000,
+   "trials_70": 70,
+   "trials_1890": 1890,
+   "grid_clarification": "27 参数点 × 70 trial = 1,890 次试验（若逐条件执行）；预注册未选择子集，**不得**事后缩减网格并声称原预注册通过。",
+   "est_hours_70": 0.122,
+   "est_hours_1890": 3.293,
+   "peak_mem_MB": 1083.72,
+   "budget_hours": 24.0,
+   "resource_ready": true,
+   "problems": [],
+   "reason": null
+  },
+  "negative_cases": [
+   {
+    "label": "no measurement",
+    "resource_ready": false,
+    "problems": [
+     "no-stimulus: no measured result",
+     "no valid per-step time (0/None/non-finite forbidden)",
+     "peak memory missing or > 2048 MB"
+    ]
+   },
+   {
+    "label": "zero per-step",
+    "resource_ready": false,
+    "problems": [
+     "no valid per-step time (0/None/non-finite forbidden)"
+    ]
+   },
+   {
+    "label": "timeout",
+    "resource_ready": false,
+    "problems": [
+     "no-stimulus: timeout"
+    ]
+   },
+   {
+    "label": "non-finite state",
+    "resource_ready": false,
+    "problems": [
+     "no-stimulus: non-finite neural state"
+    ]
+   },
+   {
+    "label": "over memory",
+    "resource_ready": false,
+    "problems": [
+     "peak memory missing or > 2048 MB"
+    ]
+   },
+   {
+    "label": "insufficient samples",
+    "resource_ready": false,
+    "problems": [
+     "no-stimulus: insufficient samples (1)"
+    ]
+   }
+  ],
+  "ok": true,
+  "class3": "UNKNOWN (eligibility/dW/teacher feedback not implemented)",
+  "limitation": "预算为实测 LIF 前向 × 预注册开销因子；**不是**完整训练实测。"
+ },
+ "leakage_grading": {
+  "level_A_independent_of_B_C_decoder": true,
+  "mock_isolation": "verified (subprocess mock only)",
+  "real_student_isolation": false,
+  "A_does_not_replace_C_isolation": true,
+  "dijkstra": "future training-time teacher only; absent at test",
+  "modulation_label_separation": "D(t) labels separate from sensory input; never test-time neural command"
+ },
+ "verdicts": {
+  "Biological_Readiness": "NO-GO",
+  "Computational_Hypothesis": "GO (conditional, proposal only)",
+  "Level_A_Design_Readiness": "GO",
+  "Level_A_Execution_Readiness": "NO-GO",
+  "Level_B_Execution_Readiness": "NO-GO",
+  "Level_C_Execution_Readiness": "NO-GO",
+  "Training_Authorization": false,
+  "a_exec_blockers": [
+   "DW_ERRATUM_NOT_APPROVED",
+   "UPDATE_NOT_IMPLEMENTED"
+  ]
+ },
+ "training_authorized": false
+}

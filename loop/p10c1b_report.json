@@ -1,7 +1,7 @@
 {
  "decoder_freeze": {
   "module": "loop/p10_test_decoder.py",
-  "sha256": "fc1ecb2da1cb9667f0c8b56a75328b42171b9e811fe5fca5db94f865e9640cbf",
+  "sha256": "625912d8edaefca04a6fd2dab8ebb05f6fc0d59ba59383ef510e08cd81dd47ba",
   "groups": {
    "turn_L": {
     "bodyIds": [
@@ -133,65 +133,65 @@
   "runs": [
    {
     "repeat": 0,
-    "warmup_s": 2.5931,
+    "warmup_s": 2.2418,
     "batches": {
      "10": {
-      "median_ms": 0.7641,
-      "p95_ms": 1.9652,
+      "median_ms": 0.733,
+      "p95_ms": 0.8173,
       "fired_mean": 43.7,
       "fired_max": 116,
       "abnormal_firing": false
      },
      "50": {
-      "median_ms": 1.4147,
-      "p95_ms": 4.2559,
+      "median_ms": 1.3249,
+      "p95_ms": 1.6685,
       "fired_mean": 3421.92,
       "fired_max": 4104,
       "abnormal_firing": false
      },
      "100": {
-      "median_ms": 1.4246,
-      "p95_ms": 2.791,
+      "median_ms": 1.3477,
+      "p95_ms": 2.9311,
       "fired_mean": 4051.51,
       "fired_max": 4132,
       "abnormal_firing": false
      }
     },
     "abnormal": [],
-    "peak_mem_MB": 938.3
+    "peak_mem_MB": 1051.07
    },
    {
     "repeat": 1,
     "warmup_s": 0.0034,
     "batches": {
      "10": {
-      "median_ms": 0.8188,
-      "p95_ms": 1.7949,
+      "median_ms": 0.6525,
+      "p95_ms": 0.7311,
       "fired_mean": 49.7,
       "fired_max": 114,
       "abnormal_firing": false
      },
      "50": {
-      "median_ms": 1.5887,
-      "p95_ms": 3.1403,
+      "median_ms": 1.1904,
+      "p95_ms": 1.3925,
       "fired_mean": 3478.6,
       "fired_max": 4167,
       "abnormal_firing": false
      },
      "100": {
-      "median_ms": 1.5526,
-      "p95_ms": 4.213,
+      "median_ms": 1.3775,
+      "p95_ms": 2.0052,
       "fired_mean": 4060.78,
       "fired_max": 4147,
       "abnormal_firing": false
      }
     },
     "abnormal": [],
-    "peak_mem_MB": 938.3
+    "peak_mem_MB": 1051.07
    }
   ],
   "repeatable": true,
-  "peak_mem_MB": 938.3,
+  "peak_mem_MB": 1051.07,
   "mem_cap_exceeded": false,
   "versions": {
    "python": "3.13.1",
@@ -211,17 +211,97 @@
   },
   "note": "真实子网 LIF 前向；仅短时性能测量，无学习/无闭环。"
  },
+ "stimulus_benchmark": {
+  "ok": true,
+  "verification": {
+   "n_neurons": 23218,
+   "nnz": 3549643,
+   "csr_dtype": "float32",
+   "csr_format": "csr",
+   "csr_float32_MB": 28.49,
+   "bodyId_unique": true,
+   "direction_check": {
+    "kc_pre": 137302,
+    "mbon_post": 519128,
+    "W_post_pre": 0.004633920267224312,
+    "W_pre_post": 0.0,
+    "correct": true
+   },
+   "n_DN_preserved": 1285,
+   "n_DN_total": 1314,
+   "n_DN_outside_subnet": 29,
+   "n_sensory_in_subnet": 1,
+   "truncation": {
+    "incoming_edges_total": 7750789,
+    "incoming_edges_internal": 3549643,
+    "lost_incoming_edges": 4201146,
+    "lost_incoming_weight": 4238.4395,
+    "note": "子网外输入被截断；不得宣称为全脑功能"
+   },
+   "layer_sizes": [
+    311,
+    10931,
+    320,
+    95,
+    11340,
+    1285
+   ],
+   "n_DAN": 340,
+   "note": "六层存在节点重合；union 去重后为 unique 神经元数，不能直接相加。"
+  },
+  "warmup_s": 0.0083,
+  "batches": {
+   "10": {
+    "median_ms": 1.152,
+    "p95_ms": 2.8792,
+    "fired_mean": 378.4,
+    "fired_max": 465,
+    "abnormal_firing": false
+   },
+   "50": {
+    "median_ms": 1.6547,
+    "p95_ms": 4.1017,
+    "fired_mean": 4065.02,
+    "fired_max": 4496,
+    "abnormal_firing": false
+   },
+   "100": {
+    "median_ms": 1.5682,
+    "p95_ms": 4.9159,
+    "fired_mean": 4408.93,
+    "fired_max": 4507,
+    "abnormal_firing": false
+   }
+  },
+  "abnormal": [],
+  "peak_mem_MB": 1083.72,
+  "mem_cap_exceeded": false,
+  "stimulus": {
+   "target": "LPLC2/LC4 (LP)",
+   "amount": 0.6,
+   "n_targets": 311,
+   "learning": false
+  },
+  "note": "固定感觉通路刺激下的 LIF 前向；无学习、无闭环。"
+ },
  "resource_budget": {
-  "per_step_ms": 1.4246,
+  "class1_no_stimulus_ms": 1.3626,
+  "class2_fixed_stimulus_ms": 1.5682,
+  "class3_eligibility_dw_teacher": "UNKNOWN (not implemented)",
+  "used_per_step_ms": 1.5682,
+  "overhead_factor": 2.0,
+  "overhead_note": "class3 未实现；预算用预注册开销因子估计，**不是**完整训练实测。",
+  "measured_samples": 320,
   "max_steps_per_trial": 2000,
   "trials_70": 70,
   "trials_1890": 1890,
   "grid_clarification": "27 参数点 × 70 trial = 1,890 次试验（若逐条件执行）；预注册未选择子集，**不得**事后缩减网格并声称原预注册通过。",
-  "est_hours_70": 0.055,
-  "est_hours_1890": 1.496,
-  "peak_mem_MB": 938.3,
+  "est_hours_70": 0.122,
+  "est_hours_1890": 3.293,
+  "peak_mem_MB": 1083.72,
   "budget_hours": 24.0,
   "resource_ready": true,
+  "problems": [],
   "reason": null
  },
  "dw_spec_safety": {

@@ -1,0 +1,73 @@
+{
+ "status": "PENDING_APPROVAL; NOT applied; NOT implemented",
+ "invariants": [
+  "only approved KC->MBON edges",
+  "no new edges",
+  "excitatory W_eff>=0; inhibitory W_eff<=0",
+  "unapproved edges bit-identical",
+  "direction/transmitter unchanged",
+  "explicit L1 policy",
+  "dW persisted separately",
+  "training off -> zero"
+ ],
+ "l1_strategies": {
+  "S1_plastic_budget": {
+   "rule": "逐突触后：仅对**可塑边**施加绝对预算（原始可塑边 Σ|W|）；超出则缩放可塑边 ΔW；未批准边逐位不变。",
+   "effect": "保留原 L1 上界；局部（逐后）、确定、可重复；可能削弱学习幅度并耦合可塑边。",
+   "pending_approval": true
+  },
+  "S2_allow_l1_exceed": {
+   "rule": "不重归一化；允许逐后 L1 超出原始归一化范围，列为**单独计算模型假设**。",
+   "effect": "最简单、局部、可重复；但偏离原始归一化模型，结果不能直接与原始 L1 模型比较。",
+   "pending_approval": true
+  },
+  "note": "两策略均**未选择、未应用**；需书面批准其一或另行方案。"
+ },
+ "modulation_protocol": {
+  "mechanism": "dW = eta * eligibility * (D - D0)",
+  "D_t": {
+   "type": "分段常数、训练期标注调制标签（教师/奖励）",
+   "range": [
+    -1.0,
+    1.0
+   ],
+   "D0": 0.0,
+   "source": "teacher/reward label, NOT sensory input; training-time only",
+   "not_biological_calibration": true
+  },
+  "eligibility": {
+   "init": "e(0)=0 at trial start",
+   "update": "e(t+1)=e(t)*exp(-dt/tau_e) + pre_trace(t)*post_trace(t)",
+   "reset": "trial start e=0; after-trial reset per preregistration",
+   "causal": true,
+   "no_future_info": true,
+   "tau_e_grid_s": [
+    0.1,
+    0.5,
+    1.0
+   ]
+  },
+  "params": {
+   "eta_grid": [
+    1e-05,
+    0.0001,
+    0.001
+   ],
+   "delta_max_grid": [
+    0.01,
+    0.05,
+    0.1
+   ],
+   "D0": 0.0,
+   "source": "computational hypotheses; no biological calibration"
+  },
+  "separation": "modulation labels are separate from sensory inputs; teacher actions never fed as sensory or test-time neural commands"
+ },
+ "pending_approval_items": [
+  "adopt W_eff>=0 (exc) / <=0 (inh) constraint",
+  "choose L1 strategy S1 or S2 (or another approved rule)",
+  "freeze delta_max relative to W (clip alone insufficient)",
+  "approve D(t) and eligibility init/reset semantics",
+  "approve separate dW persistence format"
+ ]
+}
