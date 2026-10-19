@@ -1,0 +1,175 @@
+{
+ "archive": {
+  "status": "ARCHIVED_VERIFIED"
+ },
+ "hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "full_brain": {
+  "csr": {
+   "format": "csr",
+   "shape": [
+    166700,
+    166700
+   ],
+   "nnz": 25582938,
+   "dtype": "float32",
+   "indices_dtype": "int32",
+   "indptr_dtype": "int32",
+   "data_bytes": 102331752,
+   "indices_bytes": 102331752,
+   "indptr_bytes": 666804,
+   "total_bytes": 205330308
+  },
+  "csc": {
+   "total_bytes": 205330308
+  },
+  "metadata_bytes": 53392120,
+  "weights_file_bytes": 205331565,
+  "brain_file_bytes": 53396978
+ },
+ "memory_budget": {
+  "threads": 16,
+  "state_bytes": {
+   "v_bytes": 666800,
+   "noise_temp_float64": 1333600,
+   "propagate_partial": 10668800,
+   "current": 666800,
+   "last_spike": 0
+  },
+  "state_total_bytes": 13336000,
+  "init_peak_lower_MB": 477.39,
+  "init_peak_with_file_MB": 682.72,
+  "upper_bound_with_1.5x_overhead_MB": 1024.08,
+  "within_2GB_upper_bound": true,
+  "measured": false,
+  "resource_ready": false,
+  "reason": "static arrays fit well below 2 GB, but the load/tocsc/file-buffer/NumPy overhead peak is not measured; no credible measured upper bound",
+  "recommendation_2GB": "keep 2 GB for the benchmark; if measured peak exceeds 2 GB -> stop/INCONCLUSIVE; do not auto-raise the cap",
+  "benchmark_required": true
+ },
+ "none_only_plan": {
+  "conditions": [
+   "none"
+  ],
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125
+  ],
+  "steps_per_seed": 400,
+  "planned_full_brain_steps": 10000,
+  "plan": "one full-brain init + 25 resets; save KC/MBON arrays; NO eligibility computation",
+  "static_core_seconds": 93.69,
+  "static_core_minutes": 1.56,
+  "nnz_ratio": 7.207,
+  "static_extrapolation_note": "nnz ratio 7.207 is NOT a measured time/memory multiplier; cache/fired-count/fixed overhead differ",
+  "save_bytes_estimate": 166440000,
+  "eligibility": "not needed for the none-only baseline comparison",
+  "benchmark_separate_authorization": true,
+  "executed": false
+ },
+ "rng_audit": {
+  "implementation": "FlyBrain.reset(seed) sets self.rng=default_rng(seed); each step draws rng.random((N,B))",
+  "full_N": 166700,
+  "subnet_N": 23218,
+  "same_seed_is_only_initial_rng": true,
+  "draw_shape_differs": true,
+  "common_bodyId_noise_sequence_same": false,
+  "strict_noise_pairing": false,
+  "comparison_type": "between-model comparison with a shared seed label; NOT a noise-paired comparison",
+  "statistical_limitation": "common-bodyId neurons occupy different positions and the RNG stream advances by N draws/step, so the per-neuron noise is not aligned",
+  "can_only_interpret_as": "overall truncation condition, not a specific external inhibition/excitation cause"
+ },
+ "phase2_provenance": {
+  "phase2_candidates": {
+   "gain": [
+    1.5,
+    3.0
+   ],
+   "tonic": [
+    0.1,
+    0.14
+   ],
+   "noise_hz": [
+    0.6,
+    1.2
+   ]
+  },
+  "flybrain_code_defaults": {
+   "gain": 3.0,
+   "tonic": 0.14,
+   "noise_hz": 1.2,
+   "noise_amp": 0.22,
+   "source": "flybrain/brain.py class attributes; author hand-set"
+  },
+  "fly64_code_values": {
+   "gain": 1.5,
+   "tonic": 0.18,
+   "source": "fly64/model.py mentioned in flybrain/brain.py docstring; code values"
+  },
+  "independent_physiological_calibration": "NONE found in the repository",
+  "peer_reviewed_doi": null,
+  "provenance_status": "INSUFFICIENT",
+  "why": "code defaults / author hand-set values and a code-to-code comparison are not independently published physiological calibrations; 'literature mentioned a similar model' != validated params",
+  "phase2_execution_ready": false,
+  "no_selection_by_A0_result": true
+ },
+ "p11_0_dz_errata": {
+  "p11_0_reported_dz": -0.022377,
+  "p11_0_dz_definition": "mean(per-cell means) / sd(per-cell means) across 320 cells",
+  "pooled_paired_dz": -0.003161,
+  "per_cell_paired_dz_median_nz": -0.019525,
+  "n_cells_zero_variance": 272,
+  "mislabel": "P11-0 dz is a cross-cell standardized mean, NOT a paired-by-seed Cohen's dz; do not conflate the two",
+  "errata_recorded": true,
+  "historical_unchanged": true
+ },
+ "gates": {
+  "Historical_P10C2_A0": "INCONCLUSIVE",
+  "HIGH_BASELINE_PHENOTYPE": "SUPPORTED",
+  "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+  "Phase1_Design_Readiness": "GO",
+  "Full_Brain_Resource_Readiness": "NO-GO",
+  "Phase1_Execution_Readiness": "NO-GO",
+  "Phase2_Parameter_Provenance": "INSUFFICIENT",
+  "Phase2_Execution_Readiness": "NO-GO",
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "why_phase1_execution_no_go": [
+   "full-brain resource benchmark not measured",
+   "peak memory vs 2 GB unverified",
+   "written authorization for the 25-seed experiment not granted"
+  ]
+ },
+ "training_authorized": false
+}
