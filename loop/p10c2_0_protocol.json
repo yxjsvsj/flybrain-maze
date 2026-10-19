@@ -1,0 +1,191 @@
+{
+ "sample_size": {
+  "independent_unit": "brain seed",
+  "test": "two-sided paired sign-flip / paired t; alpha=0.05",
+  "min_meaningful_dz": 0.65,
+  "power_target": 0.8,
+  "required_n_for_power": 19,
+  "valid_n_required": 20,
+  "planned_n": 22,
+  "attrition_allowance": "9%",
+  "power_at_valid_n": 0.8282,
+  "power_at_planned_n": 0.8619,
+  "exact_test_reachable": true,
+  "exact_min_p_6": 0.03125,
+  "not_based_on_old_A0_effect": true,
+  "rationale": "n=20 有效种子在 dz=0.65 下 power≈0.83；计划 22 预留 10% 失败/非有限；精确符号翻转在 ≥6 非零时可达 p<0.05。**不**用旧 A0 的偶然最大差异选参数。"
+ },
+ "stimulus_unit": {
+  "encoder_semantics": "amount = dv * (1 - decay); decay = exp(-dt/tau)",
+  "dt": 0.02,
+  "tau": 0.1,
+  "decay": 0.818731,
+  "per_step": 0.181269,
+  "old_amount": 0.6,
+  "old_steady_state_dv": 3.31,
+  "old_amount_is_per_step_not_dv": true,
+  "old_unit_consistent": false,
+  "old_mismatch_factor_vs_dv_0.2": 16.55,
+  "proposed_unit": "steady-state voltage increment dv (LIF normalized voltage units)",
+  "proposed_dv": 0.2,
+  "proposed_amount_per_step": 0.036254,
+  "calibration_target": "LPLC2/LC4 entrance firing increase (NOT KC response)",
+  "no_posthoc_increase": true,
+  "future_fixed_stimulus": {
+   "unit": "dv (steady-state voltage increment)",
+   "single_step_amount": "dv*(1-exp(-dt/tau))",
+   "stim_window_steps": [
+    100,
+    300
+   ],
+   "no_stim_control": "same duration, same seed, no injection",
+   "recover": "stim then off; matched baseline duration"
+  },
+  "ceiling_criteria": {
+   "kc_baseline_rate_max": 0.85,
+   "mbon_baseline_rate_max": 0.85,
+   "if_exceeded": "INCONCLUSIVE (ceiling)"
+  }
+ },
+ "eligibility": {
+  "definition": "e(t)=e(t-1)*exp(-dt/tau_e)+pre_trace(t-1)*post_trace(t-1)",
+  "init_zero": true,
+  "strictly_causal": true,
+  "reset_fresh_equal": true,
+  "nonzero_after_spikes": true,
+  "time_resolved": true,
+  "records_amplitude_and_nonzero": true,
+  "spontaneous_vs_evoked_separable": true,
+  "synthetic": {
+   "max_e": 1.063397,
+   "mean_e": 0.186218,
+   "nonzero_frac": 0.2,
+   "evoked_diff_max": 17.569696
+  },
+  "primary_metric": "stim-evoked eligibility amplitude difference (paired by seed, time-resolved)",
+  "secondary": [
+   "nonzero fraction",
+   "distribution quantiles",
+   "KC per-cell response fraction"
+  ]
+ },
+ "metrics_failure": {
+  "A_entrance": {
+   "metric": "LPLC2/LC4 population firing rate (stim - none)",
+   "gate": "pre-registered positive effect (p<0.05, effect size >= declared)"
+  },
+  "B_KC": {
+   "primary": "KC population firing rate (stim - none)",
+   "secondary": [
+    "per-cell KC response",
+    "latency",
+    "post-removal recovery"
+   ]
+  },
+  "C_eligibility": {
+   "primary": "stim-evoked eligibility amplitude difference",
+   "secondary": [
+    "nonzero fraction",
+    "distribution",
+    "time course"
+   ]
+  },
+  "single_primary_endpoint": "B_KC population rate",
+  "secondary_family_fdr": "Benjamini-Hochberg q=0.05; labelled secondary/exploratory",
+  "zero_diff_handling": "included in sign-flip (zero contributes 0); excluded from sign test; both reported",
+  "nonfinite_failure": "excluded; >10% excluded -> INCONCLUSIVE",
+  "multiple_comparisons_frozen": true,
+  "states": {
+   "INPUT_INVALID": "entrance positive control fails",
+   "METRIC_INVALID": "eligibility synthetic validation fails or saturated/undiscriminative",
+   "SENSORY_NO_EFFECT": "entrance valid but KC primary endpoint fails declared effect",
+   "INCONCLUSIVE": "insufficient valid seeds/ceiling/wide CI/excessive exclusions",
+   "A0_PASS": "all pre-registered gates met (not just one p<0.05)"
+  },
+  "a0_pass_authorizes_training": false,
+  "no_posthoc_changes": true
+ },
+ "resource": {
+  "seeds": 22,
+  "conditions": [
+   "none",
+   "stim",
+   "recover"
+  ],
+  "steps_per_run": 400,
+  "lif_steps_total": 26400,
+  "estimated_lif_seconds": 34.32,
+  "eligibility_edge_steps": 119671200,
+  "estimated_eligibility_seconds": "~seconds (vectorized; not a learning run)",
+  "peak_memory_MB": "~1000 (subnet LIF, per process; sequential)",
+  "wall_clock_budget": "< 10 min CPU (no learning; class3 UNKNOWN)",
+  "class3_learning_cost": "UNKNOWN (eligibility/dW/teacher update not implemented)",
+  "not_full_training_measurement": true
+ },
+ "evidence": {
+  "this_round": "DESIGN/SYNTHETIC ONLY (no empirical A0)",
+  "a0_execution_would_provide": [
+   "Level 1: entrance positive control",
+   "Level 1-2: KC transmission",
+   "Level 2: candidate eligibility identifiability"
+  ],
+  "does_not_provide": [
+   "real synaptic modulation",
+   "g_unit calibration",
+   "learning/navigation"
+  ],
+  "historical_p10c1_closed": true
+ },
+ "approval_items": {
+  "statistics": {
+   "min_dz": 0.65,
+   "planned_n": 22,
+   "valid_n": 20,
+   "alpha": 0.05,
+   "test": "two-sided paired; exact reachability"
+  },
+  "stimulus": {
+   "unit": "dv steady-state; amount=dv*(1-decay)",
+   "proposed_dv": 0.2,
+   "entrance_calibration_required": true,
+   "no_posthoc_increase": true
+  },
+  "eligibility": {
+   "independent_pre_post_traces": true,
+   "tau_pre/tau_post/tau_e grids": true,
+   "init/reset": "e(0)=0; trial reset",
+   "time_resolved": true
+  },
+  "failure_conditions": [
+   "INPUT_INVALID",
+   "METRIC_INVALID",
+   "SENSORY_NO_EFFECT",
+   "INCONCLUSIVE",
+   "A0_PASS"
+  ],
+  "dw_training": {
+   "s1_budget_a_b": "net positive headroom = 0",
+   "s2": "L1 deviation",
+   "s1_s2_approved": false,
+   "real_update_implemented": false,
+   "training_authorization": false
+  },
+  "scope": "one new A0 run only after written approval; no B/C/training"
+ },
+ "verdicts": {
+  "Protocol_Statistically_Valid": true,
+  "Stimulus_Units_Clear": true,
+  "Eligibility_Metric_Preregistered": true,
+  "Failure_Conditions_Observable": true,
+  "A0_Run_This_Round": false,
+  "Worth_Applying_For_One_A0_Run": true,
+  "Level_A_Execution": "NO-GO (until approved and run)",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "note": "协议可申请单次 A0；A0_PASS 也不授权真实 ΔW/B/C/训练。P10-C1 已关闭，不重启。"
+ },
+ "training_authorized": false,
+ "a0_executed": false
+}
