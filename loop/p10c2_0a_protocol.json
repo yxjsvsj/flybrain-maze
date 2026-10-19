@@ -1,0 +1,165 @@
+{
+ "protocol_version": "P10-C2-0a/v1",
+ "sample_size": {
+  "protocol_version": "P10-C2-0a/v1",
+  "primary_test": "two-sided exact sign-flip, alpha=0.05",
+  "independent_unit": "brain seed",
+  "min_dz": 0.65,
+  "valid_n": 22,
+  "planned_n": 25,
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125
+  ],
+  "condition_order": [
+   "none",
+   "stim",
+   "recover"
+  ],
+  "max_exclusions": 3,
+  "power_signflip_n20": 0.781,
+  "power_signflip_n22": 0.831,
+  "power_normal_n20": 0.8282,
+  "power_t_n20": 0.7874,
+  "valid_n_changed_from_20_to_22": true,
+  "reason": "精确符号翻转模拟：n=20 power≈0.789 <0.80；n=22 power≈0.833 >=0.80。故 valid n=22、planned n=25（允许 3 个失败/非有限，12%）。正态近似/配对 t/精确符号翻转**不可混用**。",
+  "ok": true
+ },
+ "power_simulation": {
+  "n20": {
+   "power": 0.781,
+   "mc_se": 0.0092,
+   "sims": 2000,
+   "seed": 20260,
+   "effect_distribution": "N(dz,1) paired differences"
+  },
+  "n22": {
+   "power": 0.831,
+   "mc_se": 0.0084,
+   "sims": 2000,
+   "seed": 20260,
+   "effect_distribution": "N(dz,1) paired differences"
+  }
+ },
+ "stimulus": {
+  "encoder_formula": "amount = dv*(1-exp(-dt/tau))",
+  "dt": 0.02,
+  "tau": 0.1,
+  "decay": 0.818731,
+  "per_step": 0.181269,
+  "dv": 0.2,
+  "amount": 0.036254,
+  "target": "LPLC2/LC4 only",
+  "no_posthoc_increase": true,
+  "ready": true
+ },
+ "eligibility": {
+  "frozen_params": {
+   "dt": 0.02,
+   "tau_pre": 0.05,
+   "tau_post": 0.05,
+   "tau_e": 0.5,
+   "output_index": "e(t) uses pre/post traces at t-1",
+   "init": "e(0)=0",
+   "reset": "trial start"
+  },
+  "exploratory_only": {
+   "tau_pre": [
+    0.02,
+    0.05,
+    0.1
+   ],
+   "tau_post": [
+    0.02,
+    0.05,
+    0.1
+   ],
+   "tau_e": [
+    0.2,
+    0.5,
+    1.0
+   ]
+  },
+  "primary_analysis_uses_frozen_params": true,
+  "no_tau_selection_by_significance": true,
+  "single_pulse_t5_first_nonzero_index": 6,
+  "time_index_matches_formula": true,
+  "strictly_causal": true,
+  "valid": true
+ },
+ "adjudicator": {
+  "cases": {
+   "A0_PASS": "A0_PASS",
+   "INPUT_INVALID": "INPUT_INVALID",
+   "METRIC_INVALID": "METRIC_INVALID",
+   "SENSORY_NO_EFFECT": "SENSORY_NO_EFFECT",
+   "INCONCLUSIVE": "INCONCLUSIVE",
+   "missing_field": "INCONCLUSIVE",
+   "version_mismatch": "INCONCLUSIVE",
+   "unfrozen_dz": "INCONCLUSIVE"
+  },
+  "all_correct": true
+ },
+ "resource": {
+  "lif_steps": 30000,
+  "core_step_s": 39.0,
+  "init_rebuild_s": 75.0,
+  "eligibility_s": 20.0,
+  "save_stats_s": 5.0,
+  "estimated_total_min": 2.32,
+  "worst_case_2x_min": 4.63,
+  "wall_cap_min": 15.0,
+  "mem_cap_MB": 2048.0,
+  "breakdown": "core LIF + init/rebuild + eligibility + save/stats",
+  "ready": true,
+  "class3_learning": "UNKNOWN"
+ },
+ "verdicts": {
+  "Protocol_Statistically_Valid": true,
+  "Primary_Power_At_Valid_N": ">=0.80 (simulated exact sign-flip)",
+  "Eligibility_Frozen": true,
+  "Adjudicator_Failably_Complete": true,
+  "Resource_Ready": true,
+  "A0_Executed": false,
+  "Eligible_To_Request_One_NoLearning_A0": true,
+  "Level_A_Execution": "NO-GO (approval/run pending)",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "note": "即使全部通过，仅形成一次无学习 A0 的审批申请；不授权 ΔW/B/C/训练。"
+ },
+ "training_authorized": false,
+ "a0_executed": false,
+ "delta_from_p10c2_0": {
+  "valid_n": "20 -> 22",
+  "planned_n": "22 -> 25",
+  "power_method": "normal approximation -> exact sign-flip MC simulation",
+  "eligibility_index": "fixed off-by-one; e(t) now matches e(t-1)de+pre(t-1)post(t-1)",
+  "adjudicator": "hardcoded true -> executable five-state, default-fail",
+  "seed_list": "101-125 fixed"
+ }
+}
