@@ -37,6 +37,8 @@ def main() -> int:
 
     iso = isolation_selftest()
     check("isolation positive allowed", iso["positive"] is True)
+    check("mock process isolation passes", iso["mock_process_isolation"] is True)
+    check("real student isolation NOT yet verified", iso["real_student_isolation"] is False)
     check("all forbidden inputs caught", all(v == "caught" for v in iso["negative"].values()))
     check("forbidden modules caught", all(v == "caught" for v in iso["imports"].values()))
     check("forbidden files caught", all(v == "caught" for v in iso["files"].values()))
@@ -53,6 +55,7 @@ def main() -> int:
     check("Computational conditional GO", R["verdicts"]["Computational_Hypothesis"].startswith("GO"))
     check("Execution Readiness NO-GO", R["verdicts"]["Execution_Readiness"] == "NO-GO")
     check("blocking includes decoder", "3_decoder_ready" in R["blocking_reasons"])
+    check("blocking includes isolation (mock only)", "8_student_isolation" in R["blocking_reasons"])
     check("blocking includes resource", "9_resource_budget" in R["blocking_reasons"])
 
     # 负例：缺 eta 的冻结规格应失败

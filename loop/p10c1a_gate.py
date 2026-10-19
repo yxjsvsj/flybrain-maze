@@ -83,12 +83,15 @@ def isolation_selftest():
             s.check_file(p); results["files"][p] = "LEAK-NOT-CAUGHT"
         except LeakError:
             results["files"][p] = "caught"
-    results["ok"] = (results["positive"]
-                     and all(v == "caught" for v in results["negative"].values())
-                     and all(v == "caught" for v in results["imports"].values())
-                     and all(v == "caught" for v in results["files"].values()))
-    results["note"] = ("仅 mock 沙箱；**不**以 sys.modules 单一检查宣称无泄漏。真实学生进程仍需"
-                       "接口白名单+依赖检查+文件访问限制+运行时断言。")
+    mock_ok = (results["positive"]
+               and all(v == "caught" for v in results["negative"].values())
+               and all(v == "caught" for v in results["imports"].values())
+               and all(v == "caught" for v in results["files"].values()))
+    results["mock_process_isolation"] = bool(mock_ok)
+    results["real_student_isolation"] = False          # 未来真实学生执行路径尚未验证
+    results["ok"] = results["mock_process_isolation"] and results["real_student_isolation"]
+    results["note"] = ("mock 沙箱通过；**真实学生进程尚未验证**，故第 8 项仍为 False。"
+                       "真实隔离需接口白名单+依赖检查+文件访问限制+运行时断言+日志。")
     return results
 
 

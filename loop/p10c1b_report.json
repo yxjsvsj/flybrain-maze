@@ -1,0 +1,318 @@
+{
+ "decoder_freeze": {
+  "module": "loop/p10_test_decoder.py",
+  "sha256": "fc1ecb2da1cb9667f0c8b56a75328b42171b9e811fe5fca5db94f865e9640cbf",
+  "groups": {
+   "turn_L": {
+    "bodyIds": [
+     523769
+    ],
+    "types": [
+     "DNa02"
+    ],
+    "side": "L"
+   },
+   "turn_R": {
+    "bodyIds": [
+     10360
+    ],
+    "types": [
+     "DNa02"
+    ],
+    "side": "R"
+   },
+   "fwd": {
+    "bodyIds": [
+     10045,
+     10056
+    ],
+    "types": [
+     "DNg100"
+    ],
+    "side": null
+   },
+   "back": {
+    "bodyIds": [
+     10763,
+     11288,
+     11332,
+     12348
+    ],
+    "types": [
+     "MDN"
+    ],
+    "side": null
+   }
+  },
+  "gains": {
+   "turn_sign": 1.0,
+   "turn_gain": 1.0,
+   "fwd_gain": 1.0,
+   "back_gain": 1.0
+  },
+  "allowed_rate_keys": [
+   "back",
+   "fwd",
+   "turn_L",
+   "turn_R"
+  ],
+  "forbidden_keys": [
+   "bias",
+   "dijkstra",
+   "escape",
+   "global_pose",
+   "goal",
+   "goal_coord",
+   "goal_direction",
+   "manual_turn",
+   "map",
+   "memory_gain",
+   "nav_memory",
+   "occupancy",
+   "path_plan",
+   "planner",
+   "pose",
+   "pursuit_turn",
+   "readout",
+   "scripted",
+   "teacher_action",
+   "teacher_label",
+   "turn_command"
+  ],
+  "neural_basis": {
+   "turn_mapping": "DNa02 L/R -> sign(turn_L - turn_R)",
+   "P7_0_LC10a_DNa02": "0 direct edges (P7-0 read-only audit)",
+   "DNa02_input": "dominated by cb_intrinsic (L abs 0.804 / R 0.808); visual input weak/near-zero",
+   "verdict": "insufficient neural basis for left/right steering -> decoder_ready=False"
+  },
+  "decoder_ready": false,
+  "requirements": [
+   "independent neural evidence for the DNa02 left/right steering mapping",
+   "frozen, neurally justified gains (not arbitrarily chosen)",
+   "proof that test-phase has no external/artificial direction source"
+  ]
+ },
+ "benchmark": {
+  "ok": true,
+  "verification": {
+   "n_neurons": 23218,
+   "nnz": 3549643,
+   "csr_dtype": "float32",
+   "csr_format": "csr",
+   "csr_float32_MB": 28.49,
+   "bodyId_unique": true,
+   "direction_check": {
+    "kc_pre": 137302,
+    "mbon_post": 519128,
+    "W_post_pre": 0.004633920267224312,
+    "W_pre_post": 0.0,
+    "correct": true
+   },
+   "n_DN_preserved": 1285,
+   "n_DN_total": 1314,
+   "n_DN_outside_subnet": 29,
+   "n_sensory_in_subnet": 1,
+   "truncation": {
+    "incoming_edges_total": 7750789,
+    "incoming_edges_internal": 3549643,
+    "lost_incoming_edges": 4201146,
+    "lost_incoming_weight": 4238.4395,
+    "note": "子网外输入被截断；不得宣称为全脑功能"
+   },
+   "layer_sizes": [
+    311,
+    10931,
+    320,
+    95,
+    11340,
+    1285
+   ],
+   "n_DAN": 340,
+   "note": "六层存在节点重合；union 去重后为 unique 神经元数，不能直接相加。"
+  },
+  "runs": [
+   {
+    "repeat": 0,
+    "warmup_s": 2.5931,
+    "batches": {
+     "10": {
+      "median_ms": 0.7641,
+      "p95_ms": 1.9652,
+      "fired_mean": 43.7,
+      "fired_max": 116,
+      "abnormal_firing": false
+     },
+     "50": {
+      "median_ms": 1.4147,
+      "p95_ms": 4.2559,
+      "fired_mean": 3421.92,
+      "fired_max": 4104,
+      "abnormal_firing": false
+     },
+     "100": {
+      "median_ms": 1.4246,
+      "p95_ms": 2.791,
+      "fired_mean": 4051.51,
+      "fired_max": 4132,
+      "abnormal_firing": false
+     }
+    },
+    "abnormal": [],
+    "peak_mem_MB": 938.3
+   },
+   {
+    "repeat": 1,
+    "warmup_s": 0.0034,
+    "batches": {
+     "10": {
+      "median_ms": 0.8188,
+      "p95_ms": 1.7949,
+      "fired_mean": 49.7,
+      "fired_max": 114,
+      "abnormal_firing": false
+     },
+     "50": {
+      "median_ms": 1.5887,
+      "p95_ms": 3.1403,
+      "fired_mean": 3478.6,
+      "fired_max": 4167,
+      "abnormal_firing": false
+     },
+     "100": {
+      "median_ms": 1.5526,
+      "p95_ms": 4.213,
+      "fired_mean": 4060.78,
+      "fired_max": 4147,
+      "abnormal_firing": false
+     }
+    },
+    "abnormal": [],
+    "peak_mem_MB": 938.3
+   }
+  ],
+  "repeatable": true,
+  "peak_mem_MB": 938.3,
+  "mem_cap_exceeded": false,
+  "versions": {
+   "python": "3.13.1",
+   "numpy": "2.5.3",
+   "scipy": "1.18.1",
+   "flybrain": "0.1.0"
+  },
+  "device": "cpu",
+  "lif_params": {
+   "dt": 0.02,
+   "tau": 0.1,
+   "gain": 3.0,
+   "noise_hz": 1.2,
+   "noise_amp": 0.22,
+   "refractory": 0.0,
+   "dW": 0
+  },
+  "note": "真实子网 LIF 前向；仅短时性能测量，无学习/无闭环。"
+ },
+ "resource_budget": {
+  "per_step_ms": 1.4246,
+  "max_steps_per_trial": 2000,
+  "trials_70": 70,
+  "trials_1890": 1890,
+  "grid_clarification": "27 参数点 × 70 trial = 1,890 次试验（若逐条件执行）；预注册未选择子集，**不得**事后缩减网格并声称原预注册通过。",
+  "est_hours_70": 0.055,
+  "est_hours_1890": 1.496,
+  "peak_mem_MB": 938.3,
+  "budget_hours": 24.0,
+  "resource_ready": true,
+  "reason": null
+ },
+ "dw_spec_safety": {
+  "current_spec_sufficient": false,
+  "issues": [
+   "负 ΔW 在 |ΔW|>W 时可令兴奋性 W_eff<0；clip(ΔW,±Δmax) 单独**不充分**",
+   "加 ΔW 可破坏逐突触后 L1 上界（无重归一化时）",
+   "ΔW 必须只写官方 KC→MBON 边掩码，否则可能产生新边"
+  ],
+  "synthetic": {
+   "negative_dW_makes_Weff_negative": true,
+   "proposed_Weff_floor_fixes": true,
+   "l1_before": 1.0,
+   "l1_after": 1.4000000953674316,
+   "l1_break": true,
+   "new_edges_if_unmasked": 1,
+   "unapproved_unchanged_with_mask": true
+  },
+  "proposed_erratum": {
+   "status": "PENDING_APPROVAL; NOT implemented",
+   "add_bound": "for excitatory edges: ΔW >= -W (equivalently W_eff >= 0); symmetric for inhibitory",
+   "l1": "either document that L1 is not preserved, or add a per-post constraint -- but that changes unapproved synapses and needs approval",
+   "topology": "apply ΔW ONLY on the official KC->MBON edge mask; no new edges; no transmitter-sign change",
+   "note": "不得悄悄修改 P10-C1a 冻结规格；不得自动实现更新。"
+  }
+ },
+ "isolation": {
+  "mock_process_isolation": true,
+  "positive": {
+   "returncode": 0,
+   "stdout": "OK",
+   "stderr": ""
+  },
+  "negative": {
+   "map": {
+    "returncode": 2,
+    "stdout": "LEAK:map",
+    "stderr": ""
+   },
+   "pose": {
+    "returncode": 2,
+    "stdout": "LEAK:pose",
+    "stderr": ""
+   },
+   "dijkstra": {
+    "returncode": 2,
+    "stdout": "LEAK:dijkstra",
+    "stderr": ""
+   },
+   "teacher_action": {
+    "returncode": 2,
+    "stdout": "LEAK:teacher_action",
+    "stderr": ""
+   },
+   "teacher_label": {
+    "returncode": 2,
+    "stdout": "LEAK:teacher_label",
+    "stderr": ""
+   },
+   "goal": {
+    "returncode": 2,
+    "stdout": "LEAK:goal",
+    "stderr": ""
+   },
+   "nav_memory": {
+    "returncode": 2,
+    "stdout": "LEAK:nav_memory",
+    "stderr": ""
+   },
+   "planner": {
+    "returncode": 2,
+    "stdout": "LEAK:planner",
+    "stderr": ""
+   },
+   "turn_command": {
+    "returncode": 2,
+    "stdout": "LEAK:turn_command",
+    "stderr": ""
+   }
+  },
+  "real_student_isolation": false,
+  "note": "真实子进程边界已验证（mock 学生）；未来真实学生程序的执行路径**尚未**验证，故 real_student_isolation=False。"
+ },
+ "verdicts": {
+  "Biological": "NO-GO",
+  "Computational_Hypothesis": "GO (conditional, proposal only)",
+  "Decoder_Readiness": "NO-GO",
+  "Resource_Readiness": "GO",
+  "Student_Isolation_Readiness": "mock-only; real student NOT verified",
+  "Overall_Execution_Readiness": "NO-GO",
+  "Training_Authorization": false
+ },
+ "training_authorized": false
+}

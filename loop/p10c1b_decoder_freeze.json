@@ -1,0 +1,93 @@
+{
+ "module": "loop/p10_test_decoder.py",
+ "sha256": "fc1ecb2da1cb9667f0c8b56a75328b42171b9e811fe5fca5db94f865e9640cbf",
+ "groups": {
+  "turn_L": {
+   "bodyIds": [
+    523769
+   ],
+   "types": [
+    "DNa02"
+   ],
+   "side": "L"
+  },
+  "turn_R": {
+   "bodyIds": [
+    10360
+   ],
+   "types": [
+    "DNa02"
+   ],
+   "side": "R"
+  },
+  "fwd": {
+   "bodyIds": [
+    10045,
+    10056
+   ],
+   "types": [
+    "DNg100"
+   ],
+   "side": null
+  },
+  "back": {
+   "bodyIds": [
+    10763,
+    11288,
+    11332,
+    12348
+   ],
+   "types": [
+    "MDN"
+   ],
+   "side": null
+  }
+ },
+ "gains": {
+  "turn_sign": 1.0,
+  "turn_gain": 1.0,
+  "fwd_gain": 1.0,
+  "back_gain": 1.0
+ },
+ "allowed_rate_keys": [
+  "back",
+  "fwd",
+  "turn_L",
+  "turn_R"
+ ],
+ "forbidden_keys": [
+  "bias",
+  "dijkstra",
+  "escape",
+  "global_pose",
+  "goal",
+  "goal_coord",
+  "goal_direction",
+  "manual_turn",
+  "map",
+  "memory_gain",
+  "nav_memory",
+  "occupancy",
+  "path_plan",
+  "planner",
+  "pose",
+  "pursuit_turn",
+  "readout",
+  "scripted",
+  "teacher_action",
+  "teacher_label",
+  "turn_command"
+ ],
+ "neural_basis": {
+  "turn_mapping": "DNa02 L/R -> sign(turn_L - turn_R)",
+  "P7_0_LC10a_DNa02": "0 direct edges (P7-0 read-only audit)",
+  "DNa02_input": "dominated by cb_intrinsic (L abs 0.804 / R 0.808); visual input weak/near-zero",
+  "verdict": "insufficient neural basis for left/right steering -> decoder_ready=False"
+ },
+ "decoder_ready": false,
+ "requirements": [
+  "independent neural evidence for the DNa02 left/right steering mapping",
+  "frozen, neurally justified gains (not arbitrarily chosen)",
+  "proof that test-phase has no external/artificial direction source"
+ ]
+}

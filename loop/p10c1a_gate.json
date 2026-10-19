@@ -192,8 +192,10 @@
     "teacher_actions.csv": "caught",
     "planner.npz": "caught"
    },
-   "ok": true,
-   "note": "仅 mock 沙箱；**不**以 sys.modules 单一检查宣称无泄漏。真实学生进程仍需接口白名单+依赖检查+文件访问限制+运行时断言。"
+   "mock_process_isolation": true,
+   "real_student_isolation": false,
+   "ok": false,
+   "note": "mock 沙箱通过；**真实学生进程尚未验证**，故第 8 项仍为 False。真实隔离需接口白名单+依赖检查+文件访问限制+运行时断言+日志。"
   },
   "resource": {
    "subnetwork": {
@@ -237,7 +239,7 @@
   "5_dw_rules_clear": true,
   "6_abc_independent_failure": true,
   "7_controls_and_stats": true,
-  "8_student_isolation": true,
+  "8_student_isolation": false,
   "9_resource_budget": false
  },
  "execution_ready": false,
@@ -250,6 +252,7 @@
  },
  "blocking_reasons": [
   "3_decoder_ready",
+  "8_student_isolation",
   "9_resource_budget"
  ],
  "note": "即使全部通过，training_authorized 仍恒为 False；本轮不训练。"
