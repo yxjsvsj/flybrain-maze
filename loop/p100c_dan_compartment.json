@@ -1,0 +1,994 @@
+{
+ "data": {
+  "dataset": "male-cns:v1.0",
+  "source": "official neuPrint + local flybrain",
+  "weight": "W[post,pre], signed L1-normalized relative, no units, transmitter-predicted sign"
+ },
+ "layers": {
+  "n_KC": 320,
+  "n_MBON": 95,
+  "n_DAN": 340
+ },
+ "evidence": {
+  "n_edges_total": 4533,
+  "n_edges_compartment_overlap": 4533,
+  "n_edges_with_DAN": 4533,
+  "n_KC_with_compartment": 320,
+  "n_MBON_with_compartment": 95,
+  "n_DAN_with_compartment": 334,
+  "shared_size_distribution": {
+   "1": 306,
+   "2": 377,
+   "3": 1143,
+   "4": 1021,
+   "5": 1209,
+   "6": 271,
+   "7": 117,
+   "8": 51,
+   "9": 13,
+   "10": 17,
+   "11": 6,
+   "12": 2
+  },
+  "n_distinct_shared_sets": 266,
+  "examples": [
+   {
+    "kc_bodyId": 18540,
+    "kc_type": "KCg-s1",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "b'1",
+     "b'2",
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 322,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 19102,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 24146,
+    "kc_type": "KCg-s2",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "b'1",
+     "b'2",
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 322,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 35180,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 36723,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 36839,
+    "kc_type": "KCg-m",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 38657,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "b'1",
+     "b'2",
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 322,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 41134,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 41378,
+    "kc_type": "KCg-m",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 41787,
+    "kc_type": "KCg-m",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 42370,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 42969,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 43775,
+    "kc_type": "KCg-m",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 43867,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 44485,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 46196,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 47354,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 47847,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 48147,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   },
+   {
+    "kc_bodyId": 48438,
+    "kc_type": "KCg-d",
+    "mbon_bodyId": 10013,
+    "mbon_type": "MBON01",
+    "shared_compartments": [
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "n_matching_DAN": 225,
+    "matching_DAN_sample": [
+     {
+      "bodyId": 11327,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 11618,
+      "type": "PPL102"
+     },
+     {
+      "bodyId": 11752,
+      "type": "PPL103"
+     },
+     {
+      "bodyId": 11900,
+      "type": "PPL101"
+     },
+     {
+      "bodyId": 12902,
+      "type": "PPL108"
+     }
+    ]
+   }
+  ],
+  "compartment_to_DAN": {
+   "a'1": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "a'2": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "a'3": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "a1": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "a2": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "a3": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "b'1": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "b'2": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "b1": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "b2": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "g1": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "g2": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "g3": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "g4": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ],
+   "g5": [
+    10753,
+    11327,
+    11560,
+    11618,
+    11752,
+    11900,
+    12902,
+    13428,
+    14182,
+    14225
+   ]
+  }
+ },
+ "simple_path": {
+  "found": true,
+  "bodyIds": [
+   11498,
+   84698,
+   137302,
+   519128,
+   69730,
+   555726
+  ],
+  "types": [
+   "LPLC2",
+   "PVLP148",
+   "KCg-d",
+   "MBON27",
+   "CB2245",
+   "DNa13"
+  ],
+  "sides": [
+   "L",
+   "L",
+   "L",
+   "L",
+   "L",
+   "L"
+  ],
+  "layer_labels": [
+   "LP",
+   "X",
+   "KC",
+   "MBON",
+   "Y",
+   "DN"
+  ],
+  "segment_weights": [
+   0.0008143322193063796,
+   0.002057613106444478,
+   0.004633920267224312,
+   0.0219123512506485,
+   -0.0002544097660575062
+  ]
+ },
+ "literature": [
+  {
+   "ref": "Aso et al. 2014 eLife 3:e04577",
+   "level": "general + compartmental anatomy",
+   "claim": "MB extrinsic neurons/DAN compartmental organization",
+   "same_source_MaleCNS": false
+  },
+  {
+   "ref": "Hige et al. 2015 Neuron 85:1341",
+   "level": "specific compartment (alpha3) DA-dependent KC->MBON plasticity",
+   "claim": "compartment-specific dopaminergic plasticity",
+   "same_source_MaleCNS": false
+  },
+  {
+   "ref": "Aso & Rubin 2016 Curr Biol 26:R225",
+   "level": "circuit/compartment",
+   "claim": "DAN/MBON recurrent architecture",
+   "same_source_MaleCNS": false
+  },
+  {
+   "ref": "Perisse et al. 2013 / Cohn et al. 2015 / Berry et al. 2018",
+   "level": "compartment-specific",
+   "claim": "compartmentalized DAN modulation of MB output",
+   "same_source_MaleCNS": false
+  }
+ ],
+ "literature_conclusion": {
+  "general_KC_MBON_plasticity": "文献支持（其它数据集/生理）",
+  "compartment_specific_DAN": "文献支持（其它数据集/区室）",
+  "same_source_MaleCNS_bodyId_anatomy": "部分（本轮 neuron-level ROI 重叠；非逐突触）",
+  "specific_MaleCNS_synapse_modulated": "MISSING（无该突触的直接生理/受体证据）",
+  "caution": "DAN 与 KC 普通突触或共享 ROI ≠ 已证明该 KC→MBON 突触受 DA 功能调制；跨数据集不强行匹配。"
+ },
+ "grading": {
+  "Structural_Path": "存在（P10-0b，数据支持）",
+  "Compartment_Match": "部分（neuron-level ROI 重叠，非逐突触）",
+  "DAN_Modulation": "不足（文献一般性支持，但无同源 MaleCNS 逐突触调制证据）",
+  "Synapse_Specificity": "MISSING（无逐突触 ROI/受体/生理证据）",
+  "Biological_Calibration": "g_unit 未解决（P9-1b1）",
+  "Learning_Readiness": "否（NO-GO 维持）"
+ },
+ "remaining_blockers": [
+  "特定 KC→MBON 突触的 DA 调制证据（逐突触/受体/生理）",
+  "g_unit 未定标",
+  "可变目标信息不可辨识"
+ ],
+ "go": false
+}
