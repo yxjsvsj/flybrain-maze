@@ -1,0 +1,232 @@
+{
+ "protocol": "P11-2-0/v1",
+ "source_audit": {
+  "decay_source": true,
+  "gain_applied_to_synaptic_current": true,
+  "decay_before_add": true,
+  "tonic_added_with_current": true,
+  "noise_bernoulli": true,
+  "noise_amplitude_float32": true,
+  "threshold_ge_1": true,
+  "reset_zero": true,
+  "synaptic_uses_previous_fired": true,
+  "tonic_rescaled": true,
+  "postsynaptic_L1_normalization_source": true,
+  "params": {
+   "dt": 0.02,
+   "tau": 0.1,
+   "gain": 3.0,
+   "tonic": 0.14,
+   "noise_hz": 1.2,
+   "noise_amp": 0.22,
+   "threshold": 1.0
+  },
+  "update_order": "current=W@prev_fired*gain; v*=decay; v+=current+tonic; v+=noise; fire if v>=1; reset 0"
+ },
+ "math_budget": {
+  "decay": 0.818730753,
+  "tonic_only_fixed_point": 0.772332,
+  "tonic_alone_reaches_threshold": false,
+  "single_step_input_from_reset_post_gain": 0.86,
+  "single_step_input_from_reset_raw_Wx": 0.286667,
+  "sustained_subthreshold_current_post_gain": 0.041269,
+  "sustained_subthreshold_raw_Wx": 0.013756,
+  "every_step_firing_current_post_gain": 0.86,
+  "every_step_firing_raw_Wx": 0.286667,
+  "noise_probability_per_step": 0.024,
+  "noise_mean_voltage_per_step": 0.00528,
+  "tonic_noise_mean_fixed_point": 0.80146,
+  "tonic_noise_alone_reaches_threshold_in_expectation": false,
+  "note": "mathematical necessary conditions under no recurrence/no noise (or mean noise); not causal results"
+ },
+ "kc_weight_budget": {
+  "n_KC": 4064,
+  "n_edges_total": 830465,
+  "pos_sum": {
+   "mean": 0.883136,
+   "median": 0.882353,
+   "min": 0.801653,
+   "max": 0.957122
+  },
+  "neg_abs": {
+   "mean": 0.116864,
+   "median": 0.117647,
+   "min": 0.042878,
+   "max": 0.198347
+  },
+  "L1": {
+   "mean": 1.0,
+   "median": 1.0
+  },
+  "edges": {
+   "mean": 204.35,
+   "median": 190,
+   "min": 16,
+   "max": 670,
+   "zero_rows": 0
+  },
+  "every_step_raw_threshold": 0.286667,
+  "n_pos_ge_threshold": 4064,
+  "frac_pos_ge_threshold": 1.0,
+  "max_postgain_current_from_static_budget": {
+   "min": 2.405,
+   "max": 2.8714
+  },
+  "static_weights_can_reach_every_step_threshold": true,
+  "actual_Wx_unknown": "full 166,700 step-wise spikes were not saved; cannot reconstruct W@spikes",
+  "top_presynaptic_types": [
+   {
+    "type": "KCab",
+    "pos_sum": 974.667,
+    "neg_sum": 0.0,
+    "edges": 239740
+   },
+   {
+    "type": "KCg-m",
+    "pos_sum": 711.256,
+    "neg_sum": 0.0,
+    "edges": 280406
+   },
+   {
+    "type": "APL",
+    "pos_sum": 0.0,
+    "neg_sum": -378.35,
+    "edges": 4633
+   },
+   {
+    "type": "KCapbp-ap2",
+    "pos_sum": 164.292,
+    "neg_sum": 0.0,
+    "edges": 36690
+   },
+   {
+    "type": "KCg-d",
+    "pos_sum": 124.814,
+    "neg_sum": 0.0,
+    "edges": 28224
+   },
+   {
+    "type": "KCapbp-m",
+    "pos_sum": 109.927,
+    "neg_sum": 0.0,
+    "edges": 24049
+   },
+   {
+    "type": "KCapbp-ap1",
+    "pos_sum": 107.677,
+    "neg_sum": 0.0,
+    "edges": 20207
+   },
+   {
+    "type": "KCab-p",
+    "pos_sum": 74.009,
+    "neg_sum": 0.0,
+    "edges": 11470
+   },
+   {
+    "type": "DPM",
+    "pos_sum": 62.265,
+    "neg_sum": 0.0,
+    "edges": 4082
+   },
+   {
+    "type": "PAM08",
+    "pos_sum": 52.631,
+    "neg_sum": 0.0,
+    "edges": 20906
+   },
+   {
+    "type": "PAM10",
+    "pos_sum": 44.195,
+    "neg_sum": 0.0,
+    "edges": 11775
+   },
+   {
+    "type": "DP1m_adPN",
+    "pos_sum": 43.368,
+    "neg_sum": 0.0,
+    "edges": 935
+   }
+  ],
+  "W_rows_L1_consistent": true
+ },
+ "source_errata": {
+  "current_LF_sha256": "e523d68a0b476f7ed5ee19e203c77f27ffe74a6001ec6e0c63dc30487b8a9290",
+  "current_CRLF_sha256": "27b121f11f5b5413bfd094a481c0834cf8f9252364e42caf7c4ef8d8caa6fd6d",
+  "report_script_sha256": "27b121f11f5b5413bfd094a481c0834cf8f9252364e42caf7c4ef8d8caa6fd6d",
+  "report_matches_current_LF": false,
+  "report_matches_current_CRLF": true,
+  "report_hash_timing": "computed in compare-only post-processing, AFTER the experiment and AFTER parent-side patches",
+  "run_commit": "7978938cb797a99992dd2cc837cdc7ba1ed6d651",
+  "result_commit": "f4176df",
+  "conclusion": "the report hash equals the CRLF form of the CURRENT (post-patch) file; it does not prove the run-time source bytes. The experiment child ran the pre-patch script; the hash was taken later. SOURCE_PROVENANCE remains PARTIAL.",
+  "errata_recorded": true,
+  "historical_report_unchanged": true
+ },
+ "a1_proposal": {
+  "id": "P11-2-A1",
+  "status": "PROPOSAL ONLY; NOT AUTHORIZED; NOT RUN",
+  "goal": "no-recurrent single-neuron control to test whether tonic and/or noise can produce firing at the model parameters",
+  "conditions": [
+   "tonic only, noise off",
+   "tonic + noise on (original noise_hz/noise_amp)"
+  ],
+  "parameters": {
+   "dt": 0.02,
+   "tau": 0.1,
+   "tonic": 0.14,
+   "noise_hz": 1.2,
+   "noise_amp": 0.22,
+   "threshold": 1.0,
+   "gain": "irrelevant (no synaptic input)"
+  },
+  "sample": "pre-fixed: 100 independent realizations x 10,000 steps (1,000,000 steps total)",
+  "criteria": {
+   "tonic_only": "expected 0 spikes (fixed point 0.772 < 1)",
+   "tonic_noise": "expected sparse, non-sustained firing; if observed rate is high/continuous -> single-neuron noise/tonic mechanism can explain saturation",
+   "decision": "pre-registered: report firing probability per step and longest consecutive run; no parameter search"
+  },
+  "not_allowed": [
+   "choosing gain/tonic/noise to make KC look better",
+   "physiological calibration claim",
+   "A2/A3 zero-recurrent/shuffled W",
+   "phase B sensitivity",
+   "training/dW/Dijkstra/B/C"
+  ],
+  "authorization": "requires a separate written approval for one A1 run; A2/A3/B remain NO-GO"
+ },
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "verdicts": {
+  "TONIC_ALONE_REACHES_THRESHOLD": "NO",
+  "EVERY_STEP_RAW_Wx_THRESHOLD": 0.286667,
+  "STATIC_WEIGHTS_SUFFICIENT_IN_PRINCIPLE": "YES (all 4,064 KC pos_sum >= 0.2867)",
+  "ACTUAL_Wx_CONTRIBUTION": "UNKNOWN (no full spike history)",
+  "MECHANISMS_MATHEMATICALLY_EXCLUDED": [
+   "tonic alone",
+   "tonic+mean noise alone (mean fixed point 0.8008 < 1)"
+  ],
+  "CANDIDATE_MECHANISMS": [
+   "recurrent KC->KC excitation (KCab/KCg-m) with gain 3.0",
+   "noise as a trigger",
+   "APL inhibition balance",
+   "step cap 1 spike/step"
+  ],
+  "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+  "SOURCE_PROVENANCE": "PARTIAL",
+  "A1_WORTH_APPLYING": "YES (separate one-run authorization; low cost, decisive for tonic/noise vs recurrent)",
+  "A2_A3_B": "NO-GO",
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Training_Authorization": false,
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO"
+ },
+ "training_authorized": false
+}
