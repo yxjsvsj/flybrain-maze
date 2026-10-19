@@ -41,12 +41,17 @@ def sign_flip_p(diffs):
     if not np.all(np.isfinite(d)):
         raise ValueError("non-finite")
     n = len(d)
-    obs = abs(float(d.sum()))
-    if obs == 0.0:
+    # 正比例归一化：符号翻转对正缩放不变；避免固定绝对容差在极小尺度上误判
+    scale = float(np.max(np.abs(d)))
+    if scale == 0.0:
+        return 1.0
+    dn = d / scale
+    obs = abs(float(dn.sum()))
+    if obs <= 1e-12:
         return 1.0
     tol = 1e-12 * max(1.0, obs)
     h = n // 2
-    sa = _signed_sums(d[:h]); sb = np.sort(_signed_sums(d[h:]))
+    sa = _signed_sums(dn[:h]); sb = np.sort(_signed_sums(dn[h:]))
     inside = 0
     for x in sa:
         lo = np.searchsorted(sb, -obs - x + tol, side="right")   # first > lower+tol

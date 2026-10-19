@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -17,6 +18,7 @@ from loop.p10c2_0b_exact_stats import (ALPHA, VALID_N, PLANNED_N, SEEDS, bootstr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTOCOL_VERSION = "P10-C2-0a/v1"
+APPROVAL_CONFIG_PATH = os.path.join(HERE, "p10c2_eligibility_threshold_approval.json")
 DT = 0.02
 TAU_PRE = 0.05
 TAU_POST = 0.05
@@ -47,7 +49,45 @@ def validate_params(params):
     return True
 
 
-def adjudicate_raw(payload, eligibility_threshold=None):
+def canonical_checksum(cfg):
+    body = {k: v for k, v in cfg.items() if k != "checksum"}
+    raw = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def load_approval_config(path=None):
+    """正式审批配置：版本 + 校验和 + 批准状态/数值。默认 PENDING_APPROVAL。"""
+    p = path or APPROVAL_CONFIG_PATH
+    if not os.path.exists(p):
+        return {"valid": False, "reason": "approval config missing", "status": None}
+    cfg = json.load(open(p, encoding="utf-8"))
+    if cfg.get("checksum") != canonical_checksum(cfg):
+        return {"valid": False, "reason": "approval config checksum mismatch", "status": None}
+    if cfg.get("protocol_version") != PROTOCOL_VERSION:
+        return {"valid": False, "reason": "approval protocol version mismatch", "status": None}
+    status = cfg.get("status")
+    if status == "APPROVED":
+        v = cfg.get("value")
+        if not (isinstance(v, (int, float)) and math.isfinite(float(v)) and float(v) >= 0):
+            return {"valid": False, "reason": "approved threshold invalid", "status": status}
+        if not cfg.get("rule") or not cfg.get("approved_by") or not cfg.get("approved_at"):
+            return {"valid": False, "reason": "approval metadata incomplete", "status": status}
+        return {"valid": True, "status": status, "threshold": float(v), "config": cfg}
+    if status in ("PENDING_APPROVAL", "REJECTED"):
+        return {"valid": True, "status": status, "threshold": None, "config": cfg}
+    return {"valid": False, "reason": "unknown approval status", "status": status}
+
+
+def adjudicate_raw(payload, approval_config_path=None):
+    """**正式入口**：只从带校验和的审批配置取阈值；无批准 -> INCONCLUSIVE。"""
+    ap = load_approval_config(approval_config_path)
+    if not ap.get("valid"):
+        return {"state": "INCONCLUSIVE", "reasons": [ap.get("reason", "invalid approval")],
+                "approval": ap}
+    return _adjudicate_raw_with_threshold(payload, ap.get("threshold"), approval=ap)
+
+
+def _adjudicate_raw_with_threshold(payload, eligibility_threshold, approval=None):
     reasons = []
     if not isinstance(payload, dict):
         return {"state": "INCONCLUSIVE", "reasons": ["payload not a dict"]}
@@ -121,6 +161,7 @@ def adjudicate_raw(payload, eligibility_threshold=None):
                "p": round(kc_p, 6), "ci": kc_ci, "baseline": round(kc_base, 6)},
         "mbon": {"diff_mean": round(float(mb.mean()), 8), "relative": round(rel(mb, mb_base), 6),
                  "baseline": round(mb_base, 6)},
+        "approval": approval if approval is not None else {"status": "SYNTHETIC_TEST_ONLY"},
         "eligibility": {"evoked_mean": round(float(el.mean()), 8),
                         "threshold": eligibility_threshold,
                         "threshold_status": ("OK" if eligibility_threshold is not None else "PENDING_APPROVAL"),
@@ -193,27 +234,27 @@ def make_payload(kind="pass", seeds=SEEDS):
 
 def selftest():
     cases = {}
-    cases["A0_PASS"] = adjudicate_raw(make_payload("pass"), eligibility_threshold=0.01)["state"]
-    cases["INPUT_INVALID"] = adjudicate_raw(make_payload("invalid_entrance"), eligibility_threshold=0.01)["state"]
-    cases["METRIC_INVALID"] = adjudicate_raw(make_payload("invalid_metric"), eligibility_threshold=0.01)["state"]
+    cases["A0_PASS"] = _adjudicate_raw_with_threshold(make_payload("pass"), 0.01)["state"]
+    cases["INPUT_INVALID"] = _adjudicate_raw_with_threshold(make_payload("invalid_entrance"), 0.01)["state"]
+    cases["METRIC_INVALID"] = _adjudicate_raw_with_threshold(make_payload("invalid_metric"), 0.01)["state"]
     p = make_payload("pass")
     for r in p["records"]:
         if r["condition"] == "stim":
             r["kc_rate"] = r["entrance_rate"]  # kc diff ~0
-    cases["SENSORY_NO_EFFECT"] = adjudicate_raw(p, eligibility_threshold=0.01)["state"]
+    cases["SENSORY_NO_EFFECT"] = _adjudicate_raw_with_threshold(p, 0.01)["state"]
     p = make_payload("pass", seeds=SEEDS[:10])
-    cases["INCONCLUSIVE"] = adjudicate_raw(p, eligibility_threshold=0.01)["state"]
-    cases["PENDING_APPROVAL"] = adjudicate_raw(make_payload("pass"))["state"]
+    cases["INCONCLUSIVE"] = _adjudicate_raw_with_threshold(p, 0.01)["state"]
+    cases["PENDING_APPROVAL"] = _adjudicate_raw_with_threshold(make_payload("pass"), None)["state"]
     # 恶意输入
-    cases["summary_only"] = adjudicate_raw({"protocol_version": PROTOCOL_VERSION,
+    cases["summary_only"] = _adjudicate_raw_with_threshold({"protocol_version": PROTOCOL_VERSION,
                                             "params": make_payload()["params"],
-                                            "kc_p": 0.001, "effect": 0.5})["state"]
+                                            "kc_p": 0.001, "effect": 0.5}, None)["state"]
     p = make_payload("pass"); p["records"].append(dict(p["records"][0]))
-    cases["duplicate"] = adjudicate_raw(p, eligibility_threshold=0.01)["state"]
+    cases["duplicate"] = _adjudicate_raw_with_threshold(p, 0.01)["state"]
     p = make_payload("pass"); p["records"] = [r for r in p["records"] if not (r["seed"] == 101 and r["condition"] == "stim")]
-    cases["missing_condition"] = adjudicate_raw(p, eligibility_threshold=0.01)["state"]
+    cases["missing_condition"] = _adjudicate_raw_with_threshold(p, 0.01)["state"]
     p = make_payload("pass"); p["protocol_version"] = "old/v0"
-    cases["version_mismatch"] = adjudicate_raw(p, eligibility_threshold=0.01)["state"]
+    cases["version_mismatch"] = _adjudicate_raw_with_threshold(p, 0.01)["state"]
     allowed = {"A0_PASS", "INPUT_INVALID", "METRIC_INVALID", "SENSORY_NO_EFFECT", "INCONCLUSIVE"}
     ok = (cases["A0_PASS"] == "A0_PASS" and cases["INPUT_INVALID"] == "INPUT_INVALID"
           and cases["METRIC_INVALID"] == "METRIC_INVALID" and cases["SENSORY_NO_EFFECT"] == "SENSORY_NO_EFFECT"
