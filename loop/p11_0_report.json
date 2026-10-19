@@ -1,0 +1,507 @@
+{
+ "archive": {
+  "status": "ARCHIVED_VERIFIED",
+  "dir": "C:\\AA_project\\flybrain-maze-archive\\p10c2_a0\\20261019T131616",
+  "integrity": {
+   "file_count": 76,
+   "npz": 75,
+   "records": true,
+   "missing": [],
+   "mismatch": []
+  }
+ },
+ "high_baseline": {
+  "KC": {
+   "none": {
+    "pre": {
+     "population_mean": {
+      "mean": 0.713987567415461,
+      "median": 0.757000058889389,
+      "q1": 0.7324000597000122,
+      "q3": 0.7692001461982727,
+      "min": 0.13960000872612,
+      "max": 0.8112000226974487
+     },
+     "per_seed_mean_range": [
+      0.2407812625169754,
+      0.7626875042915344
+     ],
+     "frac_ge_0.85": 0.0030000000000000005,
+     "frac_ge_0.95": 0.0,
+     "frac_eq_1": 0.0
+    },
+    "stim": {
+     "population_mean": {
+      "mean": 0.911798738501966,
+      "median": 0.9599999785423279,
+      "q1": 0.9599999785423279,
+      "q3": 0.9600500017404556,
+      "min": 0.18239997327327728,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.28821876645088196,
+      0.9413906335830688
+     ],
+     "frac_ge_0.85": 0.8632499999999999,
+     "frac_ge_0.95": 0.86225,
+     "frac_eq_1": 0.8593749999999999
+    },
+    "post": {
+     "population_mean": {
+      "mean": 0.9120474881492555,
+      "median": 0.9599999785423279,
+      "q1": 0.9599999785423279,
+      "q3": 0.9599999785423279,
+      "min": 0.18240001797676086,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.28718748688697815,
+      0.9425937533378601
+     ],
+     "frac_ge_0.85": 0.8651250000000001,
+     "frac_ge_0.95": 0.8625,
+     "frac_eq_1": 0.86025
+    },
+    "concentration": {
+     "top10_share_mean": 0.11625506848096848,
+     "n_cells_80pct_mean": 233.76,
+     "n_cells": 320
+    },
+    "time_course_20step": [
+     0.029618747532367706,
+     0.8184561729431152,
+     0.8991187214851379,
+     0.9105312824249268,
+     0.9122125506401062,
+     0.9120437502861023,
+     0.9121624827384949,
+     0.9117562770843506,
+     0.9116750359535217,
+     0.9117187261581421,
+     0.9117624759674072,
+     0.9112188220024109,
+     0.9118061661720276,
+     0.9118437170982361,
+     0.9119999408721924,
+     0.9117749929428101,
+     0.9120875597000122,
+     0.9122686982154846,
+     0.9121875166893005,
+     0.9119186997413635
+    ]
+   },
+   "stim": {
+    "pre": {
+     "population_mean": {
+      "mean": 0.713987567415461,
+      "median": 0.757000058889389,
+      "q1": 0.7324000597000122,
+      "q3": 0.7692001461982727,
+      "min": 0.13960000872612,
+      "max": 0.8112000226974487
+     },
+     "per_seed_mean_range": [
+      0.2407812625169754,
+      0.7626875042915344
+     ],
+     "frac_ge_0.85": 0.0030000000000000005,
+     "frac_ge_0.95": 0.0,
+     "frac_eq_1": 0.0
+    },
+    "stim": {
+     "population_mean": {
+      "mean": 0.9117787397000938,
+      "median": 0.9599999785423279,
+      "q1": 0.9599999785423279,
+      "q3": 0.9599999785423279,
+      "min": 0.18140001595020294,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.2888437509536743,
+      0.9413906335830688
+     ],
+     "frac_ge_0.85": 0.863625,
+     "frac_ge_0.95": 0.862125,
+     "frac_eq_1": 0.8589999999999999
+    },
+    "post": {
+     "population_mean": {
+      "mean": 0.9118524885270745,
+      "median": 0.9599999785423279,
+      "q1": 0.9599999785423279,
+      "q3": 0.9599999785423279,
+      "min": 0.1820000261068344,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.2875625193119049,
+      0.942062497138977
+     ],
+     "frac_ge_0.85": 0.8637500000000001,
+     "frac_ge_0.95": 0.862,
+     "frac_eq_1": 0.860625
+    },
+    "concentration": {
+     "top10_share_mean": 0.11623024791479111,
+     "n_cells_80pct_mean": 233.76,
+     "n_cells": 320
+    },
+    "time_course_20step": [
+     0.029618747532367706,
+     0.8184561729431152,
+     0.8991187214851379,
+     0.9105312824249268,
+     0.9122125506401062,
+     0.9119875431060791,
+     0.9120875000953674,
+     0.9117062091827393,
+     0.9117312431335449,
+     0.9115186929702759,
+     0.9120437502861023,
+     0.9111374616622925,
+     0.9116124510765076,
+     0.9119312167167664,
+     0.9120312333106995,
+     0.9118000268936157,
+     0.9118250012397766,
+     0.9120437502861023,
+     0.9118750095367432,
+     0.9117187261581421
+    ]
+   }
+  },
+  "MBON": {
+   "none": {
+    "pre": {
+     "population_mean": {
+      "mean": 0.6853137365297267,
+      "median": 0.735200047492981,
+      "q1": 0.7084001004695892,
+      "q3": 0.7834001183509827,
+      "min": 0.06880000978708267,
+      "max": 0.8059999942779541
+     },
+     "per_seed_mean_range": [
+      0.39105260372161865,
+      0.7334735989570618
+     ],
+     "frac_ge_0.85": 0.005473684210526316,
+     "frac_ge_0.95": 0.0,
+     "frac_eq_1": 0.0
+    },
+    "stim": {
+     "population_mean": {
+      "mean": 0.8814715887370862,
+      "median": 0.9599999785423279,
+      "q1": 0.9200000166893005,
+      "q3": 0.9970999956130981,
+      "min": 0.09020000696182251,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.6177895665168762,
+      0.9170525670051575
+     ],
+     "frac_ge_0.85": 0.8130526315789472,
+     "frac_ge_0.95": 0.7831578947368422,
+     "frac_eq_1": 0.7675789473684211
+    },
+    "post": {
+     "population_mean": {
+      "mean": 0.8816379020088597,
+      "median": 0.9599999785423279,
+      "q1": 0.9200000166893005,
+      "q3": 0.9968000054359436,
+      "min": 0.09160000085830688,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.6177895665168762,
+      0.9170525670051575
+     ],
+     "frac_ge_0.85": 0.8138947368421051,
+     "frac_ge_0.95": 0.7861052631578948,
+     "frac_eq_1": 0.7722105263157896
+    },
+    "concentration": {
+     "top10_share_mean": 0.12120826005935668,
+     "n_cells_80pct_mean": 67.36,
+     "n_cells": 95
+    },
+    "time_course_20step": [
+     0.025389475747942924,
+     0.7789684534072876,
+     0.8619369268417358,
+     0.8787579536437988,
+     0.8815158009529114,
+     0.8817052245140076,
+     0.881431519985199,
+     0.8814526200294495,
+     0.8814315795898438,
+     0.8813473582267761,
+     0.8811157941818237,
+     0.8818104267120361,
+     0.8818947076797485,
+     0.8814947009086609,
+     0.8810316324234009,
+     0.8812841773033142,
+     0.8819158673286438,
+     0.8815367817878723,
+     0.8821051716804504,
+     0.8813473582267761
+    ]
+   },
+   "stim": {
+    "pre": {
+     "population_mean": {
+      "mean": 0.6853137365297267,
+      "median": 0.735200047492981,
+      "q1": 0.7084001004695892,
+      "q3": 0.7834001183509827,
+      "min": 0.06880000978708267,
+      "max": 0.8059999942779541
+     },
+     "per_seed_mean_range": [
+      0.39105260372161865,
+      0.7334735989570618
+     ],
+     "frac_ge_0.85": 0.005473684210526316,
+     "frac_ge_0.95": 0.0,
+     "frac_eq_1": 0.0
+    },
+    "stim": {
+     "population_mean": {
+      "mean": 0.8815684348344803,
+      "median": 0.9599999785423279,
+      "q1": 0.9201000332832336,
+      "q3": 0.9972000420093536,
+      "min": 0.09100000560283661,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.6179473996162415,
+      0.9166315793991089
+     ],
+     "frac_ge_0.85": 0.8134736842105262,
+     "frac_ge_0.95": 0.7823157894736843,
+     "frac_eq_1": 0.767578947368421
+    },
+    "post": {
+     "population_mean": {
+      "mean": 0.8816715868680101,
+      "median": 0.9599999785423279,
+      "q1": 0.9200000166893005,
+      "q3": 0.9966000020503998,
+      "min": 0.09279999881982803,
+      "max": 1.0
+     },
+     "per_seed_mean_range": [
+      0.6170526146888733,
+      0.9170525074005127
+     ],
+     "frac_ge_0.85": 0.8134736842105262,
+     "frac_ge_0.95": 0.7852631578947369,
+     "frac_eq_1": 0.7709473684210526
+    },
+    "concentration": {
+     "top10_share_mean": 0.12118937730789185,
+     "n_cells_80pct_mean": 67.36,
+     "n_cells": 95
+    },
+    "time_course_20step": [
+     0.025389475747942924,
+     0.7789684534072876,
+     0.8619369268417358,
+     0.8787579536437988,
+     0.8815158009529114,
+     0.8816421031951904,
+     0.8818315863609314,
+     0.8814947009086609,
+     0.8813473582267761,
+     0.8817474246025085,
+     0.8819999694824219,
+     0.8813894391059875,
+     0.8815158009529114,
+     0.8813052177429199,
+     0.881410539150238,
+     0.881915807723999,
+     0.8818315863609314,
+     0.8817052245140076,
+     0.8817263245582581,
+     0.8811789155006409
+    ]
+   }
+  }
+ },
+ "kc_cell_level": {
+  "n": 320,
+  "positive": 0,
+  "negative": 1,
+  "near_zero": 319,
+  "near_zero_threshold": 0.01,
+  "effect_mean": {
+   "mean": -2.0000041058665374e-05,
+   "median": 0.0,
+   "q1": 0.0,
+   "q3": 0.0,
+   "min": -0.01120000146329403,
+   "max": 0.006999997887760401
+  },
+  "dz": -0.022376861423254013,
+  "sum_positive": 0.027000000700354576,
+  "sum_negative": -0.03340001404285431,
+  "net": -0.006400012411177158,
+  "cancellation_present": true,
+  "sign_consistency": {
+   "all_25_positive": 0,
+   "all_25_negative": 278,
+   "ge20_positive": 0,
+   "ge20_negative": 303
+  },
+  "bh_fdr": {
+   "q": 0.05,
+   "n_significant": 0,
+   "cutoff": null,
+   "exploratory": true,
+   "n_tests": 320
+  },
+  "note": "exploratory; no responsive-subset replacement of the primary KC endpoint"
+ },
+ "eligibility_distribution": {
+  "n_edges": 4533,
+  "background_amplitude": {
+   "mean": 199.4764404296875,
+   "median": 233.1190185546875,
+   "q05": 72.21064758300781,
+   "q95": 233.31600952148438
+  },
+  "paired_change": {
+   "mean": -0.01142426673322916,
+   "median": 0.0,
+   "q05": -0.2152441442012787,
+   "q95": 0.18660156428813934,
+   "positive": 702,
+   "negative": 651,
+   "sum_positive": 113.53257751464844,
+   "sum_negative": -165.3187713623047,
+   "net": -51.78620147705078
+  },
+  "final_binary_fraction": {
+   "none_mean": 0.9710302228105008,
+   "stim_mean": 0.9708272667107876,
+   "note": "binary e>1e-6 fraction; NOT amplitude saturation"
+  },
+  "time_course_none": [
+   0.020642,
+   36.197918,
+   117.403217,
+   160.779677,
+   182.729127,
+   192.837451,
+   197.375913,
+   199.384756,
+   200.21786,
+   200.596567,
+   200.759855,
+   200.825546,
+   200.861124,
+   200.974772,
+   200.930528,
+   200.874733,
+   200.927483,
+   200.988582,
+   200.996695,
+   200.993347
+  ],
+  "time_course_stim": [
+   0.020642,
+   36.197918,
+   117.403217,
+   160.779677,
+   182.729127,
+   192.839448,
+   197.400021,
+   199.37249,
+   200.182303,
+   200.559222,
+   200.791231,
+   200.881225,
+   200.851737,
+   200.875865,
+   200.896589,
+   200.907801,
+   200.934599,
+   200.968893,
+   200.952159,
+   200.954618
+  ],
+  "bh_fdr": {
+   "q": 0.05,
+   "n_significant": 0,
+   "cutoff": null,
+   "exploratory": true,
+   "n_tests": 4533
+  }
+ },
+ "source_audit": {
+  "model": "normalized LIF (flybrain.FlyBrain); dt=0.020 s; v threshold 1.0; reset 0; refractory default 0",
+  "confirmed_model_params": {
+   "dt": 0.02,
+   "tau": 0.1,
+   "gain": 3.0,
+   "tonic": 0.14,
+   "noise_hz": 1.2,
+   "noise_amp": 0.22,
+   "eye_gain": 0.62
+  },
+  "postsynaptic_normalization": true,
+  "threshold_source": true,
+  "reset_source": true,
+  "truncation": {
+   "incoming_edges_total": 7750789,
+   "incoming_edges_internal": 3549643,
+   "lost_incoming_edges": 4201146,
+   "lost_incoming_weight": 4238.4395,
+   "note": "子网外输入被截断；不得宣称为全脑功能"
+  },
+  "lplc2_lc4_to_kc": {
+   "direct_edges": 0,
+   "two_hop_intermediates": 56,
+   "two_hop_sum_w_out": 1.7124
+  },
+  "observed_high_baseline": "KC ~0.91, MBON ~0.88 per-step spike probability (not calibrated Hz)",
+  "computational_assumptions_may_raise_baseline": [
+   "gain=3.0 and tonic=0.14 (hand-calibrated, not measured)",
+   "noise_hz=1.2 / noise_amp=0.22",
+   "truncated subnet removes ~4.2M incoming edges / Σw~4238 (external inhibition/excitation)",
+   "per-postsynaptic L1 normalization concentrates weights",
+   "dt=0.020 s step itself caps rates (max 1 spike/step)"
+  ],
+  "undetermined": [
+   "relative contribution of gain/tonic/noise vs truncation vs connectome",
+   "whether the high baseline is a model artifact or a plausible biological regime",
+   "causal root cause"
+  ],
+  "root_cause": "NOT_ESTABLISHED"
+ },
+ "verdicts": {
+  "P10C2_A0_Entrance": "PASS",
+  "P10C2_A0_KC_Main_Endpoint": "NOT_DETECTED",
+  "P10C2_A0_Ceiling": "FAIL",
+  "P10C2_A0_Canonical": "INCONCLUSIVE",
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "HIGH_BASELINE_PHENOTYPE": "SUPPORTED",
+  "CELL_LEVEL_HETEROGENEITY": "NOT_OBSERVED",
+  "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+  "worth_new_preregistered_model_validity_experiment": true,
+  "note": "post-hoc descriptive diagnosis; does not rewrite the frozen A0; no responsive-subset reclassification"
+ },
+ "training_authorized": false
+}
