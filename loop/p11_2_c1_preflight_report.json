@@ -1,0 +1,612 @@
+{
+ "protocol": "P11-2-C1-0/v1",
+ "status": "PREFLIGHT_COMPLETE; NO_DYNAMICS_RUN",
+ "baseline_commit": "ff8466b",
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "archive": {
+  "ok": true,
+  "status": "VERIFIED",
+  "raw_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_1c_full\\20261019T153322",
+  "file_count": 29,
+  "missing": [],
+  "mismatch": [],
+  "extra": []
+ },
+ "mechanism_localization": {
+  "W_KC_KC": {
+   "shape": [
+    4064,
+    4064
+   ],
+   "nnz": 642933,
+   "positive_nnz": 642933,
+   "negative_nnz": 0
+  },
+  "insufficient_total_events": 14994,
+  "unique_kc_step": 600,
+  "unique_kcs": 3,
+  "low_feedback_kcs": [
+   {
+    "local_index": 2460,
+    "body_id": 109321,
+    "insufficient_events": 5000,
+    "unique_steps": 200,
+    "event_input": {
+     "mean": 0.27907,
+     "min": 0.27907,
+     "max": 0.27907
+    },
+    "window_input": {
+     "mean": 0.27907,
+     "min": 0.27907,
+     "max": 0.27907
+    },
+    "needed_nonKC_at_max_noise": 0.36093,
+    "non_kc_weight_budget": {
+     "pos_sum": 0.761628,
+     "neg_sum": -0.145349,
+     "net_sum": 0.616279,
+     "pos_edges": 8,
+     "neg_edges": 4,
+     "top_types": [
+      {
+       "type": "VA6_adPN",
+       "sum": 0.25,
+       "pos": 0.25,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "VL2a_adPN",
+       "sum": 0.133721,
+       "pos": 0.133721,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "VA7l_adPN",
+       "sum": 0.127907,
+       "pos": 0.127907,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "VP1d+VP4_l2PN1",
+       "sum": 0.116279,
+       "pos": 0.116279,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "APL",
+       "sum": -0.075581,
+       "pos": 0.0,
+       "neg": -0.075581,
+       "n_pos": 0,
+       "n_neg": 1
+      }
+     ],
+     "activity_imputed": false
+    }
+   },
+   {
+    "local_index": 2650,
+    "body_id": 117446,
+    "insufficient_events": 4994,
+    "unique_steps": 200,
+    "event_input": {
+     "mean": 0.132743,
+     "min": 0.132743,
+     "max": 0.132743
+    },
+    "window_input": {
+     "mean": 0.132743,
+     "min": 0.132743,
+     "max": 0.132743
+    },
+    "needed_nonKC_at_max_noise": 0.507257,
+    "non_kc_weight_budget": {
+     "pos_sum": 0.80531,
+     "neg_sum": -0.150442,
+     "net_sum": 0.654867,
+     "pos_edges": 4,
+     "neg_edges": 7,
+     "top_types": [
+      {
+       "type": "LHPV3c1",
+       "sum": 0.415929,
+       "pos": 0.415929,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "DM3_adPN",
+       "sum": 0.247788,
+       "pos": 0.247788,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "DM5_lPN",
+       "sum": 0.132743,
+       "pos": 0.132743,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "LHPV12a1",
+       "sum": -0.053097,
+       "pos": 0.0,
+       "neg": -0.053097,
+       "n_pos": 0,
+       "n_neg": 2
+      },
+      {
+       "type": "APL",
+       "sum": -0.053097,
+       "pos": 0.0,
+       "neg": -0.053097,
+       "n_pos": 0,
+       "n_neg": 1
+      }
+     ],
+     "activity_imputed": false
+    }
+   },
+   {
+    "local_index": 3971,
+    "body_id": 545375,
+    "insufficient_events": 5000,
+    "unique_steps": 200,
+    "event_input": {
+     "mean": 0.182432,
+     "min": 0.182432,
+     "max": 0.182432
+    },
+    "window_input": {
+     "mean": 0.182432,
+     "min": 0.182432,
+     "max": 0.182432
+    },
+    "needed_nonKC_at_max_noise": 0.457568,
+    "non_kc_weight_budget": {
+     "pos_sum": 0.763514,
+     "neg_sum": -0.175676,
+     "net_sum": 0.587838,
+     "pos_edges": 6,
+     "neg_edges": 5,
+     "top_types": [
+      {
+       "type": "DM1_lPN",
+       "sum": 0.202703,
+       "pos": 0.202703,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "DM2_lPN",
+       "sum": 0.182432,
+       "pos": 0.182432,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "VA2_adPN",
+       "sum": 0.168919,
+       "pos": 0.168919,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "VC1_lPN",
+       "sum": 0.155405,
+       "pos": 0.155405,
+       "neg": 0.0,
+       "n_pos": 1,
+       "n_neg": 0
+      },
+      {
+       "type": "LHPV12a1",
+       "sum": -0.101351,
+       "pos": 0.0,
+       "neg": -0.101351,
+       "n_pos": 0,
+       "n_neg": 2
+      }
+     ],
+     "activity_imputed": false
+    }
+   }
+  ],
+  "kc_2650_zeros": [
+   {
+    "seed": 104,
+    "step": 232,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   },
+   {
+    "seed": 114,
+    "step": 213,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   },
+   {
+    "seed": 115,
+    "step": 234,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   }
+  ],
+  "all_zero_events": [
+   {
+    "seed": 104,
+    "step": 232,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   },
+   {
+    "seed": 114,
+    "step": 213,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   },
+   {
+    "seed": 115,
+    "step": 234,
+    "local_index": 2650,
+    "body_id": 117446,
+    "kc_kc_input": 0.132743
+   }
+  ],
+  "window": [
+   100,
+   300
+  ],
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125
+  ],
+  "spikes_imputed": false,
+  "note": "Only KC->KC input reconstructed; non-KC spikes were never saved. Non-KC numbers are static signed weight budgets, not activity."
+ },
+ "p11_2_0a_crosscheck": {
+  "values": {
+   "W_KC_KC_nnz": 642933,
+   "net_mean": 1.679843,
+   "matched_net_mean": 1.74451,
+   "consecutive_events": 20319994,
+   "insufficient_lt_064": 14994,
+   "fired_not_again": 3
+  },
+  "checks": {
+   "W_KC_KC_nnz_match": true,
+   "insufficient_events_match": true,
+   "zero_events_match": true,
+   "consecutive_events_match": true,
+   "net_mean_match": true,
+   "matched_mean_match": true
+  }
+ },
+ "W_B": {
+  "derived": {
+   "W_nnz": 25582938,
+   "W_B_nnz": 24940005,
+   "expected_W_B_nnz": 24940005,
+   "removed_edges": 642933,
+   "removed_sum": 2275.627441,
+   "removed_abs_sum": 2275.627441,
+   "removed_all_positive": true,
+   "diff_nnz": 642933,
+   "diff_only_KC_KC": true,
+   "reverse_diff_nnz": 642933,
+   "reverse_diff_only_KC_KC": true,
+   "no_new_edges": true,
+   "W_B_KC_KC_nnz": 0,
+   "KC_KC_zeroed": true,
+   "removed_data_matches": true,
+   "other_edges_bitwise_unchanged": true,
+   "renormalized": false,
+   "derived_in_memory": true,
+   "derived_file_written": false,
+   "W_B_csc_bytes": 200186844,
+   "W_A_csc_bytes": 205330308,
+   "official_hashes_ok_before": true,
+   "official_hashes_ok_after": true,
+   "official_file_unchanged": true
+  },
+  "verification": {
+   "W_nnz": 25582938,
+   "W_B_nnz": 24940005,
+   "expected_W_B_nnz": 24940005,
+   "removed_edges": 642933,
+   "removed_sum": 2275.627441,
+   "removed_abs_sum": 2275.627441,
+   "removed_all_positive": true,
+   "diff_nnz": 642933,
+   "diff_only_KC_KC": true,
+   "reverse_diff_nnz": 642933,
+   "reverse_diff_only_KC_KC": true,
+   "no_new_edges": true,
+   "W_B_KC_KC_nnz": 0,
+   "KC_KC_zeroed": true,
+   "removed_data_matches": true,
+   "other_edges_bitwise_unchanged": true,
+   "renormalized": false,
+   "derived_in_memory": true,
+   "derived_file_written": false,
+   "W_B_csc_bytes": 200186844,
+   "W_A_csc_bytes": 205330308,
+   "official_hashes_ok_before": true,
+   "official_hashes_ok_after": true,
+   "official_file_unchanged": true
+  }
+ },
+ "noise": {
+  "audit": {
+   "source_file": "C:\\AA_project\\guoying\\.venv\\Lib\\site-packages\\flybrain\\brain.py",
+   "source_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+   "step_rng_calls": [
+    "self.rng.random"
+   ],
+   "one_rng_random_per_step": true,
+   "rng_random_shape": "(self.n, B)",
+   "drawn_after_current": true,
+   "drawn_before_firing": true,
+   "reset_uses_default_rng_seed": true,
+   "other_rng_calls_in_step": 0,
+   "cpu_only": true,
+   "cuda_note": "CUDA noise streams differ; both conditions must run on CPU with the same seed.",
+   "pairing_conditions": [
+    "same seed",
+    "same n and batch",
+    "same step count",
+    "reset(seed) before each condition",
+    "no stim/inject/eye_drive",
+    "CPU only",
+    "same numpy version"
+   ],
+   "strict_pairing": true
+  },
+  "synthetic": {
+   "n": 17,
+   "steps": 5,
+   "seed": 101,
+   "threshold": 0.024,
+   "same_seed_raw_equal": true,
+   "same_seed_events_equal": true,
+   "same_seed_equal": true,
+   "different_seed_raw_differs": true,
+   "different_seed_differs": true,
+   "condition_independent": true,
+   "note": "Raw RNG stream is the pairing unit; Bernoulli events are a thresholded view. No FlyBrain and no full-brain run."
+  }
+ },
+ "resource": {
+  "conditions": [
+   "intact",
+   "kc_kc_zero"
+  ],
+  "seeds": 25,
+  "steps_per_seed": 400,
+  "total_steps": 20000,
+  "p11_1c_wall_s": 152.54,
+  "p11_1c_steps": 10000,
+  "ms_per_step": 15.254,
+  "estimated_wall_s": 305.08,
+  "wall_cap_s": 900.0,
+  "wall_margin_s": 594.92,
+  "p11_1b_peak_MB": 1497.87,
+  "mem_cap_MiB": 2048,
+  "mem_margin_MiB": 550.13,
+  "W_B_csc_MiB": 190.91,
+  "estimated_peak_with_W_B_MiB": 1688.78,
+  "estimated_mem_margin_MiB": 359.22,
+  "estimate_basis": "P11-1c 152.54 s / 10,000 steps; P11-1b peak 1497.87 MB; linear extrapolation + one W_B copy",
+  "status": "PLAUSIBLE_UNVERIFIED",
+  "verified": false,
+  "full_brain_run_this_round": false,
+  "note": "No real full-brain initialization/run was used to validate this budget."
+ },
+ "stats": {
+  "primary_endpoint": "matched 320 KC per-step firing fraction in [100,300), per seed",
+  "primary_unit": "seed",
+  "n_pairs": 25,
+  "effect": "B - A",
+  "test": "exact two-sided sign-flip over 25 paired seed differences (2^25 sign patterns)",
+  "min_two_sided_p": 5.960464477539063e-08,
+  "ci": "paired bootstrap 10000 resamples; seed 20261019; 2.5/97.5 percentile",
+  "min_meaningful_effect_absolute": 0.1,
+  "effect_rationale": "0.10 absolute decline in matched 320 KC firing fraction is a material loss of the saturated phenotype; it is slightly larger than the P11-1c full-vs-subnet difference (0.0882) and is frozen before the C1 run.",
+  "support_criterion": "mean(B-A) <= -0.10 AND exact p < 0.05; report the paired bootstrap CI",
+  "inconclusive_criterion": "mean(B-A) <= -0.10 but p >= 0.05, or any required seed/condition missing",
+  "not_supported_criterion": "mean(B-A) > -0.10, or B increases",
+  "missing_rule": "no replacement, no rerun; any missing seed/condition -> INCONCLUSIVE",
+  "overrun_rule": "any wall > 900 s or Job peak > 2048 MiB -> NO_GO; no automatic retry",
+  "keep_seed_114": true,
+  "drop_seeds": false,
+  "select_seeds": false,
+  "cell_step_pseudo_replication": false,
+  "secondary_endpoints": [
+   "full 4,064 KC baseline and >=0.85 / >=0.95 fractions",
+   "95 matched / 97 full MBON baseline",
+   "startup transient bins and longest consecutive run",
+   "low-feedback subpopulation (3 KCs: local 2460, 2650, 3971; bodyIds 109321, 117446, 545375)"
+  ],
+  "interpretation_if_decrease": "KC->KC edges have a causal contribution to the saturation phenotype in this model; no claim about a specific loop, biological mechanism, or learning.",
+  "interpretation_if_no_decrease": "deleting KC->KC does not relieve saturation under the tested conditions; investigate non-KC network input."
+ },
+ "freeze": {
+  "P1_mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+  "P1_mapfix_freeze_diff": "",
+  "P1_mapfix_freeze_empty": true,
+  "P1_baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+  "P1_baseline_diff_historical_nonempty": true,
+  "BASE_tag_present": false,
+  "BASE_note": "No git revision named BASE; P1-baseline is the historical reference.",
+  "readout_status": "",
+  "readout_working_tree_modified": false,
+  "tags": {
+   "HW-shadow-v1": "0d784033630c1789e86367cb3e8fd98216d1a675",
+   "P1-baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+   "P1-mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+   "P1-mapfix-holdout": "35bb54360208070bfab1a7ac890161b35a5948f7",
+   "P1-pathfix": "ba5be735b848373386104d7f3965e407605ecff0",
+   "P1-repro-baseline": "f54f6f50f56dec8c18bf842d99c887f3eaa71bee",
+   "P2b-hil-wheelsup": "de41b461c3f7095350d074d22a586c6e2392e78c",
+   "P2b-tof5-bringup": "bb3162355ae9e23ec27e91853533e9257aed45af",
+   "P2c-0-ground-tools": "1b13d770fb4aa8447263c14db698cb02c7890612",
+   "P2c-ground-commissioning": "b58e2d353b364d9d6563491540675638b14d2f38"
+  },
+  "tags_modified": false,
+  "head": "ff8466b614e5c4952d64785bb4d6682063f2e8a4",
+  "baseline_commit": "ff8466b",
+  "head_matches_baseline": true,
+  "dirty_files": [
+   "hardware/tof5_client.py",
+   "loop/diagnose.py",
+   "loop/p10c1b_decoder_freeze.json"
+  ],
+  "dirty_files_preserved": true,
+  "three_dirty_files_unchanged": true
+ },
+ "safety": {
+  "selftest": {
+   "no_job_alloc": {
+    "rc": 0,
+    "out": "ALLOC_OK",
+    "ok": true
+   },
+   "job_alloc_limit": {
+    "rc": 3,
+    "log": "",
+    "ok": true
+   },
+   "assign_failure": {
+    "assign_ok": false,
+    "exit_code": 1,
+    "ok": true
+   },
+   "timeout": {
+    "timeout": true,
+    "wall_s": 1.238,
+    "exit_code": 1,
+    "ok": true
+   },
+   "no_retry": {
+    "calls": 1,
+    "ok": true
+   },
+   "all_ok": true
+  },
+  "selftest_all_ok": true,
+  "crash": {
+   "ok": true,
+   "exit_code": 3,
+   "timeout": false,
+   "mem_exceeded": false
+  },
+  "all_synthetic_ok": true
+ },
+ "conditions": [
+  "intact",
+  "kc_kc_zero"
+ ],
+ "seeds": [
+  101,
+  102,
+  103,
+  104,
+  105,
+  106,
+  107,
+  108,
+  109,
+  110,
+  111,
+  112,
+  113,
+  114,
+  115,
+  116,
+  117,
+  118,
+  119,
+  120,
+  121,
+  122,
+  123,
+  124,
+  125
+ ],
+ "steps": 400,
+ "stim": [
+  100,
+  300
+ ],
+ "total_steps": 20000,
+ "verdicts": {
+  "P11_2_C1_EXECUTION_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "A1_A2_A3_B": "NO-GO",
+  "FULL_BRAIN_RUN_THIS_ROUND": false,
+  "KC_KC_REMOVAL_EXECUTED": false,
+  "KC_KC_REMOVAL_STRICT_IMPLEMENTABLE": true,
+  "NOISE_PAIRING_STRICT": true,
+  "RESOURCE_PLAUSIBLE": true,
+  "RESOURCE_VERIFIED": false,
+  "MINIMAL_PREREG_FROZEN": true,
+  "READY_TO_APPLY_FOR_ONE_RUN": true,
+  "P11_2_0A_CONSISTENCY": true
+ },
+ "training_authorized": false
+}
