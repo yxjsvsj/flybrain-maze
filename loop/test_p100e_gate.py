@@ -1,11 +1,14 @@
-"""P10-0e 回归：静态门控、预注册要素、无训练产物、维度独立裁决、负例。不训练/不控车。"""
+"""P10-0e/P10-C1a 回归：静态门控修正 + 负例（缺裁决/缺产物/训练产物/坏 hash）。不训练/不控车。"""
 from __future__ import annotations
 
+import json
 import os
+import shutil
 import sys
 import tempfile
 
-from loop.p100e_gate import dual_verdict, evidence_matrix_check, protocol_check, run
+from loop.p100e_gate import (evidence_matrix_check, history_verdicts, no_training_check,
+                             protocol_check, run, w_readonly_check)
 
 RESULTS = []
 
@@ -15,42 +18,60 @@ def check(label, ok, extra=""):
     print(f"  [{'PASS' if ok else 'FAIL'}] {label} {extra}")
 
 
+def write(path, obj):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f)
+
+
 def main() -> int:
     print("=========== p100e_gate ===========")
     R = run()
     c = R["checks"]
-    check("w read-only hashes match", c["w_readonly"].get("ok") is True)
+    check("full SHA-256 match", c["w_readonly"].get("ok") is True)
     check("P1 freeze empty", c["p1_freeze"].get("ok") is True)
     check("no training artifacts", c["no_training"].get("ok") is True)
-    check("protocol required elements present", c["protocol"].get("ok") is True, str(c["protocol"].get("missing")))
+    check("history verdicts readable & empty problems", c["history"].get("problems") == [])
+    check("p100 decision.verdict = NO-GO", c["history"]["verdicts"]["p100"]["verdict"] == "NO-GO")
+    check("p100 go False", c["history"]["verdicts"]["p100"]["go"] is False)
+    check("protocol elements present", c["protocol"].get("ok") is True)
     check("evidence matrix present", c["evidence_matrix"].get("ok") is True)
-    check("historical verdicts still NO-GO", c["history_no_go"] is True)
+    check("historical NO-GO preserved", c["history_no_go"] is True)
     check("all static checks pass", c["all_static_ok"] is True)
 
     v = R["dual_verdict"]
-    check("Biological = NO-GO", v["Biological"] == "NO-GO")
-    check("go_biological False", v["go_biological"] is False)
-    check("Computational = GO (conditional)", v["Computational_Hypothesis"].startswith("GO"))
-    check("go_computational True", v["go_computational"] is True)
+    check("Biological NO-GO", v["Biological"] == "NO-GO")
+    check("worth_doing_computational True", v["worth_doing_computational"] is True)
+    check("execution_ready False (not hardcoded GO)", v["execution_ready"] is False)
     check("training NOT authorized", v["training_authorized"] is False)
 
-    # 负例：缺少关键要素的协议应判 False
-    fd, tmp = tempfile.mkstemp(suffix=".md", text=True)
+    # ---- 负例 ----
+    tmp = tempfile.mkdtemp(prefix="p100e_neg_")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write("# empty protocol\n")
-        neg = protocol_check(tmp)
-        check("negative protocol rejected", neg["ok"] is False and len(neg["missing"]) > 0)
+        # 1) 缺失关键报告
+        h = history_verdicts(base=tmp)
+        check("negative: missing reports -> problems", len(h["problems"]) > 0)
+        nt = no_training_check(base=tmp)
+        check("negative: missing expected -> fail", nt["ok"] is False)
+        # 2) 空裁决
+        write(os.path.join(tmp, "p100.json"), {"decision": {"verdict": ""}})
+        h = history_verdicts(base=tmp)
+        check("negative: empty decision.verdict -> problems",
+              any("decision.verdict" in p for p in h["problems"]))
+        # 3) 禁止的训练产物
+        open(os.path.join(tmp, "p10c1_delta_w.npz"), "wb").close()
+        nt = no_training_check(base=tmp)
+        check("negative: forbidden training artifact -> fail", nt["ok"] is False)
+        # 4) 坏 hash（伪造 W 文件）
+        wtmp = tempfile.mkdtemp(prefix="p100e_w_")
+        try:
+            open(os.path.join(wtmp, "brain.npz"), "wb").write(b"fake")
+            open(os.path.join(wtmp, "weights.npz"), "wb").write(b"fake")
+            wr = w_readonly_check(w_dir=wtmp)
+            check("negative: bad hash -> fail", wr["ok"] is False)
+        finally:
+            shutil.rmtree(wtmp, ignore_errors=True)
     finally:
-        os.remove(tmp)
-    fd, tmp = tempfile.mkstemp(suffix=".md", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write("# empty closeout\n")
-        neg = evidence_matrix_check(tmp)
-        check("negative evidence matrix rejected", neg["ok"] is False)
-    finally:
-        os.remove(tmp)
+        shutil.rmtree(tmp, ignore_errors=True)
 
     npass = sum(1 for _, ok in RESULTS if ok)
     print(f"\n{npass}/{len(RESULTS)} " + ("ALL PASS" if npass == len(RESULTS) else "FAILED"))

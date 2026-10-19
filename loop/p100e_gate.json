@@ -1,12 +1,18 @@
 {
  "checks": {
   "w_readonly": {
-   "weights_path": "C:\\Users\\yang\\fly-data\\weights.npz",
-   "brain_path": "C:\\Users\\yang\\fly-data\\brain.npz",
-   "weights_sha16": "c29919aa44069a27",
-   "brain_sha16": "cc9bd1ecd00bd703",
-   "weights_match": true,
-   "brain_match": true,
+   "files": {
+    "brain.npz": {
+     "path": "C:\\Users\\yang\\fly-data\\brain.npz",
+     "sha256": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+     "match": true
+    },
+    "weights.npz": {
+     "path": "C:\\Users\\yang\\fly-data\\weights.npz",
+     "sha256": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c",
+     "match": true
+    }
+   },
    "ok": true
   },
   "p1_freeze": {
@@ -14,31 +20,32 @@
    "stdout": "",
    "returncode": 0
   },
-  "history_verdicts": {
-   "p100": {
-    "go": null,
-    "verdict": null
+  "history": {
+   "verdicts": {
+    "p100": {
+     "verdict": "NO-GO",
+     "go": false
+    },
+    "p100a": {
+     "overturned": false,
+     "verdict": "NO-GO（维持）"
+    },
+    "p100b": {
+     "go": false
+    },
+    "p100c": {
+     "go": false
+    },
+    "p100d": {
+     "go": false
+    }
    },
-   "p100a": {
-    "overturned": false,
-    "verdict": "NO-GO（维持）"
-   },
-   "p100b": {
-    "go": false,
-    "structural": "存在"
-   },
-   "p100c": {
-    "go": false,
-    "learning": "否（NO-GO 维持）"
-   },
-   "p100d": {
-    "go": false,
-    "learning": "NO-GO"
-   }
+   "problems": []
   },
   "no_training": {
    "ok": true,
-   "hits": []
+   "missing_expected": [],
+   "forbidden_hits": []
   },
   "protocol": {
    "ok": true,
@@ -55,10 +62,10 @@
  "dual_verdict": {
   "Biological": "NO-GO",
   "Computational_Hypothesis": "GO (conditional, proposal only)",
-  "go_biological": false,
-  "go_computational": true,
+  "worth_doing_computational": true,
+  "execution_ready": false,
   "training_authorized": false,
-  "meaning": "Computational GO 仅表示值得另行申请有限真实连接组计算假设实验；不授权本轮训练，不推翻 Biological NO-GO。"
+  "meaning": "worth_doing=值得另行申请有限计算假设实验；execution_ready 由 P10-C1a 单独判定；training_authorized 恒 False；不推翻 Biological NO-GO。"
  },
- "note": "静态门控；不训练、不跑动力学、不控车。默认仍 NO-GO（生物）；计算假设仅提案。"
+ "note": "静态门控；不训练、不跑动力学、不控车。execution_ready 由 p10c1a_gate 判定。"
 }

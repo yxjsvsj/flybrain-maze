@@ -1,0 +1,256 @@
+{
+ "checks": {
+  "w_readonly": {
+   "files": {
+    "brain.npz": {
+     "path": "C:\\Users\\yang\\fly-data\\brain.npz",
+     "sha256": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+     "match": true
+    },
+    "weights.npz": {
+     "path": "C:\\Users\\yang\\fly-data\\weights.npz",
+     "sha256": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c",
+     "match": true
+    }
+   },
+   "ok": true
+  },
+  "history": {
+   "verdicts": {
+    "p100": {
+     "verdict": "NO-GO",
+     "go": false
+    },
+    "p100a": {
+     "overturned": false,
+     "verdict": "NO-GO（维持）"
+    },
+    "p100b": {
+     "go": false
+    },
+    "p100c": {
+     "go": false
+    },
+    "p100d": {
+     "go": false
+    }
+   },
+   "problems": []
+  },
+  "decoder": {
+   "decoder_ready": false,
+   "features": {
+    "memory_gain": true,
+    "pursuit_turn": true,
+    "scripted": true,
+    "readout": true,
+    "bias": true,
+    "escape": true,
+    "stall_turn_mode": true,
+    "stall_dir": true,
+    "turn_sign": true
+   },
+   "risky_direction_sources": [
+    "memory_gain",
+    "pursuit_turn",
+    "scripted",
+    "readout",
+    "bias",
+    "escape",
+    "stall_turn_mode",
+    "stall_dir"
+   ],
+   "reason": "P1 冻结的 decode.py 在测试路径仍含外部方向来源：memory_gain, pursuit_turn, scripted, readout, bias, escape, stall_turn_mode, stall_dir。测试期方向必须只来自冻结、有神经依据的 DN 输出映射；安全层仅限速/急停。",
+   "proposed_interface": {
+    "name": "P10TestDecoder (separate, NOT modifying loop/decode.py)",
+    "inputs": [
+     "frozen DN group firing rates"
+    ],
+    "allowed_fixed_gains": [
+     "prespecified, neurally justified, frozen before training"
+    ],
+    "forbidden": [
+     "memory_gain",
+     "pursuit_turn",
+     "scripted",
+     "readout",
+     "bias",
+     "escape direction",
+     "stall spin",
+     "manual turn"
+    ],
+    "safety_layer": [
+     "speed limit",
+     "emergency stop (no direction)"
+    ]
+   },
+   "requires": [
+    "独立 P10 测试解码接口（不改 P1 decode.py）",
+    "固定增益的神经依据与冻结审计",
+    "证明测试期无任何外部/人工方向来源",
+    "安全层只限速/急停，不决定左右/旋转脱困"
+   ]
+  },
+  "freeze_spec": {
+   "ok": true,
+   "missing": [],
+   "missing_params": [],
+   "spec": {
+    "mechanism": "KC->MBON three-factor local plasticity",
+    "equation": "dW = eta * eligibility * (D - D0)",
+    "status": "FROZEN_SPEC_ONLY; implementation NOT started",
+    "params": {
+     "eta": {
+      "value": null,
+      "unit": "dimensionless (relative weight per unit eligibility*DA)",
+      "status": "computational_hypothesis",
+      "grid": [
+       1e-05,
+       0.0001,
+       0.001
+      ],
+      "source": "no dataset calibration; declared hypothesis; NO post-hoc selection by navigation success"
+     },
+     "tau_e": {
+      "value": null,
+      "unit": "s",
+      "status": "computational_hypothesis",
+      "grid": [
+       0.1,
+       0.5,
+       1.0
+      ],
+      "source": "literature order-of-magnitude only; not fitted"
+     },
+     "delta_max": {
+      "value": null,
+      "unit": "relative weight",
+      "status": "computational_hypothesis",
+      "grid": [
+       0.01,
+       0.05,
+       0.1
+      ],
+      "source": "bound per synapse; not a conductance calibration"
+     },
+     "D0": {
+      "value": 0.0,
+      "unit": "relative DA signal",
+      "status": "computational_hypothesis",
+      "grid": [
+       0.0
+      ],
+      "source": "baseline DA; teacher reward deviations from D0"
+     }
+    },
+    "eligibility": "pre-trace x post-trace, causal (uses only past/current activity; no future info, no teacher action as input)",
+    "composition": "W_eff = W_official + dW overlay; official W unchanged on disk; dW stored separately",
+    "bounds": "per-synapse clip dW to [-delta_max, +delta_max]",
+    "sign_topology": "plastic edges = ONLY existing real KC->MBON edges (bodyId pairs); sign from transmitter prediction; NO new edges; NO sensory-target change",
+    "l1_normalization": "NO renormalization of unrelated edges. If per-postsynaptic L1 is applied, it must be preregistered, isolated, and must not change unapproved synapses; default = NO renormalization.",
+    "sensitivity": {
+     "type": "finite pre-fixed grid",
+     "selection_rule": "report ALL grid points; NO choosing the best by navigation performance; any post-hoc selection invalidates the run",
+     "grid_size": 27
+    },
+    "not_conductance": "relative weights only; g_unit NOT calibrated; must NOT be described as real synaptic conductance",
+    "decoder": "pre-frozen, neurally grounded fixed decoder; NOT trained on teacher labels; test-phase must exclude external direction",
+    "training_authorized": false
+   }
+  },
+  "dw_rules": {
+   "ok": true,
+   "sign_topology": "plastic edges = ONLY existing real KC->MBON edges (bodyId pairs); sign from transmitter prediction; NO new edges; NO sensory-target change",
+   "l1_normalization": "NO renormalization of unrelated edges. If per-postsynaptic L1 is applied, it must be preregistered, isolated, and must not change unapproved synapses; default = NO renormalization.",
+   "composition": "W_eff = W_official + dW overlay; official W unchanged on disk; dW stored separately",
+   "bounds": "per-synapse clip dW to [-delta_max, +delta_max]"
+  },
+  "protocol_rules": {
+   "ok": true,
+   "missing": []
+  },
+  "isolation": {
+   "positive": true,
+   "negative": {
+    "map": "caught",
+    "pose": "caught",
+    "dijkstra": "caught",
+    "teacher_action": "caught",
+    "teacher_label": "caught",
+    "goal": "caught",
+    "nav_memory": "caught",
+    "planner": "caught",
+    "turn_command": "caught"
+   },
+   "imports": {
+    "dijkstra": "caught",
+    "planner": "caught",
+    "networkx": "caught"
+   },
+   "files": {
+    "map.json": "caught",
+    "teacher_actions.csv": "caught",
+    "planner.npz": "caught"
+   },
+   "ok": true,
+   "note": "仅 mock 沙箱；**不**以 sys.modules 单一检查宣称无泄漏。真实学生进程仍需接口白名单+依赖检查+文件访问限制+运行时断言。"
+  },
+  "resource": {
+   "subnetwork": {
+    "n_neurons": 23218,
+    "nnz": 3549643,
+    "csr_float32_MB": 28.49,
+    "layer_sizes": [
+     311,
+     10931,
+     320,
+     95,
+     11340,
+     1285
+    ],
+    "n_DAN": 340
+   },
+   "plastic_edges": {
+    "KC_to_MBON_in_subnet": 4533,
+    "note": "仅真实 KC→MBON 子集；bodyId 可追踪"
+   },
+   "trials": {
+    "planned_per_condition": 10,
+    "conditions": 7,
+    "total": 70,
+    "note": "预注册上限；未执行"
+   },
+   "lif_benchmark": "MISSING（本轮不跑 MaleCNS 动力学；P9 COBA 数据仅参考，不能替代 LIF 实测）",
+   "resource_ready": false,
+   "reason": "缺 LIF 子网逐步耗时实测；仅完成静态 CSR 内存/规模计算。",
+   "estimate": {
+    "csr_MB": 28.49,
+    "note": "float32 data+indices+indptr 下界估计；不含状态/突触前迹"
+   }
+  }
+ },
+ "conditions": {
+  "1_frozen_assets_complete": true,
+  "2_history_verdicts_correct": true,
+  "3_decoder_ready": false,
+  "4_params_preregistered": true,
+  "5_dw_rules_clear": true,
+  "6_abc_independent_failure": true,
+  "7_controls_and_stats": true,
+  "8_student_isolation": true,
+  "9_resource_budget": false
+ },
+ "execution_ready": false,
+ "training_authorized": false,
+ "verdicts": {
+  "Biological": "NO-GO",
+  "Computational_Hypothesis": "GO (conditional, proposal only)",
+  "Execution_Readiness": "NO-GO",
+  "Training_Authorization": false
+ },
+ "blocking_reasons": [
+  "3_decoder_ready",
+  "9_resource_budget"
+ ],
+ "note": "即使全部通过，training_authorized 仍恒为 False；本轮不训练。"
+}
