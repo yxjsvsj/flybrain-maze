@@ -1,0 +1,542 @@
+{
+ "protocol": "P11-2-0a/v1",
+ "archive": {
+  "ok": true,
+  "status": "VERIFIED",
+  "raw_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_1c_full\\20261019T153322",
+  "file_count": 29,
+  "missing": [],
+  "mismatch": [],
+  "extra": []
+ },
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "math_bounds": {
+  "decay": 0.818730753078,
+  "tonic_only_fixed_point": 0.772331779,
+  "tonic_alone_can_fire": false,
+  "tonic_noise_mean_fixed_point": 0.801459721,
+  "tonic_noise_mean_can_fire": false,
+  "max_voltage_reset_steps_1_4": [
+   0.36,
+   0.654743071,
+   0.896058288,
+   1.093630477
+  ],
+  "earliest_refire_step_after_reset": 4,
+  "long_run_firing_fraction_upper_bound": 0.25,
+  "raw_threshold_no_noise": 0.2866667,
+  "raw_threshold_with_max_noise": 0.2133333,
+  "strict_conclusion": "with no synaptic input, tonic+noise cannot fire every step; earliest re-fire after reset is step 4, so the long-run firing fraction is bounded by 0.25",
+  "caveat": "if the previous step did not fire, residual voltage exists; the reset=0 thresholds do not apply"
+ },
+ "reconstruction": {
+  "data_checks": {
+   "brain_n": 166700,
+   "W_shape": [
+    166700,
+    166700
+   ],
+   "kc_idx_count": 4064,
+   "kc_idx_unique": true,
+   "kc_idx_sorted": true,
+   "matched_count": 320,
+   "matched_subset": true,
+   "kc_cell_type_all_start_KC": true,
+   "W_KC_KC_direction_check": {
+    "local_post": 0,
+    "local_pre": 230,
+    "Wkk_value": 0.006521739065647125,
+    "W_post_pre_value": 0.006521739065647125,
+    "equal": true
+   },
+   "W_dtype": "float32",
+   "W_KC_KC_nnz": 642933,
+   "W_KC_KC_pos_nnz": 642933,
+   "W_KC_KC_neg_nnz": 0
+  },
+  "W_KC_KC": {
+   "shape": [
+    4064,
+    4064
+   ],
+   "nnz": 642933,
+   "dtype": "float32",
+   "signed_preserved": true,
+   "nnz_pos": 642933,
+   "nnz_neg": 0
+  },
+  "all_4064_KC": {
+   "pos": {
+    "mean": 1.679843,
+    "median": 1.665857,
+    "p5": 1.454108,
+    "p95": 1.963188,
+    "min": 0.132743,
+    "max": 2.703486
+   },
+   "neg": {
+    "mean": 0.0,
+    "median": 0.0,
+    "p5": 0.0,
+    "p95": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "net": {
+    "mean": 1.679843,
+    "median": 1.665857,
+    "p5": 1.454108,
+    "p95": 1.963188,
+    "min": 0.132743,
+    "max": 2.703486
+   }
+  },
+  "matched_320_KC": {
+   "pos": {
+    "mean": 1.74451,
+    "median": 1.745553,
+    "p5": 1.494512,
+    "p95": 1.949037,
+    "min": 1.303277,
+    "max": 2.703486
+   },
+   "neg": {
+    "mean": 0.0,
+    "median": 0.0,
+    "p5": 0.0,
+    "p95": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "net": {
+    "mean": 1.74451,
+    "median": 1.745553,
+    "p5": 1.494512,
+    "p95": 1.949037,
+    "min": 1.303277,
+    "max": 2.703486
+   }
+  },
+  "per_seed": [
+   {
+    "seed": 101,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 102,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 103,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 104,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 105,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 106,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 107,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 108,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 109,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 110,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 111,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 112,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 113,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 114,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 115,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 116,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 117,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 118,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 119,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 120,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 121,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 122,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 123,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 124,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   },
+   {
+    "seed": 125,
+    "pos_mean": 1.679843,
+    "neg_mean": 0.0,
+    "net_mean": 1.679843,
+    "net_median": 1.665857,
+    "net_p5": 1.454108,
+    "net_p95": 1.963188,
+    "net_min": 0.132743,
+    "net_max": 2.703486
+   }
+  ],
+  "per_seed_net_mean_range": [
+   1.679843,
+   1.679843
+  ],
+  "per_cell_4064": {
+   "mean": 1.679843,
+   "median": 1.665857,
+   "p5": 1.454114,
+   "p95": 1.963154,
+   "min": 0.132743,
+   "max": 2.703486,
+   "n_cells": 4064
+  },
+  "main_window_zero_spikes": {
+   "seeds_with_zeros": [
+    {
+     "seed": 104,
+     "count": 1,
+     "positions": [
+      [
+       232,
+       2650
+      ]
+     ]
+    },
+    {
+     "seed": 114,
+     "count": 1,
+     "positions": [
+      [
+       213,
+       2650
+      ]
+     ]
+    },
+    {
+     "seed": 115,
+     "count": 1,
+     "positions": [
+      [
+       234,
+       2650
+      ]
+     ]
+    }
+   ],
+   "seeds_without_zeros": [
+    101,
+    102,
+    103,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125
+   ],
+   "identical_except_listed": true
+  },
+  "consecutive_firing": {
+   "n_events": 20319994,
+   "n_ge_0.86": 20305000,
+   "n_ge_0.64": 20305000,
+   "n_lt_0.86": 14994,
+   "n_lt_0.64": 14994,
+   "frac_input_ge_0.86": 0.999262,
+   "frac_input_ge_0.64": 0.999262,
+   "prev_fired_all": 20319997,
+   "prev_fired_frac_ge_0.86": 0.999262,
+   "prev_fired_frac_ge_0.64": 0.999262,
+   "fired_not_again": 3,
+   "fired_not_again_input_ge_0.86": 0,
+   "fired_not_again_input": {
+    "mean": 0.132743,
+    "median": 0.132743,
+    "p5": 0.132743,
+    "p95": 0.132743,
+    "min": 0.132743,
+    "max": 0.132743
+   },
+   "required_nonKC_at_max_noise": {
+    "mean": 0.000326,
+    "median": 0.0,
+    "p5": 0.0,
+    "p95": 0.0,
+    "min": 0.0,
+    "max": 0.507257,
+    "frac_gt_0": 0.000738
+   }
+  },
+  "caveats": [
+   "only KC->KC input reconstructed; other 162,636 neurons' spikes not saved",
+   "signed W preserved; positive/negative/net all reported",
+   "positive-feedback capacity != causal root cause",
+   "first step t=0 has no previous spikes and is excluded",
+   "float32 W accumulation; small numerical rounding possible"
+  ]
+ },
+ "verdicts": {
+  "OFFLINE_RECONSTRUCTION": "VERIFIED",
+  "TONIC_ONLY_EXCLUDED": true,
+  "TONIC_NOISE_EVERY_STEP_EXCLUDED": true,
+  "EARLIEST_REFIRE_STEP": 4,
+  "FIRING_FRACTION_UPPER_BOUND": 0.25,
+  "KC_KC_NET_STATIC_CAPACITY_SUFFICIENT": true,
+  "KC_KC_NET_MEAN": 1.679843,
+  "KC_KC_POS_MEAN": 1.679843,
+  "KC_KC_NEG_MEAN": 0.0,
+  "CONSECUTIVE_INPUT_GE_086_FRAC": 0.999262,
+  "CONSECUTIVE_INPUT_GE_064_FRAC": 0.999262,
+  "PREV_FIRED_INPUT_GE_086_FRAC": 0.999262,
+  "PREV_FIRED_INPUT_GE_064_FRAC": 0.999262,
+  "CONSECUTIVE_REQUIRING_NON_KC": 0.000738,
+  "KC_KC_CAUSAL_ROOT_CAUSE": "NOT_ESTABLISHED (capacity only)",
+  "SOURCE_PROVENANCE": "PARTIAL",
+  "A1_STILL_OPTIONAL": "yes (sparse-probability estimate); A1 no longer needed to exclude tonic+noise every-step",
+  "NETWORK_CAUSAL_EXPERIMENT_WORTH_APPLYING": "YES (KC->KC zeroed vs intact; separate authorization)",
+  "A2_A3_B": "NO-GO",
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Training_Authorization": false,
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO"
+ },
+ "training_authorized": false
+}
