@@ -1,0 +1,229 @@
+{
+ "a0_stats": {
+  "diffs": {
+   "kc": [
+    -6.3e-05,
+    0.000563,
+    -0.000313,
+    -0.000687,
+    0.0
+   ],
+   "mb": [
+    -0.001684,
+    0.001474,
+    0.001474,
+    -0.000211,
+    -0.000632
+   ],
+   "e_nz": [
+    0.001765,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "kc": {
+   "n_nonzero": 4,
+   "n_zero": 1,
+   "p_include_zeros": 0.625,
+   "p_exclude_zeros": 0.625,
+   "min_p_possible_with_5(nonzero)": 0.0625,
+   "min_p_possible_current_nonzero": 0.125,
+   "effect_mean": -0.0001,
+   "sign_consistency": 3
+  },
+  "mb": {
+   "n_nonzero": 5,
+   "n_zero": 0,
+   "p_include_zeros": 1.0,
+   "p_exclude_zeros": 1.0,
+   "min_p_possible_with_5(nonzero)": 0.0625,
+   "min_p_possible_current_nonzero": 0.0625,
+   "effect_mean": 8.42e-05,
+   "sign_consistency": 3
+  },
+  "e_nz": {
+   "n_nonzero": 1,
+   "n_zero": 4,
+   "p_include_zeros": 1.0,
+   "p_exclude_zeros": 1.0,
+   "min_p_possible_with_5(nonzero)": 0.0625,
+   "min_p_possible_current_nonzero": 1.0,
+   "effect_mean": 0.000353,
+   "sign_consistency": 1
+  },
+  "synthetic": {
+   "all_same_sign_5": {
+    "p": 0.0625,
+    "min_possible": 0.0625
+   },
+   "mixed_signs_5": {
+    "p": 0.8125,
+    "min_possible": 0.0625
+   },
+   "one_zero_4_nonzero": {
+    "p": 0.125,
+    "min_possible": 0.125
+   },
+   "all_zero_5": {
+    "p": 1.0,
+    "min_possible": 1.0
+   }
+  },
+  "nonfinite_rejected": true,
+  "stat_gate_valid": false,
+  "reason": "5 个非零配对的双侧精确符号翻转最小 p=2/32=0.0625；实际 1 个零 + 4 非零 -> 最小 p=2/16=0.125。均不能达到 p<0.05；**不得**改单侧/改 α/加 seed 事后挽救。"
+ },
+ "eligibility": {
+  "definition_matches_prereg": false,
+  "uses_same_step_product": true,
+  "time_resolved": false,
+  "final_only_binary_fraction": true,
+  "entrance_positive_control_recorded": false,
+  "amplitude_timecourse_saved": false,
+  "stimulus_units_verified_vs_encoder": false,
+  "high_spontaneous_ceiling": true,
+  "recover_baseline_matched": false,
+  "recover_vs_stim_comparable": false,
+  "validity": "INVALID/LIMITED",
+  "missing": [
+   "per-step eligibility amplitude/timecourse",
+   "LPLC2/LC4 entrance firing (positive control)",
+   "Encoder-consistent stimulus calibration",
+   "matched recover baseline"
+  ],
+  "interpretations": {
+   "stimulus_truly_no_transmission": "NOT ESTABLISHED",
+   "stimulus_drowned_by_background": "LIKELY (high spontaneous; eligibility nonzero=1.0 in 4/5 controls)",
+   "metric_lacks_discriminative_power": "YES (same-step product; final-only binarized fraction)",
+   "current_data_cannot_discriminate": "YES"
+  },
+  "note": "以上四类必须分开；不得把'指标无效'说成'感觉通路机制失败'。"
+ },
+ "s1_budget_erratum": {
+  "n_MBON": 95,
+  "l1_total": {
+   "mean": 1.0,
+   "min": 1.0,
+   "max": 1.0,
+   "all_one": true
+  },
+  "l1_plastic": {
+   "mean": 0.041548
+  },
+  "l1_nonplastic": {
+   "mean": 0.958452
+  },
+  "budgetA_headroom": {
+   "mean": 0.0,
+   "n_zero": 95
+  },
+  "budgetB_headroom": {
+   "mean": 1.1e-08,
+   "max": 1.19e-07,
+   "n_zero_1e-6": 95,
+   "note": "浮点残差 ~1e-7；净余量为 0"
+  },
+  "previous_wrong_budgetB_headroom": 0.9585,
+  "corrected_budgetB_headroom": 0.0,
+  "erratum": "P10-C1d 把 L1_nonplastic≈0.9585 误当作**未使用**学习容量；实际 L1_total = L1_nonplastic + L1_plastic = 1.0，故 headroom=0。",
+  "synthetic_negative": {
+   "nonplastic": 0.9585,
+   "plastic": 0.0415,
+   "added_positive": 0.01,
+   "resulting_total_L1": 1.01,
+   "exceeds_one": true
+  },
+  "conclusion": "Budget A 与 Budget B 的**净正向余量均为 0**；保持 L1≤1 只能通过可塑突触间增强/减弱抵消实现重新分配。正向净增长需 S2（放宽 L1）或减少非可塑权重（不允许，未批准边不变）。",
+  "s1_a_feasible": true,
+  "s1_b_feasible": true,
+  "s2_feasible": true
+ },
+ "kernel": {
+  "requested_effective_consistent": true,
+  "frozen_eval_retains": true,
+  "zero_weight_keeps_anatomical_identity": true,
+  "original_save_state_has_metadata": false,
+  "original_frozen_eval_validates_source": false,
+  "candidate_checked_loader_validates": [
+   "W sha256",
+   "approved mask sha256",
+   "params",
+   "L1 strategy"
+  ],
+  "limitations": [
+   "历史 save_state 仅存 delta，无 W/掩码/参数/L1 元数据",
+   "历史 FROZEN_EVAL 加载不校验来源；仅合成沙箱内使用"
+  ],
+  "status": "SYNTHETIC_ONLY; real update NOT implemented"
+ },
+ "candidate_loader_tests": {
+  "matching_ok": true,
+  "wrong_W": true,
+  "wrong_approved": true,
+  "wrong_params": true,
+  "wrong_l1": true
+ },
+ "future_a0_preregistration": {
+  "status": "PENDING_APPROVAL; NOT run",
+  "statistics": {
+   "min_nonzero_pairs": 6,
+   "reason": "5 非零 -> min p 0.0625；6 非零 -> 2/64=0.03125 <0.05",
+   "rule": "pre-register n and one-sided/two-sided; no post-hoc change",
+   "power_analysis_required": true
+  },
+  "eligibility": {
+   "definition": "independent pre/post traces (exponential filters), not same-step product",
+   "time_resolved": "per-step/per-window amplitude + nonzero fraction",
+   "metrics": [
+    "mean",
+    "quantiles",
+    "nonzero fraction",
+    "decay time"
+   ],
+   "no_final_only_binary": true
+  },
+  "stimulus": {
+   "entrance_positive_control": "record LPLC2/LC4 firing; require significant increase",
+   "calibration": "match Encoder steady-state voltage semantics; pre-register amount",
+   "no_kc_injection": true
+  },
+  "controls": {
+   "matched_baseline": "same duration no-stim; recover baseline matched",
+   "background": "quantify spontaneous rate; pre-register ceiling criteria"
+  },
+  "inference": {
+   "separate": [
+    "no transmission",
+    "drowned by background",
+    "metric invalid",
+    "indeterminate"
+   ]
+  },
+  "approval_required": true
+ },
+ "verdicts": {
+  "A0_Historical_Protocol_Result": "FAIL (retained)",
+  "A0_Statistical_Gate_Validity": "INVALID",
+  "A0_Sensory_Transmission_Evidence": "INCONCLUSIVE",
+  "Eligibility_Measurement_Validity": "INVALID/LIMITED",
+  "S1_Budget_A": "feasible; zero net positive headroom (only redistribution)",
+  "S1_Budget_B": "erratum: headroom=0 (previous 0.9585 wrong)",
+  "S2": "feasible; positive net growth allowed with explicit L1 deviation",
+  "Synthetic_Kernel": "synthetic-only; invariants pass; persistence metadata LIMITED",
+  "Level_A_Execution": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false,
+  "route": "FORMALLY CLOSED (A0 protocol invalid + A-level not ready)",
+  "restart_requires": [
+   "new preregistered A0 protocol (statistics + metric + entrance control)",
+   "real DW erratum written approval",
+   "real update implementation + acceptance",
+   "real-student isolation (for C) and B decoder"
+  ]
+ },
+ "training_authorized": false
+}
