@@ -1,0 +1,59 @@
+{
+ "status": "OK",
+ "archive_status": "ARCHIVED_VERIFIED",
+ "n_seeds": 25,
+ "n_cells": 320,
+ "seed_level_paired_dz": {
+  "definition": "per-seed mean over 320 KC of stim-none; mean/SD over 25 seeds (ddof=1)",
+  "mean": -2.0000037693534978e-05,
+  "sample_sd_ddof1": 0.000458470662124455,
+  "dz": -0.04362337515962108,
+  "n": 25,
+  "seed_mean_values": [
+   0.000125000442,
+   -0.000734374917,
+   -1.5625264e-05,
+   0.000265624927,
+   -0.000656249933,
+   -0.000171875028,
+   -0.000265625247,
+   0.00054687541,
+   -0.000281250104,
+   0.000234374966,
+   -0.000390625006,
+   0.000624999986,
+   -0.000140624965,
+   0.000625000335,
+   -0.000499999966,
+   0.001203124644,
+   0.000437500334,
+   7.8124649e-05,
+   -0.000359375583,
+   7.8124831e-05,
+   -0.000500000548,
+   7.8124925e-05,
+   -0.000374999741,
+   -0.000234375053,
+   -0.000171875115
+  ]
+ },
+ "comparisons": {
+  "cross_cell_dz_P11_0": -0.022376861423254013,
+  "cross_cell_definition": "mean(per-cell means)/sd(per-cell means) across 320 cells",
+  "pooled_seed_cell_standardized_ratio": -0.0031611144077032804,
+  "pooled_definition": "mean(all 8000 seed-cell diffs)/sd(all seed-cell diffs)",
+  "seed_level_paired_dz": -0.04362337515962108,
+  "all_three_distinct": true,
+  "warning": "cross-cell dz and pooled seed-cell ratio must NOT be presented as the seed-level paired Cohen's dz"
+ },
+ "seed_114": {
+  "included": true,
+  "index": 13,
+  "value": 0.000625000335
+ },
+ "seed_selection": "none; all 25 seeds included; no deletion",
+ "historical_unchanged": true,
+ "a0_rerun": false,
+ "full_brain_initialized": false,
+ "training_authorized": false
+}
