@@ -1,0 +1,43 @@
+{
+ "protocol": "P11-1c/v1",
+ "authorization": {
+  "granted": false,
+  "status": "NOT_AUTHORIZED",
+  "reason": "no P11-1c authorization config"
+ },
+ "hashes": {
+  "brain.npz": {
+   "sha256": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "full_equal": true
+  },
+  "weights.npz": {
+   "sha256": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c",
+   "full_equal": true
+  },
+  "ok": true
+ },
+ "hashes_ok": true,
+ "full_brain_started": false,
+ "experiment": "NOT RUN",
+ "safety_fixes": [
+  "CREATE_SUSPENDED -> AssignProcessToJobObject -> ResumeThread",
+  "assignment failure terminates child immediately (no run)",
+  "per-process AND job-total memory limits (2 GiB)",
+  "full 64-hex SHA-256 equality (no prefix compare)",
+  "MiB/GiB units for memory; GiB cap",
+  "synthetic isolation/assign/timeout/memory/no-retry tests"
+ ],
+ "verdicts": {
+  "RESOURCE": "NOT_AUTHORIZED",
+  "FULL_BRAIN_BASELINE": "INCONCLUSIVE",
+  "FULL_VS_SUBNET_DIFFERENCE": "INCONCLUSIVE",
+  "MODEL_ROOT_CAUSE": "NOT_ESTABLISHED",
+  "Level_A_Training": "NO-GO",
+  "Level_B": "NO-GO",
+  "Level_C": "NO-GO",
+  "Biological": "NO-GO",
+  "Training_Authorization": false
+ },
+ "training_authorized": false,
+ "status": "NOT_AUTHORIZED"
+}
