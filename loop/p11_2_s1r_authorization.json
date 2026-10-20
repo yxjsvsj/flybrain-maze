@@ -1,0 +1,59 @@
+{
+ "protocol": "P11-2-S1R/v1",
+ "status": "NOT_AUTHORIZED",
+ "approved_by": null,
+ "approval_text": null,
+ "scope": {
+  "n_neurons": 166700,
+  "network": "B_synthetic_kc_kc_zero",
+  "remove_edges": 642933,
+  "conditions": [
+   "none",
+   "stim"
+  ],
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125
+  ],
+  "steps": 400,
+  "total_steps": 20000,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "exact LPLC2 + LC4 (311)",
+  "dv": 0.2,
+  "amount": 0.036254,
+  "device": "cpu",
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "one_run": true,
+  "auto_retry": false,
+  "training": false,
+  "dW": 0
+ },
+ "checksum": "f6c1cbad917e880194d6f6ce6b96084868f9fb5c010fcd798af74cdb66954311"
+}

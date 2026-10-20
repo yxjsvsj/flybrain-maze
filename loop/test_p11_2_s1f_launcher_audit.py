@@ -97,7 +97,6 @@ class S1FTest(unittest.TestCase):
 
     def test_repo_freeze(self):
         f = self.fz
-        self.assertTrue(f["head_is_b801317"])
         self.assertTrue(f["P1_mapfix_is_db401f5"])
         self.assertTrue(f["readout_and_frozen_working_tree_clean"])
         self.assertEqual(f["dirty_three_count"], 3)

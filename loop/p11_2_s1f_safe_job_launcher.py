@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.wintypes as wt
-import json
 import os
+import subprocess
 import sys
 import time
 
@@ -60,7 +60,7 @@ def _command(script=None, module=None, args=()):
     else:
         cmd = f'"{py}" -u "{os.path.abspath(script)}"'
     if args:
-        cmd += " " + " ".join(str(a) for a in args)
+        cmd += " " + subprocess.list2cmdline([str(a) for a in args])
     return cmd
 
 
