@@ -1,8 +1,8 @@
 {
  "protocol": "P11-2-S1R/v1",
- "status": "NOT_AUTHORIZED",
- "approved_by": null,
- "approval_text": null,
+ "status": "APPROVED",
+ "approved_by": "user",
+ "approval_text": "我明确批准 P11-2-S1R 正式实验仅执行一次。基线 commit 7124a36。完整 MaleCNS 的合成 B 网络，仅删除原有 642,933 条 KC→KC 连接；none/stim 两条件；seeds 101–125；每 seed 每条件 400 步，共 20,000 步。仅精确 LPLC2/LC4 共 311 个靶点；dv=0.2，amount=0.036254；窗口 [100,300)。统计门槛、LIF 参数及原始连接权重保持冻结；CPU only；整体 900 秒 / 2048 MiB；只允许一次运行，失败、异常、超时、内存超限均停止，不自动重跑、不补跑、不提高上限、不修改实验参数。不包括训练、真实突触 ΔW 更新、Dijkstra、迷宫实验、Level B/C 或实体机器人控制。",
  "scope": {
   "n_neurons": 166700,
   "network": "B_synthetic_kc_kc_zero",
@@ -55,5 +55,5 @@
   "training": false,
   "dW": 0
  },
- "checksum": "f6c1cbad917e880194d6f6ce6b96084868f9fb5c010fcd798af74cdb66954311"
+ "checksum": "b7f9def8d16a6161f34d45c888d8fbf47c90b53999481787bd8f686c49b362f5"
 }
