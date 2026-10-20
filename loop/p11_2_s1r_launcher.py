@@ -344,8 +344,11 @@ def _copy_if_exists(src, dst):
 
 
 def _manifest(out_dir, extra):
+    """不可变文件清单；run_meta.json 可更新，单独用最终字节哈希记录。"""
     rows = []
     for name in sorted(os.listdir(out_dir)):
+        if name == "run_meta.json":
+            continue
         p = os.path.join(out_dir, name)
         if os.path.isfile(p):
             rows.append({"name": name, "sha256": _sha(p), "size": os.path.getsize(p)})

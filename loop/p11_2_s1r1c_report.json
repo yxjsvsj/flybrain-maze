@@ -1,0 +1,196 @@
+{
+ "protocol": "P11-2-S1R-1c/v1",
+ "baseline": "8702272",
+ "status": "S1R1C_ERRATA_COMPLETE; NOT_AUTHORIZED; NO_RUN",
+ "ready_to_request_one_s1r_run": "YES",
+ "new_s1r_execution_authorization": false,
+ "training_authorization": false,
+ "real_synaptic_learning_ready": "NO",
+ "levels": "NO-GO",
+ "static_hardening": "GO",
+ "s1r_execution_now": "NO-GO",
+ "mbon_none_source": {
+  "fixed": true,
+  "code": "mbn = zn[mb]; mbs = zs[mb]",
+  "full_97_none_mean": 0.1,
+  "full_97_stim_mean": 0.2,
+  "matched_95_none_mean": 0.05,
+  "matched_95_stim_mean": 0.15,
+  "matched_95_diff": 0.1,
+  "per_cell_none_mean_rate": 0.1,
+  "per_cell_stim_mean_rate": 0.2,
+  "matched_95_pairing_unchanged": true,
+  "scientific_parameters_unchanged": true
+ },
+ "manifest_hashes": {
+  "run_meta_excluded_from_files": true,
+  "run_meta_sha256": "final bytes",
+  "run_meta_sha256_matches_final": true,
+  "all_listed_files_rehashed_ok": true,
+  "npz_count": 50,
+  "npz_name_size_sha_preserved": true,
+  "circular_manifest_run_meta": false
+ },
+ "status_chain": {
+  "success": "RUN_COMPLETE",
+  "postprocess_failure": "POSTPROCESS_FAILED",
+  "persistence_failure": "PERSISTENCE_FAILED",
+  "incomplete": "INCOMPLETE_NO_GO"
+ },
+ "tests": {
+  "s1r_ran": 36,
+  "s1r_passed": 36,
+  "s1f_ran": 9,
+  "s1f_passed": 9,
+  "failed": 0,
+  "s1r_command": ".\\.venv\\Scripts\\python.exe -m unittest loop.test_p11_2_s1r_launcher -v"
+ },
+ "science_frozen": {
+  "network": "B_synthetic_kc_kc_zero",
+  "remove_edges": 642933,
+  "conditions": [
+   "none",
+   "stim"
+  ],
+  "seeds": [
+   101,
+   125
+  ],
+  "steps": 400,
+  "total_steps": 20000,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "exact LPLC2 + LC4 (311)",
+  "dv": 0.2,
+  "amount": 0.036254,
+  "device": "cpu",
+  "training": false,
+  "dW": 0,
+  "exact_signflip": true,
+  "bootstrap_n": 10000,
+  "primary_min_positive": 0.05
+ },
+ "resources": {
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "c1_peak_MiB": 1942.7,
+  "c1_margin_MiB": 105.3,
+  "resource_verified": false,
+  "note": "S1/S1R not resource-measured; no automatic increase"
+ },
+ "historical_s1": {
+  "report_status": "INCOMPLETE_NO_GO",
+  "run_meta_status": "RUN_COMPLETE",
+  "exit_code": 1,
+  "run_wall_s": 0.82,
+  "job_peak_MiB": 521.05,
+  "experiment_log_bytes": 0,
+  "child_result": false,
+  "seeds": 0,
+  "files": [
+   {
+    "name": "authorization.json",
+    "sha256": "4f0f54b4116fe92b10462ddeb459b07c7c61e84157c8b4a5f5ad9228f43c9d71",
+    "raw_ok": true,
+    "backup_ok": true
+   },
+   {
+    "name": "experiment.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_ok": true,
+    "backup_ok": true
+   },
+   {
+    "name": "ids.npz",
+    "sha256": "c542c23757f1d3c7f599cdca58d974c95f464f025a2aec3541fd6b3234035ba2",
+    "raw_ok": true,
+    "backup_ok": true
+   },
+   {
+    "name": "matched_ids.json",
+    "sha256": "fc27e51fa13a54aeebe1a5b47ae157e1e26b1f8fa6fa1f678c274f53a02a9315",
+    "raw_ok": true,
+    "backup_ok": true
+   },
+   {
+    "name": "run_meta.json",
+    "sha256": "728a2e4cd7e744bb584ef9e2751223dcde3f9028e23b9a491cb0ea77c61dbc24",
+    "raw_ok": true,
+    "backup_ok": true
+   },
+   {
+    "name": "script_freeze.json",
+    "sha256": "6bebf546d6355c90690e1761acd82d0ac7e4a6a70140b0c2e3fc1691628ca16f",
+    "raw_ok": true,
+    "backup_ok": true
+   }
+  ],
+  "all_raw_hashes_ok": true,
+  "all_backup_hashes_ok": true,
+  "backup_dir": "C:\\AA_project\\guoying_archive\\p11_2_s1_failed_20261020T104624",
+  "no_rerun": true
+ },
+ "one_shot_lock": {
+  "implemented": true,
+  "path_pattern": "loop/p11_2_s1r_authorization_locks/<auth_checksum>.consumed.json",
+  "atomic": "os.open(O_CREAT|O_EXCL|O_WRONLY)",
+  "persistent": true,
+  "second_execution": "AUTHORIZATION_ALREADY_CONSUMED",
+  "lock_present_now": false
+ },
+ "authorization": {
+  "file": "C:\\AA_project\\guoying\\loop\\p11_2_s1r_authorization.json",
+  "status": "NOT_AUTHORIZED",
+  "checksum": "f6c1cbad917e880194d6f6ce6b96084868f9fb5c010fcd798af74cdb66954311",
+  "checksum_ok": true,
+  "approved_by": null,
+  "approval_text": null,
+  "old_s1_reused": false
+ },
+ "freeze": {
+  "file": "C:\\AA_project\\guoying\\loop\\p11_2_s1r_script_freeze.json",
+  "module": "loop.p11_2_s1r_experiment",
+  "script": "C:\\AA_project\\guoying\\loop\\p11_2_s1r_experiment.py",
+  "sha256": "2a57790479e69f8aded1ccc37257d2b375d47de50255d06bb3580d61bc71ab93",
+  "computed_sha256": "2a57790479e69f8aded1ccc37257d2b375d47de50255d06bb3580d61bc71ab93",
+  "match": true
+ },
+ "repo_freeze": {
+  "head": "87022726aa5baf1938146417ce0c08838b150c8b",
+  "P1_mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+  "P1_mapfix_is_db401f5": true,
+  "tags_at_head": [],
+  "P1_FREEZE_exists": false,
+  "BASE_tag_exists": false,
+  "readout_and_frozen_working_tree_clean": true,
+  "dirty_three": [
+   "M hardware/tof5_client.py",
+   " M loop/diagnose.py",
+   " M loop/p10c1b_decoder_freeze.json"
+  ],
+  "dirty_three_count": 3,
+  "official_hashes": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  },
+  "official_hashes_match": true,
+  "note": "No P1/BASE/readout/tag mutation. Three pre-existing dirty files preserved; S1F files are new.",
+  "head_is_8702272": true
+ },
+ "gates": {
+  "Training_Authorization": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "A1_A2_A3/B": "NO-GO",
+  "DeltaW": 0,
+  "Dijkstra": "NO",
+  "Maze": "NO",
+  "B/C": "NO",
+  "Robot": "NO"
+ },
+ "no_full_brain_run": true,
+ "no_s1r_run": true,
+ "notes": "Two targeted errata + synthetic 25x2 postprocess; S1R not executed; S1 remains INCOMPLETE_NO_GO."
+}

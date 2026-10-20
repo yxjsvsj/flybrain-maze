@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 from loop.p11_1c_full_brain_bench import run_under_job
 from loop.p11_2_s1f_safe_job_launcher import run_under_job_safe
@@ -234,8 +235,18 @@ def repo_freeze():
     def g(*args):
         return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=30)
-    head = g("rev-parse", "HEAD").stdout.strip()
-    p1 = g("rev-parse", "P1-mapfix").stdout.strip()
+
+    def g_value(*args):
+        r = None
+        for _ in range(5):
+            r = g(*args)
+            if r.returncode == 0 and r.stdout.strip():
+                return r.stdout.strip()
+            time.sleep(0.1)
+        return (r.stdout.strip() if r is not None else "")
+
+    head = g_value("rev-parse", "HEAD")
+    p1 = g_value("rev-parse", "P1-mapfix")
     at_head = [x for x in g("tag", "--points-at", "HEAD").stdout.splitlines() if x]
     frozen = g("status", "--short", "--", "nav", "config.py", "loop/decode.py",
                "loop/encode.py", "loop/run.py").stdout.strip()

@@ -523,7 +523,7 @@ def analyze(out_dir, validate=True):
     for s in SEEDS:
         zn = np.load(os.path.join(out_dir, f"{s}_none.npz"), allow_pickle=True)
         zs = np.load(os.path.join(out_dir, f"{s}_stim.npz"), allow_pickle=True)
-        kcn = zn["kc"]; kcs = zs["kc"]; mbn = zs["mb"]; mbs = zs["mb"]
+        kcn = zn["kc"]; kcs = zs["kc"]; mbn = zn["mb"]; mbs = zs["mb"]
         lpn = zn["lp"]; lps = zs["lp"]
         kcmn = zn["kc_matched"]; kcms = zs["kc_matched"]
         mbmn = zn["mb_matched"]; mbms = zs["mb_matched"]

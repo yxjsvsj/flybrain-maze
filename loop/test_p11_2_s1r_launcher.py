@@ -223,6 +223,39 @@ class S1R0Test(unittest.TestCase):
         self.assertEqual(rep["complete_25_pairs"], True)
         self.assertEqual(len(rep["per_seed"]), 25)
         self.assertIn("kc_cell_none", rep["secondary"])
+        names = [x["name"] for x in man["files"]]
+        self.assertNotIn("run_meta.json", names)
+        self.assertEqual(len([n for n in names if n.endswith("_none.npz") or n.endswith("_stim.npz")]), 50)
+        for row in man["files"]:
+            p = os.path.join(fx["out"], row["name"])
+            self.assertEqual(_sha(p), row["sha256"])
+            self.assertEqual(os.path.getsize(p), row["size"])
+        self.assertEqual(man["run_meta_sha256"], _sha(fx["run_meta"]))
+        self.assertNotEqual(man["run_meta_sha256"], "")
+        # no circular manifest/run_meta reference
+        self.assertNotIn("manifest_sha256", rm)
+        self.assertNotIn("run_meta_sha256", rm)
+
+    def test_full_97_mbon_uses_none_source(self):
+        def mutate(seed, cond, data):
+            if cond == "none":
+                data["mb"][100:120, :] = 1
+                data["mb_matched"][100:110, :] = 1
+            else:
+                data["mb"][100:140, :] = 1
+                data["mb_matched"][100:130, :] = 1
+        out = self._dataset("mb_nonzero", mutate)
+        rep = experiment.analyze(out)
+        self.assertAlmostEqual(rep["secondary"]["full_97_mbon_none"], 0.1, places=12)
+        self.assertAlmostEqual(rep["secondary"]["full_97_mbon_stim"], 0.2, places=12)
+        self.assertAlmostEqual(rep["secondary"]["mbon_cell_none"]["mean_rate"], 0.1, places=12)
+        self.assertAlmostEqual(rep["secondary"]["mbon_cell_stim"]["mean_rate"], 0.2, places=12)
+        self.assertAlmostEqual(rep["per_seed"][0]["full_mb_none"], 0.1, places=12)
+        self.assertAlmostEqual(rep["per_seed"][0]["full_mb_stim"], 0.2, places=12)
+        # matched 95 MBON remains the correct zn/zs pair: 0.05 vs 0.15
+        self.assertAlmostEqual(rep["mbon"]["matched_95_diff"]["mean"], 0.1, places=12)
+        self.assertAlmostEqual(rep["per_seed"][0]["mb_none"], 0.05, places=12)
+        self.assertAlmostEqual(rep["per_seed"][0]["mb_stim"], 0.15, places=12)
 
     def test_report_write_failure_is_persistence_failed(self):
         fx = self._postprocess_fixture("report_fail")
@@ -760,6 +793,27 @@ class S1R0Test(unittest.TestCase):
         self.assertTrue(r["full_success_chain"]["manifest_status"])
         self.assertEqual(r["tests"]["s1r_ran"], 34)
         self.assertEqual(r["tests"]["s1r_passed"], 34)
+        self.assertEqual(r["tests"]["s1f_ran"], 9)
+        self.assertEqual(r["tests"]["s1f_passed"], 9)
+        self.assertEqual(r["authorization"]["status"], "NOT_AUTHORIZED")
+        self.assertTrue(r["freeze"]["match"])
+        self.assertFalse(r["one_shot_lock"]["lock_present_now"])
+        self.assertEqual(r["historical_s1"]["report_status"], "INCOMPLETE_NO_GO")
+
+    def test_s1r1c_errata_report(self):
+        r = _load(os.path.join(HERE, "p11_2_s1r1c_report.json"))
+        self.assertEqual(r["status"], "S1R1C_ERRATA_COMPLETE; NOT_AUTHORIZED; NO_RUN")
+        self.assertEqual(r["ready_to_request_one_s1r_run"], "YES")
+        self.assertFalse(r["new_s1r_execution_authorization"])
+        self.assertTrue(r["mbon_none_source"]["fixed"])
+        self.assertEqual(r["mbon_none_source"]["full_97_none_mean"], 0.1)
+        self.assertEqual(r["mbon_none_source"]["full_97_stim_mean"], 0.2)
+        self.assertEqual(r["mbon_none_source"]["matched_95_diff"], 0.1)
+        self.assertTrue(r["manifest_hashes"]["run_meta_excluded_from_files"])
+        self.assertTrue(r["manifest_hashes"]["all_listed_files_rehashed_ok"])
+        self.assertTrue(r["manifest_hashes"]["run_meta_sha256_matches_final"])
+        self.assertEqual(r["tests"]["s1r_ran"], 36)
+        self.assertEqual(r["tests"]["s1r_passed"], 36)
         self.assertEqual(r["tests"]["s1f_ran"], 9)
         self.assertEqual(r["tests"]["s1f_passed"], 9)
         self.assertEqual(r["authorization"]["status"], "NOT_AUTHORIZED")
