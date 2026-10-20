@@ -1,0 +1,288 @@
+{
+ "protocol": "P11-2-S3-0/v1",
+ "baseline": "8461d91",
+ "status": "PREREGISTRATION_COMPLETE; NOT_AUTHORIZED; NO_RUN",
+ "new_s3_authorization": "NOT_AUTHORIZED",
+ "new_full_brain_authorization": false,
+ "training_authorization": false,
+ "real_synaptic_learning_ready": "NO",
+ "levels": "NO-GO",
+ "frozen_s1r": {
+  "status": "RUN_COMPLETE",
+  "grading": "SENSORY_TRANSMISSION_NOT_DETECTED",
+  "completeness": "25/25",
+  "entry_diff": 0.066634727,
+  "entry_p": 5.960464477539063e-08,
+  "matched_kc_diff": -0.001430625,
+  "matched_kc_p": 0.3523610830307007,
+  "matched_kc_ci": {
+   "ci_low": -0.004300078,
+   "ci_high": 0.001516953,
+   "n": 10000,
+   "seed": 20261019
+  },
+  "matched_mbon_diff": -0.00176,
+  "matched_mbon_p": 0.43899786472320557,
+  "preserved": true
+ },
+ "s2_basis": {
+  "status": "OFFLINE_ANALYSIS_COMPLETE; NO_NEW_DYNAMICS; EXPLORATORY",
+  "matched_kc": 320,
+  "matched_kc_reachable": 320,
+  "matched_kc_independent_paths": 8162,
+  "other_kc_reachable": 0,
+  "note": "320/320 matched KC have static 2-hop paths; dynamic effective drive is unresolved."
+ },
+ "target": {
+  "rule": "S1R matched-320 KC set; frozen before S3",
+  "count": 320,
+  "unique": 320,
+  "sha256_i64_le": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "first10": [
+   7784,
+   8303,
+   8904,
+   10679,
+   12810,
+   17000,
+   20372,
+   22576,
+   23943,
+   24039
+  ],
+  "last10": [
+   137032,
+   137229,
+   138936,
+   139772,
+   140287,
+   141412,
+   141589,
+   142217,
+   142517,
+   143905
+  ],
+  "no_reselection": true
+ },
+ "injection_semantics": {
+  "api": "FlyBrain.step(inject=[(indices, amount)]) adds amount to v directly; amount is a voltage increment, not nA",
+  "lif": "v <- exp(-dt/tau) v + gain*W@spikes + tonic + noise + inject; v>=1 -> spike; reset 0",
+  "dt": 0.02,
+  "tau": 0.1,
+  "decay": 0.818730753077982,
+  "tonic": 0.14,
+  "steady_contribution_formula": "delta_v_inf = amount/(1-exp(-dt/tau))",
+  "reference_s1r_dv": 0.2,
+  "reference_s1r_amount": 0.03625384938440364,
+  "primary": {
+   "dv_inf": 0.2,
+   "amount": 0.03625384938440364
+  },
+  "low": {
+   "dv_inf": 0.1,
+   "amount": 0.01812692469220182
+  },
+  "no_empirical_dose_tuning": true
+ },
+ "design": {
+  "network": "official MaleCNS synthetic B KC->KC-zero; original LIF/noise/weight semantics",
+  "seeds": [
+   201,
+   202,
+   203,
+   204,
+   205,
+   206,
+   207,
+   208,
+   209,
+   210,
+   211,
+   212,
+   213,
+   214,
+   215,
+   216,
+   217,
+   218,
+   219,
+   220,
+   221,
+   222,
+   223,
+   224,
+   225
+  ],
+  "conditions": [
+   "sham",
+   "kc_low",
+   "kc_primary"
+  ],
+  "steps_per_seed_condition": 400,
+  "total_steps": 30000,
+  "window": [
+   100,
+   300
+  ],
+  "sham": "no KC injection",
+  "kc_low": "matched-320 KC, low voltage increment",
+  "kc_primary": "matched-320 KC, primary voltage increment",
+  "injection_window": [
+   100,
+   300
+  ],
+  "no_sensory_injection": true,
+  "no_mbon_injection": true,
+  "cpu_only": true,
+  "one_run": true,
+  "auto_retry": false,
+  "npz_estimate": 75,
+  "record_per_condition": [
+   "kc",
+   "mb",
+   "lp",
+   "kc_matched",
+   "mb_matched"
+  ]
+ },
+ "primary_endpoints": {
+  "kc_intervention": {
+   "target": "matched-320 KC firing fraction [100,300), kc_primary-sham",
+   "min_positive_effect": 0.1,
+   "test": "paired exact sign-flip, two-sided",
+   "alpha": 0.05,
+   "ci": "paired bootstrap 10,000, seed 20261019, lower bound > 0",
+   "saturation_guard": "primary mean KC firing <0.85 and fraction of matched KCs with per-cell primary mean >=0.95 <=0.10",
+   "pass_rule": "effect>=+0.10 AND p<0.05 AND CI low>0 AND not saturated"
+  },
+  "mbon_downstream": {
+   "target": "matched-95 MBON firing fraction [100,300), kc_primary-sham",
+   "min_positive_effect": 0.05,
+   "test": "paired exact sign-flip, two-sided",
+   "alpha": 0.05,
+   "ci": "paired bootstrap 10,000, seed 20261019, lower bound > 0",
+   "conditional": "interpreted only if KC intervention passes",
+   "pass_rule": "effect>=+0.05 AND p<0.05 AND CI low>0"
+  },
+  "negative": "MBON effect<=-0.05 with p<0.05 and CI high<0 is reported as KC_MBON_NEGATIVE, not a positive functional pass"
+ },
+ "secondary_analysis": {
+  "low_dose": "kc_low-sham for KC and MBON; descriptive; BH across the two low-dose endpoints; cannot replace primary",
+  "all_cell_level": "descriptive only; no cell-level p-value selection",
+  "no_endpoint_switching": true
+ },
+ "decision_tree": [
+  {
+   "if": "KC effect<+0.10 or p>=0.05 or CI includes 0",
+   "result": "INCONCLUSIVE_KC_NOT_DRIVEN",
+   "downstream_interpretation": "none"
+  },
+  {
+   "if": "saturation guard fails",
+   "result": "INCONCLUSIVE_KC_SATURATED",
+   "downstream_interpretation": "none"
+  },
+  {
+   "if": "KC passes and MBON passes",
+   "result": "KC_MBON_FUNCTIONAL_UNDER_DIRECT_DRIVE",
+   "downstream_interpretation": "downstream KC->MBON functional under artificial drive; natural sensory limitation remains supported, not proven"
+  },
+  {
+   "if": "KC passes and MBON effect>=+0.05 but p>=0.05/CI includes 0",
+   "result": "INCONCLUSIVE_DOWNSTREAM",
+   "downstream_interpretation": "cannot distinguish weak downstream from no downstream"
+  },
+  {
+   "if": "KC passes and MBON effect<=-0.05 with p<0.05/CI high<0",
+   "result": "KC_MBON_NEGATIVE",
+   "downstream_interpretation": "inhibitory/negative downstream response; not a positive chain"
+  },
+  {
+   "if": "KC passes and MBON neither positive nor negative significant",
+   "result": "KC_MBON_NOT_ACTIVATED",
+   "downstream_interpretation": "downstream not activated under artificial KC drive; artificial limitation"
+  }
+ ],
+ "risk_matrix": [
+  {
+   "risk": "KC dose too weak",
+   "mitigation": "predeclared low/primary; KC success gate; otherwise INCONCLUSIVE",
+   "severity": "medium"
+  },
+  {
+   "risk": "KC saturation/ceiling",
+   "mitigation": "predeclared mean<0.85 and >=0.95 fraction<=0.10 gate; otherwise INCONCLUSIVE",
+   "severity": "high"
+  },
+  {
+   "risk": "artificial synchronous drive",
+   "mitigation": "sham, paired seeds, both doses, explicit no-natural/learning claim",
+   "severity": "high"
+  },
+  {
+   "risk": "nonspecific network effects",
+   "mitigation": "sham and predeclared target set; artificial conclusion only",
+   "severity": "medium"
+  },
+  {
+   "risk": "resource/timeout",
+   "mitigation": "900 s/2048 MiB, one shot, no retry/no cap increase",
+   "severity": "high"
+  },
+  {
+   "risk": "multiplicity",
+   "mitigation": "hierarchical KC gate; low-dose BH; no cell-level selection",
+   "severity": "medium"
+  },
+  {
+   "risk": "MBON ambiguous",
+   "mitigation": "INCONCLUSIVE_DOWNSTREAM, no positive chain claim",
+   "severity": "medium"
+  }
+ ],
+ "resource": {
+  "s1r_reference": {
+   "steps": 20000,
+   "wall_s": 275.591,
+   "peak_MiB": 1943.16
+  },
+  "s3_steps": 30000,
+  "time_estimate_s": 413.387,
+  "peak_estimate_MiB": 1948.16,
+  "margin_estimate_MiB": 99.84,
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "status": "RESOURCE_PLAUSIBLE_TIGHT",
+  "verified": false,
+  "note": "Linear time scaling from S1R; extra condition is not concurrent, peak estimate is approximate. Must be treated as unverified; no automatic increase.",
+  "worth_applying_one_run": "YES_CONDITIONAL_ON_PREFLIGHT",
+  "resource_not_ready": false
+ },
+ "authorization": {
+  "s3": "NOT_AUTHORIZED",
+  "approved": false,
+  "s1r_authorization_consumed": true,
+  "no_s3_lock_created": true,
+  "note": "This is a preregistration only; no S3 authorization or lock is created."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_new_dynamics": true,
+ "no_s3_run": true,
+ "answers": {
+  "q1_target_and_current_freeze": "Use the S1R matched-320 KC global indices (SHA-256 frozen) and predeclare primary DV_inf=0.20 (amount 0.0362538494) with low DV_inf=0.10 (amount 0.0181269247); no pilot dose selection.",
+  "q2_discriminating_result": "Only KC intervention success followed by MBON positive/negative/absent outcome can discriminate upstream effective drive from downstream KC->MBON function; KC failure is INCONCLUSIVE.",
+  "q3_avoid_false_functional_claim": "Sham, paired seeds, two doses, KC success gate, saturation gate, and explicit artificial-synchronous-drive limitation; no natural pathway or learning claim.",
+  "q4_worth_one_run": "YES, conditional on resource preflight: estimated 413.4 s and ~1948 MiB, tight but within caps; unverified, no retry/no increase.",
+  "q5_inconclusive": "KC not driven, KC saturated, ambiguous MBON CI, missing seeds, resource/timeout, or any failure to meet predeclared gates.",
+  "next_experiment_candidate": "Direct KC current injection (sham/low/primary) with matched-320 targets, new seeds 201-225; do not execute without a new S3 authorization."
+ }
+}
