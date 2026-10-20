@@ -1,0 +1,98 @@
+{
+ "protocol": "P11-2-S3-1a/v1",
+ "baseline": "c34103e",
+ "status": "S3_1A_HASH_REVERIFY_COMPLETE; NOT_AUTHORIZED; NO_RUN",
+ "ready_to_request_one_s3_run": "YES",
+ "new_s3_execution_authorization": false,
+ "training_authorization": false,
+ "real_synaptic_learning_ready": "NO",
+ "levels": "NO-GO",
+ "fix": {
+  "implemented": true,
+  "function": "loop.p11_2_s3_experiment.verify_raw_75_hashes",
+  "timing": "after exp.analyze and before any RUN_COMPLETE decision",
+  "checks": ["file exists", "size exact", "sha256 exact"],
+  "files_checked": 75,
+  "on_mismatch": "POSTPROCESS_FAILED / INCOMPLETE_NO_GO",
+  "records_mismatched_files": true,
+  "no_auto_retry": true,
+  "post_stats_hashes_ok_true_only_if_all_match": true
+ },
+ "hash_chain": {
+  "pre_stats_manifest_files": 75,
+  "post_stats_recheck": true,
+  "run_meta_not_in_manifest_files": true,
+  "final_run_meta_sha256_separate": true,
+  "success_test_all_rehashed": true,
+  "tamper_test_rejected_run_complete": true
+ },
+ "synthetic_tamper": {
+  "tamper": "analyze() modified 201_sham.npz after computing statistics",
+  "result_status": "POSTPROCESS_FAILED",
+  "scientific_go": false,
+  "post_stats_hashes_ok": false,
+  "mismatches_include": "201_sham.npz",
+  "run_meta_status": "POSTPROCESS_FAILED",
+  "false_run_complete": false
+ },
+ "tests": {
+  "ran": 9,
+  "passed": 9,
+  "failed": 0,
+  "command": ".\\.venv\\Scripts\\python.exe -m unittest loop.test_p11_2_s3_launcher -v"
+ },
+ "freeze": {
+  "path": "loop/p11_2_s3_script_freeze.json",
+  "sha256": "63154938b2d887cccfea7918ae27624e3c105ed5a86aa127b291d65239a2568e",
+  "matches_experiment": true
+ },
+ "authorization": {
+  "s3_status": "NOT_AUTHORIZED",
+  "s3_approved": false,
+  "s3_lock_present": false,
+  "s1r_authorization_consumed": true
+ },
+ "frozen_science": {
+  "target_sha256": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "seeds": [201, 225],
+  "conditions": ["sham", "kc_low", "kc_primary"],
+  "steps": 400,
+  "total_steps": 30000,
+  "window": [100, 300],
+  "primary_amount": 0.03625384938440364,
+  "low_amount": 0.01812692469220182,
+  "cpu_only": true,
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048
+ },
+ "resource": {
+  "status": "RESOURCE_PLAUSIBLE_TIGHT",
+  "verified": false,
+  "s1r_peak_MiB": 1943.16,
+  "s3_static_estimate_MiB": 1948.16,
+  "time_estimate_s": 413.387,
+  "no_full_brain_calibration": true,
+  "no_auto_increase": true
+ },
+ "history": {
+  "s1r_modified": false,
+  "s2_modified": false,
+  "official_data_modified": false,
+  "p1_readout_tags_modified": false,
+  "three_unrelated_dirty_files_preserved": true
+ },
+ "gates": {
+  "NEW_S3_EXECUTION_AUTHORIZATION": false,
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_new_dynamics": true,
+ "no_s3_run": true,
+ "notes": "Only one hash re-verification patch; synthetic tests only; no S3 authorization or production lock."
+}

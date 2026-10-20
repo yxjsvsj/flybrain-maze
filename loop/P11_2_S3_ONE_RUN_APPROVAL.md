@@ -25,7 +25,7 @@ Level A/B/C/Biological=`NO-GO`
 
 1. S3-1 静态实现/合成验收通过，独立 commit/push。
 2. `p11_2_s3_script_freeze.json` 与 `p11_2_s3_experiment.py` SHA 完全一致
-   （当前 `09ecd2b4a68aff40b314ebe5e8ac4101409b6431779ba1a2c38b6643cf053d53`）。
+   （当前 `63154938b2d887cccfea7918ae27624e3c105ed5a86aa127b291d65239a2568e`）。
 3. `p11_2_s3_authorization.json` 仍为 `NOT_AUTHORIZED`；不得复用 S1R 授权或锁。
 4. 用户明确给出新的 S3 一次性批准文本；scope 必须与冻结方案完全一致。
 5. 运行前资源 preflight；S3 静态估计：约 413.387 s / 1948.16 MiB，`RESOURCE_PLAUSIBLE_TIGHT`，不是已验证资源。

@@ -262,10 +262,16 @@ def postprocess_and_persist(out_dir, run, meta, pre, child_path, report_path=Non
         rep = exp.analyze(out_dir)
         if rep.get("status") != "ANALYSIS_COMPLETE":
             raise RuntimeError(f"ANALYZE_BAD_STATUS:{rep.get('status')}")
+        post_hashes = exp.verify_raw_75_hashes(out_dir, raw["files"])
+        meta["post_stats_hashes_ok"] = bool(post_hashes["ok"])
+        meta["post_stats_hash_mismatches"] = post_hashes["mismatches"][:20]
+        if not post_hashes["ok"]:
+            raise RuntimeError("POST_STATS_HASH_MISMATCH:" + ",".join(post_hashes["mismatches"]))
     except Exception as e:  # noqa: BLE001
         meta["status"] = "POSTPROCESS_FAILED"; meta["run_status"] = "INCOMPLETE_NO_GO"
         meta["stats_error"] = f"{type(e).__name__}:{e}"; meta["experiment_succeeded"] = False
         meta["scientific_go"] = False
+        meta.setdefault("post_stats_hashes_ok", False)
         _persist_run_meta(out_dir, meta, run_meta_path)
         _write_failure_files(out_dir, report_path, manifest_path, "POSTPROCESS_FAILED",
                              meta["stats_error"], meta, raw, child)
@@ -274,7 +280,7 @@ def postprocess_and_persist(out_dir, run, meta, pre, child_path, report_path=Non
     meta_final.update({"status": "RUN_COMPLETE", "run_status": "RUN_COMPLETE",
                        "experiment_succeeded": True,
                        "decision": rep["decision"], "scientific_go": bool(rep["scientific_go"]),
-                       "post_stats_hashes_ok": True})
+                       "post_stats_hashes_ok": bool(post_hashes["ok"])})
     rep["status"] = "RUN_COMPLETE"; rep["run_status"] = "RUN_COMPLETE"
     rep["run_meta"] = meta_final
     rep["scientific_go"] = bool(rep["scientific_go"])

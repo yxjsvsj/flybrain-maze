@@ -258,6 +258,34 @@ class S31Test(unittest.TestCase):
         finally:
             experiment.exact_signflip = orig_analyze
 
+    def test_post_stats_hash_tamper_rejects_run_complete(self):
+        fx = self._fixture("post_hash_tamper")
+        orig_exact = self._fast_analyze()
+        orig_analyze = experiment.analyze
+
+        def tamper(out_dir):
+            rep = orig_analyze(out_dir)
+            p = os.path.join(out_dir, "201_sham.npz")
+            np.savez_compressed(p, kc=np.zeros((1, 1), np.uint8))
+            return rep
+
+        experiment.analyze = tamper
+        try:
+            meta = self._post(fx)
+        finally:
+            experiment.analyze = orig_analyze
+            experiment.exact_signflip = orig_exact
+        self.assertEqual(meta["status"], "POSTPROCESS_FAILED")
+        self.assertFalse(meta["experiment_succeeded"])
+        self.assertFalse(meta["scientific_go"])
+        self.assertFalse(meta["post_stats_hashes_ok"])
+        self.assertIn("201_sham.npz", meta["post_stats_hash_mismatches"])
+        rep = _load(fx["report"]); rm = _load(fx["run_meta"])
+        self.assertEqual(rep["status"], "POSTPROCESS_FAILED")
+        self.assertIn("201_sham.npz", rep["run_meta"]["post_stats_hash_mismatches"])
+        self.assertNotEqual(rm["status"], "RUN_COMPLETE")
+        self.assertFalse(rm["experiment_succeeded"])
+
     def test_synthetic_job_timeout_memory_exit(self):
         pkg = os.path.join(self.tmp, "s3_synth"); os.makedirs(pkg, exist_ok=True)
         _write(os.path.join(pkg, "__init__.py"), "")

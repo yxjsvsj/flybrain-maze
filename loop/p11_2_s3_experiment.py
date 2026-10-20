@@ -389,6 +389,17 @@ def validate_raw_75(out_dir, auth_sha=None, script_sha=None):
             "target_hashes": sorted(target_seen)}
 
 
+def verify_raw_75_hashes(out_dir, files):
+    """Recompute every pre-stat file size + SHA-256; any mismatch is fatal."""
+    bad = []
+    for row in files:
+        p = os.path.join(out_dir, row["name"])
+        if (not os.path.exists(p) or os.path.getsize(p) != row["size"]
+                or _sha256(p) != row["sha256"]):
+            bad.append(row["name"])
+    return {"ok": not bad, "mismatches": bad, "checked": len(files)}
+
+
 def validate_child_result(path, raw_w_hashes=None):
     if not os.path.exists(path):
         return {"exists": False, "complete": False, "errors": ["CHILD_OUTPUT_MISSING"]}
