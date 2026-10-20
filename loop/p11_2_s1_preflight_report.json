@@ -1,0 +1,202 @@
+{
+ "protocol": "P11-2-S1-preflight/v1",
+ "status": "STATIC_PREFLIGHT_COMPLETE; NOT_AUTHORIZED; NO_RUN",
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "authorization": {
+  "status": "NOT_AUTHORIZED",
+  "s1_execution_authorization": false,
+  "full_brain_run": false,
+  "s1_run_generated": false,
+  "c1_authorization_consumed": true,
+  "self_approval_config": false,
+  "evidence": "No explicit user approval for a P11-2-S1 run was provided in the current task; the S0 P11_2_S1_ONE_RUN_APPROVAL.md is an approval request marked NOT_AUTHORIZED; C1's one-shot authorization is consumed.",
+  "required_approval": "one independent S1 run: B synthetic KC->KC-zero; none/stim; 25 seeds; 400 steps; 20,000; exact LPLC2/LC4 311; dv=0.2 amount=0.036254; [100,300); CPU; 15 min/2 GiB; one run; no auto-retry; no training/dW/Dijkstra/maze/B/C/robot",
+  "no_fabricated_run": true
+ },
+ "two_hop_correction": {
+  "kc_endpoint_pairs": 7883,
+  "kc_independent_two_hop_paths": 8162,
+  "kc_paths_per_endpoint_max": 3,
+  "kc_paths_per_endpoint_mean": 1.035393,
+  "s0_reported_7883_is": "aggregated source-KC endpoint pairs (nnz of boolean 2-hop product), NOT independent paths",
+  "independent_paths_are_distinct": true,
+  "aggregate_positive_endpoints": 7783,
+  "aggregate_negative_endpoints": 100,
+  "aggregate_signed_sum": 0.003759782761,
+  "sign_7783_100_is": "signs of the 7,883 aggregated endpoint values, NOT path signs",
+  "signed_sum_is_dynamic_stimulus_effect": false,
+  "signed_sum_unit": "sum of aggregated signed 2-hop products (static weight statistic), not a neural response",
+  "kc_B_endpoint_pairs": 7883,
+  "kc_B_independent_paths": 8162,
+  "kc_removed_via_kc_intermediate": 0,
+  "kc_aggregate_signed_sum_B": 0.003759782761,
+  "feedforward_preserved_in_B": true,
+  "mbon_endpoint_pairs": 2528,
+  "mbon_independent_two_hop_paths": 3265,
+  "mbon_paths_per_endpoint_max": 6,
+  "mbon_paths_per_endpoint_mean": 1.291535,
+  "mbon_B_endpoint_pairs": 2528,
+  "mbon_B_independent_paths": 3265,
+  "direct_src_to_kc": 0,
+  "direct_src_to_mbon": 1,
+  "kc_to_mbon_edges": 61210,
+  "kc_to_mbon_all_positive": true,
+  "kc_to_mbon_signed_sum": 56.178184509,
+  "source_count": 311,
+  "kc_count": 4064,
+  "mbon_count": 97,
+  "note": "7,883 and 2,528 are aggregated endpoint pairs. Independent 2-hop paths are 8,162 (KC) and 3,265 (MBON). 7,783/100 are aggregate endpoint signs; signed sum 0.003759783 is not a dynamic stimulus effect."
+ },
+ "sensory": {
+  "lplc2": 185,
+  "lc4_exact": 126,
+  "targets": 311,
+  "lc4_startswith": 227,
+  "lc4_startswith_overcount": 101,
+  "target_rule": "exact cell_type in {LPLC2, LC4}",
+  "dv": 0.2,
+  "dt": 0.02,
+  "tau": 0.1,
+  "amount": 0.03625384938440364,
+  "amount_rounded": 0.036254,
+  "amount_is_0_036254": true,
+  "amount_is_not_0_6": true,
+  "stim_window": [
+   100,
+   300
+  ],
+  "only_window": true,
+  "no_kc_mbon_stim": true,
+  "no_target_change": true,
+  "no_strength_change": true,
+  "no_new_connections": true,
+  "no_teacher": true,
+  "tof_mapping_changed": false,
+  "lif_params_changed": false,
+  "dW": 0
+ },
+ "stats": {
+  "entry": {
+   "targets": "exact LPLC2/LC4 (311)",
+   "contrast": "stim-none",
+   "readout": "[100,300) firing fraction",
+   "unit": "seed",
+   "n": 25,
+   "test": "exact two-sided sign-flip",
+   "pass": "mean>0 and p<0.05"
+  },
+  "primary": {
+   "endpoint": "matched-320 KC [100,300) stim-none",
+   "unit": "seed",
+   "n": 25,
+   "test": "exact two-sided sign-flip",
+   "ci": "paired bootstrap 10,000 seed 20261019",
+   "min_positive_effect": 0.05,
+   "pass": "mean>=+0.05 and p<0.05 and 95% CI excludes 0"
+  },
+  "secondary": {
+   "full_4064": "exploratory",
+   "matched_95_MBON": "secondary; min +0.05",
+   "full_97_MBON": "exploratory",
+   "background_ceiling": "per-cell background and >=0.85/>=0.95 fractions",
+   "low_feedback": "2460/109321, 2650/117446, 3971/545375 individually",
+   "none_drift": "none-only matched-320 [100,200) vs [200,300); exact; report p"
+  },
+  "negative_response_rule": {
+   "statement": "A significant negative KC/MBON response is a real exploratory observation. It does not satisfy the frozen positive primary endpoint (mean >= +0.05) and must not be presented as primary success; it also must not be described as 'no sensory change'. Report separately; do not change the primary direction.",
+   "negative_does_not_pass_primary": true,
+   "negative_does_not_mean_no_change": true,
+   "reported_separately": true
+  },
+  "failure": {
+   "entry_fail": "SENSORY_ENTRY_FAILED",
+   "entry_ok_kc_no_positive": "SENSORY_TRANSMISSION_NOT_DETECTED",
+   "kc_ok_mbon_no": "KC_RESPONSE_WITHOUT_MBON_TRANSMISSION",
+   "kc_mbon_ok": "SENSORY_TRANSMISSION_DETECTED_IN_SYNTHETIC_B",
+   "resource": "RESOURCE_NO_GO",
+   "missing": "INCONCLUSIVE"
+  },
+  "rules": {
+   "keep_all_seeds": true,
+   "seed_114_kept": true,
+   "drop_seeds": false,
+   "select_seeds": false,
+   "cell_step_pseudo_replication": false,
+   "endpoint_switching": false,
+   "min_effect_change": false
+  }
+ },
+ "resource": {
+  "c1_peak_MiB": 1942.7,
+  "c1_margin_MiB": 105.3,
+  "extra_MiB_per_seed_both": 3.728,
+  "static_extra_MiB": 5.73,
+  "estimated_peak_MiB": 1948.43,
+  "estimated_margin_MiB": 99.57,
+  "time_estimate_s": 290.38,
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "status": "RESOURCE_PLAUSIBLE_TIGHT",
+  "verified": false,
+  "no_auto_increase": true,
+  "low_memory_per_seed": true,
+  "job_peak_persist_before_postprocess": true,
+  "create_suspended_job_resume": true,
+  "w_b_under_job": true,
+  "no_go_if": "peak >2048 MiB or wall >900 s or init/exit/missing seed failure",
+  "stop_rule": "no retry, no parameter change, no cap increase, no seed replacement"
+ },
+ "freeze": {
+  "P1_mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+  "P1_mapfix_freeze_empty": true,
+  "P1_baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+  "BASE_tag_present": false,
+  "readout_working_tree_modified": false,
+  "tags": {
+   "HW-shadow-v1": "0d784033630c1789e86367cb3e8fd98216d1a675",
+   "P1-baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+   "P1-mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+   "P1-mapfix-holdout": "35bb54360208070bfab1a7ac890161b35a5948f7",
+   "P1-pathfix": "ba5be735b848373386104d7f3965e407605ecff0",
+   "P1-repro-baseline": "f54f6f50f56dec8c18bf842d99c887f3eaa71bee",
+   "P2b-hil-wheelsup": "de41b461c3f7095350d074d22a586c6e2392e78c",
+   "P2b-tof5-bringup": "bb3162355ae9e23ec27e91853533e9257aed45af",
+   "P2c-0-ground-tools": "1b13d770fb4aa8447263c14db698cb02c7890612",
+   "P2c-ground-commissioning": "b58e2d353b364d9d6563491540675638b14d2f38"
+  },
+  "tags_modified": false,
+  "dirty_files": [
+   "hardware/tof5_client.py",
+   "loop/diagnose.py",
+   "loop/p10c1b_decoder_freeze.json"
+  ],
+  "dirty_files_preserved": true,
+  "head": "6fe7db926f73040fc54c8375f1406dba37f02dd1"
+ },
+ "verdicts": {
+  "AUTHORIZATION": "NOT_AUTHORIZED",
+  "S1_EXECUTION": false,
+  "FULL_BRAIN_RUN": false,
+  "S0_ENDPOINT_PAIRS_7883": true,
+  "S0_INDEPENDENT_PATHS_8162": true,
+  "S0_SIGNED_SUM_IS_NOT_DYNAMIC": true,
+  "NEGATIVE_RESPONSES_EXPLORATORY": true,
+  "PRIMARY_FROZEN": true,
+  "RESOURCE": "RESOURCE_PLAUSIBLE_TIGHT",
+  "RESOURCE_VERIFIED": false,
+  "S1_READY_TO_APPLY": true,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "A1_A2_A3/B": "NO-GO"
+ },
+ "full_brain_run": false,
+ "s1_run": false,
+ "training_authorized": false
+}

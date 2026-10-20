@@ -4,6 +4,15 @@
 `P11-2-S1 Execution Authorization = False`。
 `P11-2-C1` 的一次性授权已消费，不适用于本阶段；本文件只是申请，不是授权。
 
+## 0. S1 静态预检状态（NOT_AUTHORIZED；NO_RUN）
+
+- 静态预检：`p11_2_s1_preflight_report.json`；未启动完整脑、未生成 S1 原始数据/run_meta/统计报告。
+- 两跳勘误：**7,883 = 聚合 source–KC 端点配对**；**独立 2-hop 路径 = 8,162**；
+  7,783/100 是**聚合端点符号**；signed sum 0.003759783 不是动态刺激效应。
+- MBON：2-hop 端点 2,528 / 独立路径 3,265；KC→MBON 61,210 全正。
+- 资源：1948.43 MiB 静态估计 / 2048 MiB；`RESOURCE_PLAUSIBLE_TIGHT`；未验证。
+- **没有自我批准配置**；需用户明确批准下方一次 S1。
+
 ---
 
 ## 1. 请求
