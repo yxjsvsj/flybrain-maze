@@ -10,6 +10,7 @@ import hashlib
 import importlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -33,6 +34,15 @@ STEPS = 400
 STIM = (100, 300)
 AMOUNT = 0.036254
 DV = 0.2
+EXPECTED_N_NEURONS = 166700
+EXPECTED_N_KC = 4064
+EXPECTED_N_MBON = 97
+EXPECTED_N_KC_MATCHED = 320
+EXPECTED_N_MBON_MATCHED = 95
+EXPECTED_N_LP = 311
+EXPECTED_REMOVED_EDGES = 642933
+EXPECTED_NNZ_B = 24940005
+SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 WALL_CAP_S = 900.0
 MEM_CAP_MIB = 2048
 MEM_CAP_BYTES = MEM_CAP_MIB * 1024 ** 2
@@ -173,23 +183,111 @@ def preflight():
             "module_path": getattr(mod, "__file__", None), "official": h}
 
 
-def validate_child_result(path, expected_seeds=25):
+def _as_str(v):
+    if hasattr(v, "item"):
+        v = v.item()
+    if isinstance(v, bytes):
+        v = v.decode("utf-8", "replace")
+    return str(v)
+
+
+def validate_child_result(path, expected_seeds=25, raw_w_hashes=None):
+    """严格核验 child_result；25 条记录本身不等于实验成功。"""
     if not os.path.exists(path):
         return {"path": path, "exists": False, "complete": False, "seeds_observed": 0,
-                "noise_pairing_all": None, "reason": "CHILD_OUTPUT_MISSING"}
+                "noise_pairing_all": None, "reason": "CHILD_OUTPUT_MISSING", "errors": ["CHILD_OUTPUT_MISSING"]}
     try:
         with open(path, encoding="utf-8") as f:
             obj = json.load(f)
     except Exception as e:             # noqa: BLE001
         return {"path": path, "exists": True, "complete": False, "seeds_observed": 0,
-                "noise_pairing_all": None, "reason": f"CHILD_RESULT_INVALID:{type(e).__name__}"}
+                "noise_pairing_all": None, "reason": f"CHILD_RESULT_INVALID:{type(e).__name__}",
+                "errors": [f"CHILD_RESULT_INVALID:{type(e).__name__}"]}
+    errors = []
+    if not isinstance(obj, dict):
+        return {"path": path, "exists": True, "complete": False, "seeds_observed": 0,
+                "noise_pairing_all": None, "reason": "CHILD_RESULT_NOT_OBJECT",
+                "errors": ["CHILD_RESULT_NOT_OBJECT"]}
     seeds = obj.get("seeds")
-    n = len(seeds) if isinstance(seeds, list) else 0
-    complete = n == expected_seeds and obj.get("noise_pairing_all") is True
-    reason = None if complete else (
-        "SEED_COUNT_SHORT" if n != expected_seeds else "NOISE_PAIRING_NOT_ALL_TRUE")
-    return {"path": path, "exists": True, "complete": bool(complete), "seeds_observed": n,
-            "noise_pairing_all": obj.get("noise_pairing_all"), "reason": reason}
+    if not isinstance(seeds, list):
+        errors.append("SEEDS_NOT_LIST")
+        seeds = []
+    if len(seeds) != expected_seeds:
+        errors.append(f"SEED_COUNT:{len(seeds)}/{expected_seeds}")
+    by = {}
+    for i, row in enumerate(seeds):
+        if not isinstance(row, dict):
+            errors.append(f"SEED_ROW_NOT_OBJECT:{i}")
+            continue
+        try:
+            seed = int(row.get("seed"))
+        except Exception:              # noqa: BLE001
+            errors.append(f"SEED_INVALID:{i}")
+            continue
+        if seed not in SEEDS:
+            errors.append(f"SEED_OUT_OF_RANGE:{seed}")
+        if seed in by:
+            errors.append(f"SEED_DUPLICATE:{seed}")
+        by[seed] = row
+        for cond in ("none", "stim"):
+            part = row.get(cond)
+            if not isinstance(part, dict):
+                errors.append(f"CONDITION_MISSING:{seed}:{cond}")
+                continue
+            if part.get("finite") is not True:
+                errors.append(f"NONFINITE:{seed}:{cond}")
+            if "condition" in part and _as_str(part.get("condition")) != cond:
+                errors.append(f"CONDITION_LABEL:{seed}:{cond}")
+            if "seed" in part:
+                try:
+                    if int(part.get("seed")) != seed:
+                        errors.append(f"INNER_SEED:{seed}:{cond}")
+                except Exception:      # noqa: BLE001
+                    errors.append(f"INNER_SEED_INVALID:{seed}:{cond}")
+        if row.get("noise_pair_ok") is not True:
+            errors.append(f"NOISE_PAIR:{seed}")
+    if set(by) != set(SEEDS):
+        errors.append(f"SEED_SET:{sorted(set(SEEDS) - set(by))}")
+    if obj.get("noise_pairing_all") is not True:
+        errors.append("NOISE_PAIRING_ALL_NOT_TRUE")
+    if obj.get("ok") is not True:
+        errors.append("CHILD_NOT_OK")
+    expected = {
+        "n_neurons": EXPECTED_N_NEURONS, "n_kc": EXPECTED_N_KC, "n_mb": EXPECTED_N_MBON,
+        "n_kc_matched": EXPECTED_N_KC_MATCHED, "n_mb_matched": EXPECTED_N_MBON_MATCHED,
+        "n_lp": EXPECTED_N_LP, "steps": STEPS, "device": "cpu", "batch": 1,
+        "training": False, "dW": 0, "removed_edges": EXPECTED_REMOVED_EDGES,
+        "nnz_B": EXPECTED_NNZ_B, "KC_KC_nnz": 0,
+    }
+    for key, want in expected.items():
+        if obj.get(key) != want:
+            errors.append(f"PROTOCOL_MISMATCH:{key}:{obj.get(key)}!={want}")
+    try:
+        if abs(float(obj.get("amount")) - AMOUNT) > 1e-9:
+            errors.append(f"AMOUNT:{obj.get('amount')}")
+    except Exception:                  # noqa: BLE001
+        errors.append("AMOUNT_INVALID")
+    try:
+        raw_win = obj.get("stim_window")
+        win = [int(x) for x in raw_win] if isinstance(raw_win, (list, tuple)) else []
+        if win != list(STIM):
+            errors.append(f"STIM_WINDOW:{win}")
+    except Exception:                  # noqa: BLE001
+        errors.append("STIM_WINDOW_INVALID")
+    bhash = _as_str(obj.get("B_hash", ""))
+    if not SHA256_RE.fullmatch(bhash):
+        errors.append(f"B_HASH_INVALID:{bhash}")
+    raw_match = None
+    if raw_w_hashes is not None:
+        hs = {_as_str(x) for x in raw_w_hashes}
+        raw_match = (len(hs) == 1 and bhash in hs)
+        if not raw_match:
+            errors.append(f"B_HASH_RAW_MISMATCH:{bhash}!={sorted(hs)}")
+    complete = not errors
+    return {"path": path, "exists": True, "complete": bool(complete),
+            "seeds_observed": len(seeds), "noise_pairing_all": obj.get("noise_pairing_all"),
+            "reason": None if complete else errors[0], "errors": errors,
+            "B_hash": bhash, "raw_w_hashes_match": raw_match}
 
 
 def evaluate_run(run, child):
@@ -302,11 +400,12 @@ def run_s1r_once(out_dir=None):
     meta = _base_meta(pre, run, out_dir, wall, child_path, lock_path)
     meta["job_name"] = job_name
     _persist_run_meta(out_dir, meta)       # 先写入运行元数据
-    child = validate_child_result(child_path)
-    ev = evaluate_run(run, child)
     raw = exp.validate_raw_dataset(out_dir, auth_sha=pre["auth"]["checksum"],
                                    script_sha=meta["script_sha256"])
+    child = validate_child_result(child_path, raw_w_hashes=raw["w_hashes"])
+    ev = evaluate_run(run, child)
     meta.update(ev)
+    meta["child_errors"] = child.get("errors", [])[:20]
     meta["raw_ok"] = bool(raw["ok"])
     meta["raw_file_count"] = raw["file_count"]
     meta["raw_dataset_sha256"] = raw["dataset_sha256"]

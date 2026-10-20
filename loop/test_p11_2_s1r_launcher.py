@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import hashlib
 import importlib
 import inspect
@@ -22,6 +23,8 @@ import loop.p11_2_s1r_launcher as launcher
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKUP = r"C:\AA_project\guoying_archive\p11_2_s1_failed_20261020T104624"
 S1_RAW = r"C:\Users\yang\AppData\Local\Temp\opencode\p11_2_s1_full\20261020T104624"
+
+HASH_A_F = "abcdef0123456789" * 4
 
 CHILD = r'''
 import argparse, json, os, subprocess, sys, time
@@ -59,8 +62,15 @@ def main():
         subprocess.run([sys.executable, "-c", "b=bytearray(512*1024**2);print(len(b))"])
     if a.write_child:
         seeds = [101 + i for i in range(a.seeds)]
-        obj = {"ok": True, "seeds": [{"seed": s} for s in seeds],
-               "noise_pairing_all": not a.noise_bad}
+        rows = [{"seed": s, "none": {"seed": s, "condition": "none", "finite": True},
+                 "stim": {"seed": s, "condition": "stim", "finite": True},
+                 "noise_pair_ok": not a.noise_bad} for s in seeds]
+        obj = {"ok": True, "seeds": rows, "noise_pairing_all": not a.noise_bad,
+               "n_neurons": 166700, "n_kc": 4064, "n_mb": 97, "n_kc_matched": 320,
+               "n_mb_matched": 95, "n_lp": 311, "steps": 400, "device": "cpu",
+               "batch": 1, "training": False, "dW": 0, "amount": 0.036254,
+               "stim_window": [100, 300], "removed_edges": 642933,
+               "nnz_B": 24940005, "KC_KC_nnz": 0, "B_hash": "a" * 64}
         with open(os.path.join(a.out_dir, "child_result.json"), "w", encoding="utf-8") as f:
             json.dump(obj, f)
     return a.exit_code
@@ -122,8 +132,8 @@ class S1R0Test(unittest.TestCase):
                     "mb_matched": np.zeros((400, 95), np.uint8),
                     "seed": seed, "condition": cond, "amount": 0.036254,
                     "stim_window": np.array([100, 300]), "script_sha": script_sha,
-                    "auth_sha": "AUTH_TEST", "w_hash": "W_TEST",
-                    "rng_before": seed, "rng_after": seed,
+                    "auth_sha": "AUTH_TEST", "w_hash": HASH_A_F,
+                    "rng_before": HASH_A_F, "rng_after": HASH_A_F,
                 }
                 if mutate is not None:
                     mutate(seed, cond, data)
@@ -133,6 +143,83 @@ class S1R0Test(unittest.TestCase):
     def _validate(self, out):
         return experiment.validate_raw_dataset(out, auth_sha="AUTH_TEST",
                                                script_sha=_sha(experiment.__file__))
+
+    def _child_payload(self):
+        rows = []
+        for seed in range(101, 126):
+            rows.append({"seed": seed,
+                         "none": {"seed": seed, "condition": "none", "finite": True},
+                         "stim": {"seed": seed, "condition": "stim", "finite": True},
+                         "noise_pair_ok": True})
+        return {"ok": True, "seeds": rows, "noise_pairing_all": True,
+                "n_neurons": 166700, "n_kc": 4064, "n_mb": 97, "n_kc_matched": 320,
+                "n_mb_matched": 95, "n_lp": 311, "steps": 400, "device": "cpu",
+                "batch": 1, "training": False, "dW": 0, "amount": 0.036254,
+                "stim_window": [100, 300], "removed_edges": 642933,
+                "nnz_B": 24940005, "KC_KC_nnz": 0, "B_hash": "a" * 64}
+
+    def _write_child(self, name, obj):
+        p = os.path.join(self.tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(obj, f)
+        return p
+
+    def test_strict_child_result_valid_and_counterexamples(self):
+        raw_hash = "a" * 64
+        p = self._write_child("child_valid.json", self._child_payload())
+        r = launcher.validate_child_result(p, raw_w_hashes=[raw_hash])
+        self.assertTrue(r["complete"], r["errors"])
+        self.assertTrue(r["raw_w_hashes_match"])
+
+        dup = copy.deepcopy(self._child_payload())
+        dup["seeds"][1]["seed"] = dup["seeds"][0]["seed"]
+        r = launcher.validate_child_result(self._write_child("child_dup.json", dup),
+                                           raw_w_hashes=[raw_hash])
+        self.assertFalse(r["complete"])
+        self.assertTrue(any("SEED_DUPLICATE" in x for x in r["errors"]))
+
+        miss = copy.deepcopy(self._child_payload())
+        miss["seeds"][2].pop("none")
+        r = launcher.validate_child_result(self._write_child("child_miss.json", miss),
+                                           raw_w_hashes=[raw_hash])
+        self.assertFalse(r["complete"])
+        self.assertTrue(any("CONDITION_MISSING" in x for x in r["errors"]))
+
+        nf = copy.deepcopy(self._child_payload())
+        nf["seeds"][3]["stim"]["finite"] = False
+        r = launcher.validate_child_result(self._write_child("child_nf.json", nf),
+                                           raw_w_hashes=[raw_hash])
+        self.assertFalse(r["complete"])
+        self.assertTrue(any("NONFINITE" in x for x in r["errors"]))
+
+        badw = copy.deepcopy(self._child_payload())
+        r = launcher.validate_child_result(self._write_child("child_badw.json", badw),
+                                           raw_w_hashes=["b" * 64])
+        self.assertFalse(r["complete"])
+        self.assertTrue(any("B_HASH_RAW_MISMATCH" in x for x in r["errors"]))
+
+        missing = copy.deepcopy(self._child_payload())
+        missing.pop("n_lp")
+        r = launcher.validate_child_result(self._write_child("child_missing.json", missing),
+                                           raw_w_hashes=[raw_hash])
+        self.assertFalse(r["complete"])
+        self.assertTrue(any("PROTOCOL_MISMATCH:n_lp" in x for x in r["errors"]))
+
+    def test_rng_sha_hex_a_f_and_tamper(self):
+        self.assertTrue(all(c in HASH_A_F for c in "abcdef"))
+        out = self._dataset("rng_ok")
+        r = self._validate(out)
+        self.assertTrue(r["ok"], r["errors"])
+
+        def tamper(seed, cond, data):
+            if seed == 105 and cond == "stim":
+                data["rng_after"] = HASH_A_F[:-1] + ("0" if HASH_A_F[-1] != "0" else "1")
+
+        out2 = self._dataset("rng_tamper", tamper)
+        r2 = self._validate(out2)
+        self.assertFalse(r2["ok"])
+        self.assertTrue(any("NOISE_PAIR_MISMATCH:105" in x for x in r2["errors"]))
+        self.assertFalse(r2["noise_pairing_all"])
 
     def test_entry_means_real_none_stim(self):
         em = experiment.entry_means([{"entry_none": 0.4, "entry_stim": 0.5}])
@@ -170,7 +257,7 @@ class S1R0Test(unittest.TestCase):
             if seed == 103 and cond == "stim":
                 data["kc"] = np.full((400, 4064), np.nan, np.float32)
             if seed == 104 and cond == "stim":
-                data["rng_after"] = 999
+                data["rng_after"] = "f" * 64
         out = self._dataset("bad", mutate)
         r = self._validate(out)
         self.assertFalse(r["ok"])
@@ -210,6 +297,14 @@ class S1R0Test(unittest.TestCase):
 
     def test_child_job_guard_rejects_env_only_and_accepts_2048(self):
         out = os.path.join(self.tmp, "job guard out")
+        no_name = dict(os.environ)
+        no_name.pop("P11_2_S1R_JOB_NAME", None)
+        r0 = subprocess.run([sys.executable, "-m", "loop.p11_2_s1r_experiment",
+                             "--child", out], cwd=experiment.ROOT, env=no_name,
+                            capture_output=True, text=True, timeout=60)
+        self.assertEqual(r0.returncode, 9)
+        self.assertIn("JOB_NAME_MISSING", r0.stdout + r0.stderr)
+
         env = dict(os.environ)
         env["P11_2_S1R_JOB_NAME"] = "Local\\definitely_missing_s1r_job"
         r = subprocess.run([sys.executable, "-m", "loop.p11_2_s1r_experiment",
@@ -232,6 +327,28 @@ class S1R0Test(unittest.TestCase):
         self.assertNotIn("JOB_GUARD_FAILED", text)
         self.assertIn("AUTHORIZATION_NOT_APPROVED", text)
         self.assertFalse(os.path.exists(os.path.join(out, "child_result.json")))
+
+        wrong_name = f"Local\\P11_2_S1R_wrong_{os.getpid()}_{time.time_ns()}"
+        from loop.p11_2_s1f_safe_job_launcher import _create_named_job, close_job
+        job, okj = _create_named_job(2048 * 1024 ** 2, wrong_name)
+        self.assertTrue(okj)
+        try:
+            env_wrong = dict(os.environ); env_wrong["P11_2_S1R_JOB_NAME"] = wrong_name
+            rw = subprocess.run([sys.executable, "-m", "loop.p11_2_s1r_experiment",
+                                 "--child", out], cwd=experiment.ROOT, env=env_wrong,
+                                capture_output=True, text=True, timeout=60)
+            self.assertEqual(rw.returncode, 9)
+            out_text = rw.stdout + rw.stderr
+            self.assertTrue("PID_NOT_IN_NAMED_JOB" in out_text or "NOT_IN_JOB" in out_text)
+        finally:
+            close_job(job)
+
+    def test_child_job_guard_checks_kill_flag_source(self):
+        src = inspect.getsource(experiment.assert_in_controlled_job)
+        self.assertIn("JOB_NAME_MISSING", src)
+        self.assertIn("KILL_ON_JOB_CLOSE_MISSING", src)
+        self.assertIn("PID_NOT_IN_NAMED_JOB", src)
+        self.assertNotIn("_query_extended(None)", src)
 
     def test_child_job_guard_rejects_wrong_limit(self):
         out = os.path.join(self.tmp, "job wrong out")
@@ -465,6 +582,27 @@ class S1R0Test(unittest.TestCase):
         self.assertTrue(r["historical_s1"]["all_raw_hashes_ok"])
         self.assertTrue(r["historical_s1"]["all_backup_hashes_ok"])
         self.assertFalse(r["resources"]["resource_verified"])
+
+    def test_s1r1a_static_fix_report(self):
+        r = _load(os.path.join(HERE, "p11_2_s1r1a_report.json"))
+        self.assertEqual(r["status"], "S1R1A_STATIC_FIXES_COMPLETE; NOT_AUTHORIZED; NO_RUN")
+        self.assertFalse(r["new_s1r_execution_authorization"])
+        self.assertTrue(r["rng_fix"]["implemented"])
+        self.assertTrue(r["job_identity"]["named_job_required"])
+        self.assertTrue(r["job_identity"]["anonymous_fallback_closed"])
+        self.assertTrue(r["job_identity"]["kill_on_job_close_required"])
+        self.assertTrue(r["strict_child"]["implemented"])
+        self.assertFalse(r["strict_child"]["25_records_alone_is_success"])
+        self.assertEqual(r["tests"]["s1r_ran"], 29)
+        self.assertEqual(r["tests"]["s1r_passed"], 29)
+        self.assertEqual(r["tests"]["s1f_ran"], 9)
+        self.assertEqual(r["tests"]["s1f_passed"], 9)
+        self.assertEqual(r["authorization"]["status"], "NOT_AUTHORIZED")
+        self.assertTrue(r["freeze"]["match"])
+        self.assertFalse(r["one_shot_lock"]["lock_present_now"])
+        self.assertEqual(r["historical_s1"]["report_status"], "INCOMPLETE_NO_GO")
+        self.assertTrue(r["historical_s1"]["all_raw_hashes_ok"])
+        self.assertTrue(r["historical_s1"]["all_backup_hashes_ok"])
 
     def test_approval_file_not_authorized(self):
         p = os.path.join(HERE, "P11_2_S1R_ONE_RUN_APPROVAL.md")

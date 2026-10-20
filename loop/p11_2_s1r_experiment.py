@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 import time
@@ -109,56 +110,44 @@ def _pid_in_job(job, pid):
 
 
 def assert_in_controlled_job(expected_bytes=MEM_CAP_BYTES):
-    """真实 Job 句柄/内存限制/PID 成员核验；环境变量只是名称提示，不是凭证。"""
+    """强制命名 Job；环境变量只是名称提示，必须打开真实句柄并核验限制/PID。"""
+    name = (os.environ.get("P11_2_S1R_JOB_NAME") or "").strip()
+    if not name:
+        return {"ok": False, "reason": "JOB_NAME_MISSING"}
     in_job = wt.BOOL(0)
     if not _kernel32.IsProcessInJob(_kernel32.GetCurrentProcess(), None, ctypes.byref(in_job)):
-        return {"ok": False, "reason": "IS_PROCESS_IN_JOB_FAILED"}
+        return {"ok": False, "reason": "IS_PROCESS_IN_JOB_FAILED", "job_name": name}
     if not in_job.value:
-        return {"ok": False, "reason": "NOT_IN_JOB"}
+        return {"ok": False, "reason": "NOT_IN_JOB", "job_name": name}
     pid = int(_kernel32.GetCurrentProcessId())
-    name = os.environ.get("P11_2_S1R_JOB_NAME")
-    job = 0
-    if name:
-        job = _kernel32.OpenJobObjectW(_JOB_OBJECT_ALL_ACCESS, False, name)
-        if not job:
-            return {"ok": False, "reason": "NAMED_JOB_OPEN_FAILED", "job_name": name}
-        try:
-            info = _query_extended(job)
-            if info is None:
-                return {"ok": False, "reason": "QUERY_JOB_FAILED", "job_name": name}
-            flags = int(info.BasicLimitInformation.LimitFlags)
-            if not (flags & _JOB_OBJECT_LIMIT_PROCESS_MEMORY and flags & _JOB_OBJECT_LIMIT_JOB_MEMORY):
-                return {"ok": False, "reason": "JOB_MEMORY_LIMIT_FLAGS_MISSING",
-                        "limit_flags": flags, "job_name": name}
-            if int(info.ProcessMemoryLimit) != expected_bytes or int(info.JobMemoryLimit) != expected_bytes:
-                return {"ok": False, "reason": "JOB_MEMORY_LIMIT_MISMATCH",
-                        "process_mem_limit": int(info.ProcessMemoryLimit),
-                        "job_mem_limit": int(info.JobMemoryLimit), "limit_flags": flags,
-                        "job_name": name}
-            if not _pid_in_job(job, pid):
-                return {"ok": False, "reason": "PID_NOT_IN_NAMED_JOB", "job_name": name}
-        finally:
-            _kernel32.CloseHandle(job)
+    job = _kernel32.OpenJobObjectW(_JOB_OBJECT_ALL_ACCESS, False, name)
+    if not job:
+        return {"ok": False, "reason": "NAMED_JOB_OPEN_FAILED", "job_name": name}
+    try:
+        info = _query_extended(job)
+        if info is None:
+            return {"ok": False, "reason": "QUERY_JOB_FAILED", "job_name": name}
+        flags = int(info.BasicLimitInformation.LimitFlags)
+        if not (flags & _JOB_OBJECT_LIMIT_PROCESS_MEMORY and flags & _JOB_OBJECT_LIMIT_JOB_MEMORY):
+            return {"ok": False, "reason": "JOB_MEMORY_LIMIT_FLAGS_MISSING",
+                    "limit_flags": flags, "job_name": name}
+        if not (flags & _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE):
+            return {"ok": False, "reason": "KILL_ON_JOB_CLOSE_MISSING",
+                    "limit_flags": flags, "job_name": name}
+        if int(info.ProcessMemoryLimit) != expected_bytes or int(info.JobMemoryLimit) != expected_bytes:
+            return {"ok": False, "reason": "JOB_MEMORY_LIMIT_MISMATCH",
+                    "process_mem_limit": int(info.ProcessMemoryLimit),
+                    "job_mem_limit": int(info.JobMemoryLimit), "limit_flags": flags,
+                    "job_name": name}
+        if not _pid_in_job(job, pid):
+            return {"ok": False, "reason": "PID_NOT_IN_NAMED_JOB", "job_name": name}
         return {"ok": True, "reason": "CONTROLLED_JOB_OK", "job_name": name,
                 "limit_flags": flags, "process_mem_limit": int(info.ProcessMemoryLimit),
                 "job_mem_limit": int(info.JobMemoryLimit),
                 "peak_process_MiB": round(info.PeakProcessMemoryUsed / 1024 ** 2, 2),
                 "peak_job_MiB": round(info.PeakJobMemoryUsed / 1024 ** 2, 2)}
-    info = _query_extended(None)
-    if info is None:
-        return {"ok": False, "reason": "QUERY_JOB_FAILED"}
-    flags = int(info.BasicLimitInformation.LimitFlags)
-    if not (flags & _JOB_OBJECT_LIMIT_PROCESS_MEMORY and flags & _JOB_OBJECT_LIMIT_JOB_MEMORY):
-        return {"ok": False, "reason": "JOB_MEMORY_LIMIT_FLAGS_MISSING", "limit_flags": flags}
-    if int(info.ProcessMemoryLimit) != expected_bytes or int(info.JobMemoryLimit) != expected_bytes:
-        return {"ok": False, "reason": "JOB_MEMORY_LIMIT_MISMATCH",
-                "process_mem_limit": int(info.ProcessMemoryLimit),
-                "job_mem_limit": int(info.JobMemoryLimit), "limit_flags": flags}
-    return {"ok": True, "reason": "CONTROLLED_JOB_OK", "job_name": None,
-            "limit_flags": flags, "process_mem_limit": int(info.ProcessMemoryLimit),
-            "job_mem_limit": int(info.JobMemoryLimit),
-            "peak_process_MiB": round(info.PeakProcessMemoryUsed / 1024 ** 2, 2),
-            "peak_job_MiB": round(info.PeakJobMemoryUsed / 1024 ** 2, 2)}
+    finally:
+        _kernel32.CloseHandle(job)
 
 
 def _canon(o):
@@ -477,18 +466,27 @@ def validate_raw_dataset(out_dir, auth_sha=None, script_sha=None):
                         if got != auth_sha:
                             errors.append(f"{name}:AUTH_SHA:{got}")
                     if "w_hash" in z.files:
-                        w_hashes.add(_scalar_str(z["w_hash"]))
+                        wh = _scalar_str(z["w_hash"])
+                        if not re.fullmatch(r"[0-9a-fA-F]{64}", wh):
+                            errors.append(f"{name}:W_HASH_INVALID:{wh}")
+                        w_hashes.add(wh)
                     if "rng_before" in z.files and "rng_after" in z.files:
-                        rng_pairs.setdefault(seed, {})[cond] = (
-                            int(z["rng_before"].item() if hasattr(z["rng_before"], "item") else z["rng_before"]),
-                            int(z["rng_after"].item() if hasattr(z["rng_after"], "item") else z["rng_after"]))
+                        rb = _scalar_str(z["rng_before"])
+                        ra = _scalar_str(z["rng_after"])
+                        if not re.fullmatch(r"[0-9a-fA-F]{64}", rb):
+                            errors.append(f"{name}:RNG_BEFORE_INVALID:{rb}")
+                        if not re.fullmatch(r"[0-9a-fA-F]{64}", ra):
+                            errors.append(f"{name}:RNG_AFTER_INVALID:{ra}")
+                        rng_pairs.setdefault(seed, {})[cond] = {"before": rb, "after": ra}
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{name}:LOAD_FAILED:{type(e).__name__}:{e}")
             files.append({"name": name, "sha256": _sha256(path), "size": os.path.getsize(path)})
     noise_ok = True
     for seed in SEEDS:
         pair = rng_pairs.get(seed, {})
-        if pair.get("none") != pair.get("stim"):
+        n = pair.get("none")
+        s = pair.get("stim")
+        if not n or not s or n.get("before") != s.get("before") or n.get("after") != s.get("after"):
             noise_ok = False
             errors.append(f"NOISE_PAIR_MISMATCH:{seed}")
     if len(w_hashes) != 1:
