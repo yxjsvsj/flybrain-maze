@@ -1,0 +1,331 @@
+{
+ "protocol": "P11-2-S0/v1",
+ "status": "PREFLIGHT_COMPLETE; NO_DYNAMICS",
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "sensory": {
+  "lplc2_count": 185,
+  "lc4_exact_count": 126,
+  "lc4_startswith_count": 227,
+  "lc4_extra_types": [
+   "LC40",
+   "LC41",
+   "LC43",
+   "LC44",
+   "LC45",
+   "LC46"
+  ],
+  "lc4_startswith_overcount": 101,
+  "target_count_exact": 311,
+  "target_types": [
+   "LPLC2",
+   "LC4"
+  ],
+  "lplc2_body_ids_first10": [
+   11498,
+   12384,
+   13132,
+   13726,
+   13764,
+   14030,
+   14102,
+   14465,
+   15804,
+   17059
+  ],
+  "lc4_body_ids_first10": [
+   12032,
+   12349,
+   12824,
+   14888,
+   15018,
+   16128,
+   16138,
+   16628,
+   16809,
+   16917
+  ],
+  "source_body_ids_unique": 311,
+  "target_rule": "exact cell_type in {LPLC2, LC4}; do NOT use startswith('LC4')",
+  "protocol": {
+   "dv": 0.2,
+   "dt": 0.02,
+   "tau": 0.1,
+   "amount_formula": "dv*(1-exp(-dt/tau))",
+   "amount_exact": 0.03625384938440364,
+   "amount_rounded": 0.036254,
+   "amount_is_0_036254": true,
+   "amount_is_not_0_6": true,
+   "stim_window": [
+    100,
+    300
+   ],
+   "stim_duration_steps": 200,
+   "no_posthoc_increase": true,
+   "no_direct_kc_mbon": true,
+   "no_new_connections": true,
+   "no_teacher": true,
+   "tof_mapping_changed": false,
+   "lif_params_changed": false,
+   "dW": 0
+  },
+  "source_protocol_audit": {
+   "p10c2_0a_stimulus_audit_present": true,
+   "p10c2_0b_DV_0_2": true,
+   "p10c2_0b_AMOUNT_0_036254": true,
+   "old_0_6_does_not_replace_amount": true
+  }
+ },
+ "path_audit": {
+  "kc_count": 4064,
+  "mbon_count": 97,
+  "matched_kc": 320,
+  "matched_mbon": 95,
+  "source_count": 311,
+  "direct_src_to_kc": {
+   "edges": 0,
+   "positive": 0,
+   "negative": 0,
+   "signed_sum": 0.0
+  },
+  "direct_src_to_mbon": {
+   "edges": 1,
+   "positive": 1,
+   "negative": 0,
+   "signed_sum": 0.000177557
+  },
+  "two_hop_src_to_kc_A": {
+   "edges": 7883,
+   "positive": 7783,
+   "negative": 100,
+   "signed_sum": 0.003759783
+  },
+  "two_hop_src_to_kc_A_bool_paths": 7883,
+  "removed_via_kc_intermediate": {
+   "edges": 0,
+   "positive": 0,
+   "negative": 0,
+   "signed_sum": 0.0
+  },
+  "removed_via_kc_intermediate_bool_paths": 0,
+  "two_hop_src_to_kc_B": {
+   "edges": 7883,
+   "positive": 7783,
+   "negative": 100,
+   "signed_sum": 0.003759783
+  },
+  "two_hop_src_to_kc_B_bool_paths": 7883,
+  "two_hop_src_to_mbon_A": {
+   "edges": 2528,
+   "positive": 1528,
+   "negative": 1000,
+   "signed_sum": 0.000481385
+  },
+  "two_hop_src_to_mbon_A_bool_paths": 2528,
+  "three_hop_src_to_mbon_via_kc_kc_removed": {
+   "edges": 0,
+   "positive": 0,
+   "negative": 0,
+   "signed_sum": 0.0
+  },
+  "three_hop_via_kc_kc_removed_bool_paths": 0,
+  "kc_to_mbon": {
+   "edges": 61210,
+   "positive": 61210,
+   "negative": 0,
+   "signed_sum": 56.178184509
+  },
+  "mbon_types": {
+   "MBON01": 2,
+   "MBON06": 2,
+   "MBON14": 4,
+   "MBON05": 2,
+   "MBON35": 2,
+   "MBON11": 2,
+   "MBON20": 2,
+   "MBON31": 2,
+   "MBON21": 2,
+   "MBON26": 2,
+   "MBON32": 2,
+   "MBON15": 4,
+   "MBON33": 2,
+   "MBON22": 2,
+   "MBON13": 2,
+   "MBON07": 4,
+   "MBON12": 4,
+   "MBON18": 2,
+   "MBON24": 2,
+   "MBON09": 4,
+   "MBON23": 2,
+   "MBON28": 2,
+   "MBON19": 4,
+   "MBON17": 2,
+   "MBON15-like": 4,
+   "MBON10": 9,
+   "MBON25-like": 1,
+   "MBON25,MBON34": 7,
+   "MBON30": 2,
+   "MBON17-like": 2,
+   "MBON27": 2,
+   "MBON03": 2,
+   "MBON29": 2,
+   "MBON16": 2,
+   "MBON02": 2,
+   "MBON04": 2
+  },
+  "mbon_unique_types": 36,
+  "feedforward_paths_preserved_in_B": true,
+  "recurrent_kc_kc_edges_removed": 642933,
+  "sensory_feedforward_uses_kc_kc": false,
+  "anatomical_reachability_not_dynamical_detectability": true,
+  "path_note": "No direct LPLC2/LC4->KC edge. The feedforward entry to KC is a 2-hop path via non-KC; the B KC->KC deletion removes the recurrent edges but not this feedforward path (0 paths removed via KC intermediate)."
+ },
+ "c1a_statistical_note": {
+  "full_B_mean": 0.351093307,
+  "low3_contribution": 0.000646358,
+  "rest_4061_group_mean": 0.350705836,
+  "rest_4061_contribution_to_full_4064_mean": 0.350446949,
+  "sum_check": 0.351093307,
+  "note": "Group mean and contribution to the full-4064 mean are different: rest_4061 contribution = 0.350705836 * 4061/4064 = 0.350446949; 0.000646358 + 0.350446949 = 0.351093307.",
+  "historical_c1a_report_overwritten": false
+ },
+ "stats": {
+  "entry_positive_control": {
+   "targets": "exact LPLC2 + LC4 (311 neurons)",
+   "readout": "fraction of target neurons firing in [100,300)",
+   "contrast": "stim - none",
+   "unit": "seed",
+   "n": 25,
+   "test": "exact two-sided sign-flip",
+   "pass": "mean > 0 and p < 0.05",
+   "note": "If the entry fails, SENSORY_ENTRY_FAILED; no downstream claim."
+  },
+  "primary": {
+   "endpoint": "matched-320 KC firing fraction in [100,300)",
+   "contrast": "stim - none",
+   "unit": "seed",
+   "n": 25,
+   "test": "exact two-sided sign-flip",
+   "ci": "paired bootstrap 10,000; seed 20261019",
+   "min_meaningful_effect": 0.05,
+   "pass": "mean >= +0.05 and p < 0.05 and CI excludes 0",
+   "note": "If entry responds but this fails: SENSORY_TRANSMISSION_NOT_DETECTED."
+  },
+  "secondary": {
+   "full_4064_KC": "exploratory stim-none; same window/effect; no causal primary claim",
+   "matched_95_MBON": "secondary stim-none; minimum meaningful effect +0.05",
+   "full_97_MBON": "exploratory",
+   "background_and_ceiling": "none-condition matched-320/full-4064/MBON rates and >=0.85/>=0.95 cell fractions; if none is at ceiling, no dynamic range",
+   "three_low_feedback": "local 2460/2650/3971 and bodyIds 109321/117446/545375 reported individually; not representative of the population"
+  },
+  "none_drift_false_positive": {
+   "contrast": "none only: matched-320 [100,200) vs [200,300)",
+   "test": "exact two-sided sign-flip by seed",
+   "purpose": "detect drift/noise false positives without stim",
+   "rule": "report p and effect; if p<0.05, flag drift and interpret the stim effect cautiously",
+   "random_noise_control": "within-seed paired stim/none; exact sign-flip; 25 seeds; no cell-step pseudo-replication"
+  },
+  "failure_conditions": {
+   "entry_fail": "SENSORY_ENTRY_FAILED",
+   "entry_ok_kc_no": "SENSORY_TRANSMISSION_NOT_DETECTED",
+   "kc_ok_mbon_no": "KC_RESPONSE_WITHOUT_MBON_TRANSMISSION",
+   "kc_mbon_ok": "SENSORY_TRANSMISSION_DETECTED_IN_SYNTHETIC_B",
+   "resource": "RESOURCE_NO_GO",
+   "missing": "INCONCLUSIVE"
+  },
+  "unit_rules": {
+   "keep_all_seeds": true,
+   "seed_114_kept": true,
+   "drop_seeds": false,
+   "select_seeds": false,
+   "cell_step_pseudo_replication": false,
+   "endpoint_switching": false,
+   "min_effect_posthoc_change": false
+  },
+  "reuse_c1b": {
+   "reuse_historical_C1_B_none": false,
+   "reason": "same-experiment none/stim paired design avoids code/params/RNG/init comparability assumptions",
+   "strict_rng_pairing": "same seed, same reset, same CPU, stim adds voltage only; noise sequence unchanged"
+  }
+ },
+ "resource": {
+  "c1_peak_MiB": 1942.7,
+  "c1_margin_MiB": 105.3,
+  "record_bytes_per_seed_both_conditions": 3909600,
+  "record_MiB_per_seed_both_conditions": 3.728,
+  "static_extra_peak_MiB": 5.73,
+  "estimated_peak_MiB": 1948.43,
+  "estimated_margin_MiB": 99.57,
+  "time_estimate_s": 290.38,
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "status": "RESOURCE_PLAUSIBLE_TIGHT",
+  "verified": false,
+  "low_memory": "save each seed/condition NPZ immediately, free arrays; no 25-seed full arrays in memory",
+  "no_auto_increase": true,
+  "no_go_if": "Job peak > 2048 MiB or wall > 900 s or missing seed",
+  "job_peak_persist_before_postprocess": true,
+  "create_suspended_job_resume": true,
+  "note": "C1 measured 1942.7 MiB, only 105.3 MiB below 2 GiB. The S1 extra record arrays are small, but the margin is too tight to call 2 GiB verified. Do not auto-raise the cap."
+ },
+ "freeze": {
+  "P1_mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+  "P1_mapfix_freeze_empty": true,
+  "P1_mapfix_diff": "",
+  "P1_baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+  "BASE_tag_present": false,
+  "readout_working_tree_modified": false,
+  "tags": {
+   "HW-shadow-v1": "0d784033630c1789e86367cb3e8fd98216d1a675",
+   "P1-baseline": "41e04d9fe1af9bd7355bdfae6c7912214c6275dd",
+   "P1-mapfix": "db401f571712140ed4c513c59d71088a7f3ad2bd",
+   "P1-mapfix-holdout": "35bb54360208070bfab1a7ac890161b35a5948f7",
+   "P1-pathfix": "ba5be735b848373386104d7f3965e407605ecff0",
+   "P1-repro-baseline": "f54f6f50f56dec8c18bf842d99c887f3eaa71bee",
+   "P2b-hil-wheelsup": "de41b461c3f7095350d074d22a586c6e2392e78c",
+   "P2b-tof5-bringup": "bb3162355ae9e23ec27e91853533e9257aed45af",
+   "P2c-0-ground-tools": "1b13d770fb4aa8447263c14db698cb02c7890612",
+   "P2c-ground-commissioning": "b58e2d353b364d9d6563491540675638b14d2f38"
+  },
+  "tags_modified": false,
+  "dirty_files": [
+   "hardware/tof5_client.py",
+   "loop/diagnose.py",
+   "loop/p10c1b_decoder_freeze.json"
+  ],
+  "dirty_files_preserved": true,
+  "head": "4f017c2b22d748555d50d4c6258d5c80bbe33347"
+ },
+ "s1_approval": {
+  "protocol": "P11-2-S1/v1",
+  "status": "NOT_AUTHORIZED; NOT_RUN",
+  "separate_authorization_required": true,
+  "c1_one_shot_consumed": true,
+  "self_approval_config": false,
+  "request": "one run: B synthetic KC->KC-zero; none/stim paired; 25 seeds; 400 steps; 20,000 steps; LPLC2/LC4 exact 311; dv=0.2 amount=0.036254; [100,300); CPU; 15 min/2 GiB; one run; no auto-retry; no training/dW/Dijkstra/maze/B/C/robot",
+  "training_authorized": false
+ },
+ "verdicts": {
+  "SENSORY_TARGET_RULE": "EXACT LPLC2 + LC4 (311); startswith(LC4) would overcount to 227",
+  "DIRECT_LPLC2_LC4_TO_KC": "ABSENT (0 edges)",
+  "FEEDFORWARD_KC_PATH": "2-hop via non-KC; preserved in B",
+  "KC_KC_RECURRENT": "removed (642,933)",
+  "KC_TO_MBON": "61,210 existing edges, all positive; preserved in B",
+  "ANATOMICAL_REACHABILITY": "NOT EQUAL TO DYNAMICAL DETECTABILITY",
+  "PRIMARY_ENDPOINT_FROZEN": true,
+  "RESOURCE": "RESOURCE_PLAUSIBLE_TIGHT",
+  "RESOURCE_VERIFIED": false,
+  "S1_EXECUTION_AUTHORIZATION": false,
+  "S1_READY_TO_APPLY": true,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "A1_A2_A3/B": "NO-GO"
+ },
+ "training_authorized": false
+}
