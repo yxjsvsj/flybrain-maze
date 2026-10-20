@@ -1,0 +1,151 @@
+{
+ "protocol": "P11-2-S3-1/v1",
+ "baseline": "7305325",
+ "status": "S3_1_IMPLEMENTATION_COMPLETE; NOT_AUTHORIZED; NO_RUN",
+ "implementation": {
+  "parent": "loop/p11_2_s3_launcher.py",
+  "child": "loop/p11_2_s3_experiment.py",
+  "authorization_template": "loop/p11_2_s3_authorization.json",
+  "freeze": "loop/p11_2_s3_script_freeze.json",
+  "approval_template": "loop/P11_2_S3_ONE_RUN_APPROVAL.md",
+  "tests": "loop/test_p11_2_s3_launcher.py"
+ },
+ "api_semantics": {
+  "verified": true,
+  "source": "flybrain/brain.py FlyBrain.step",
+  "inject_is_voltage_increment": true,
+  "not_nanoamps": true,
+  "indices_are_global_neuron_indices": true,
+  "target_sha_verified": true,
+  "no_dose_change": true
+ },
+ "target": {
+  "count": 320,
+  "sha256_i64_le": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "rule": "S1R matched-320 KC global indices"
+ },
+ "design": {
+  "conditions": ["sham", "kc_low", "kc_primary"],
+  "seeds": [201, 225],
+  "steps_per_seed_condition": 400,
+  "total_steps": 30000,
+  "window": [100, 300],
+  "npz_expected": 75,
+  "primary_amount": 0.03625384938440364,
+  "low_amount": 0.01812692469220182,
+  "primary_dv_inf": 0.2,
+  "low_dv_inf": 0.1,
+  "cpu_only": true,
+  "training": false,
+  "dW": 0
+ },
+ "authorization": {
+  "s3_status": "NOT_AUTHORIZED",
+  "s3_approved": false,
+  "s3_lock_present": false,
+  "s1r_authorization_reused": false,
+  "s2_modified": false,
+  "s1r_modified": false
+ },
+ "freeze": {
+  "path": "loop/p11_2_s3_script_freeze.json",
+  "sha256": "09ecd2b4a68aff40b314ebe5e8ac4101409b6431779ba1a2c38b6643cf053d53",
+  "matches_experiment": true
+ },
+ "safe_chain": {
+  "python_module_launch": true,
+  "create_suspended_assign_resume": true,
+  "job_memory_MiB": 2048,
+  "job_wall_s": 900,
+  "inheritable_stdout_stderr": true,
+  "named_job_identity_guard": true,
+  "atomic_one_shot_lock": true,
+  "no_auto_retry": true,
+  "refuses_before_job_without_auth": true
+ },
+ "raw_integrity": {
+  "exact_seeds": "201-225",
+  "exact_conditions": ["sham", "kc_low", "kc_primary"],
+  "exact_npz": 75,
+  "shapes": {"kc": [400, 4064], "mb": [400, 97], "lp": [400, 311],
+             "kc_matched": [400, 320], "mb_matched": [400, 95]},
+  "target_index_hash": true,
+  "condition_labels": true,
+  "injection_amounts": true,
+  "injection_window": true,
+  "rng_pairing": true,
+  "finite": true,
+  "b_hash": true,
+  "script_sha": true,
+  "auth_checksum": true,
+  "per_file_sha256": true,
+  "dataset_sha256": true,
+  "run_meta_hash_separate": true,
+  "run_meta_not_in_manifest_files": true
+ },
+ "stats": {
+  "kc_positive_threshold": 0.1,
+  "mbon_positive_threshold": 0.05,
+  "exact_signflip": true,
+  "bootstrap_n": 10000,
+  "bootstrap_seed": 20261019,
+  "saturation_mean_lt": 0.85,
+  "saturation_frac_ge095_le": 0.1,
+  "low_dose_BH": true,
+  "hierarchical_mbon_only_if_kc_pass": true,
+  "downstream_nonpass": "INCONCLUSIVE_DOWNSTREAM",
+  "no_function_absence_claim": true
+ },
+ "synthetic_acceptance": {
+  "full_success": {"result": "GO", "decision": "KC_MBON_FUNCTIONAL_UNDER_DIRECT_DRIVE", "note": "SYNTHETIC_ONLY"},
+  "kc_not_driven": {"result": "NO-GO/INCONCLUSIVE", "decision": "INCONCLUSIVE_KC_NOT_DRIVEN"},
+  "kc_saturated": {"result": "NO-GO/INCONCLUSIVE", "decision": "INCONCLUSIVE_KC_SATURATED"},
+  "mbon_positive": {"result": "GO", "decision": "KC_MBON_FUNCTIONAL_UNDER_DIRECT_DRIVE"},
+  "mbon_negative": {"result": "NO-GO", "decision": "KC_MBON_NEGATIVE"},
+  "mbon_small_positive": {"result": "INCONCLUSIVE", "decision": "INCONCLUSIVE_DOWNSTREAM"},
+  "mbon_nonsignificant": {"result": "INCONCLUSIVE", "decision": "INCONCLUSIVE_DOWNSTREAM"},
+  "missing_npz": {"result": "NO-GO", "decision": "INCOMPLETE_NO_GO"},
+  "duplicate_seed": {"result": "NO-GO", "decision": "INCOMPLETE_NO_GO"},
+  "hash_corruption": {"result": "NO-GO", "decision": "INCOMPLETE_NO_GO"},
+  "abnormal_exit_timeout_memory": {"result": "NO-GO", "decision": "INCOMPLETE_NO_GO"},
+  "report_manifest_failure": {"result": "NO-GO", "decision": "PERSISTENCE_FAILED/INCOMPLETE_NO_GO"},
+  "second_lock": {"result": "NO-GO", "decision": "AUTHORIZATION_ALREADY_CONSUMED"},
+  "unauthorized_production": {"result": "NO-GO", "decision": "REFUSED_NOT_AUTHORIZED"}
+ },
+ "tests": {
+  "ran": 8, "passed": 8, "failed": 0,
+  "command": ".\\.venv\\Scripts\\python.exe -m unittest loop.test_p11_2_s3_launcher -v"
+ },
+ "resource": {
+  "s1r_peak_MiB": 1943.16,
+  "s3_static_estimate_MiB": 1948.16,
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "time_estimate_s": 413.387,
+  "status": "RESOURCE_PLAUSIBLE_TIGHT",
+  "verified": false,
+  "no_full_brain_calibration": true,
+  "no_auto_increase": true
+ },
+ "questions": {
+  "q1_production_entry_complete": "YES: independent parent/child/auth template/freeze/synthetic tests; default refuse.",
+  "q2_target_and_injection_verified": "YES: target SHA and global index space verified; inject is direct voltage, not nA; no dose change.",
+  "q3_75npz_pairing_stats_status": "YES: synthetic 25x3/75 NPZ, RNG pairing, gates, decision tree, statuses and persistence paths passed.",
+  "q4_resource": "RESOURCE_PLAUSIBLE_TIGHT; ~413.4 s / ~1948.2 MiB; NOT verified; no new full-brain calibration.",
+  "q5_ready_for_new_s3_authorization": "YES, static acceptance complete; no S3 authorization/lock created."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "NEW_S3_EXECUTION_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_new_dynamics": true,
+ "no_s3_run": true,
+ "notes": "Synthetic results are not full-brain scientific results; no S3 execution was authorized."
+}

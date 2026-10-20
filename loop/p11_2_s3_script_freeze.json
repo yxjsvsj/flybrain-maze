@@ -1,0 +1,9 @@
+{
+ "protocol": "P11-2-S3/v1",
+ "status": "FROZEN_STATIC_ONLY_NOT_APPROVED",
+ "module": "loop.p11_2_s3_experiment",
+ "script": "C:\\AA_project\\guoying\\loop\\p11_2_s3_experiment.py",
+ "sha256": "09ecd2b4a68aff40b314ebe5e8ac4101409b6431779ba1a2c38b6643cf053d53",
+ "created": "2026-10-20",
+ "note": "S3 child frozen for static acceptance only; no S3 run authorized."
+}

@@ -1,0 +1,63 @@
+{
+ "protocol": "P11-2-S3/v1",
+ "status": "NOT_AUTHORIZED",
+ "approved_by": null,
+ "approval_text": null,
+ "scope": {
+  "n_neurons": 166700,
+  "network": "B_synthetic_kc_kc_zero",
+  "remove_edges": 642933,
+  "conditions": [
+   "sham",
+   "kc_low",
+   "kc_primary"
+  ],
+  "seeds": [
+   201,
+   202,
+   203,
+   204,
+   205,
+   206,
+   207,
+   208,
+   209,
+   210,
+   211,
+   212,
+   213,
+   214,
+   215,
+   216,
+   217,
+   218,
+   219,
+   220,
+   221,
+   222,
+   223,
+   224,
+   225
+  ],
+  "steps": 400,
+  "total_steps": 30000,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "S1R matched-320 KC",
+  "target_sha256": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "dv_primary": 0.2,
+  "dv_low": 0.1,
+  "amount_primary": 0.03625384938440364,
+  "amount_low": 0.01812692469220182,
+  "device": "cpu",
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "one_run": true,
+  "auto_retry": false,
+  "training": false,
+  "dW": 0
+ },
+ "checksum": "14a6dce0ed51d8c6480bacb8347fe972a037a0176c311618bca2d906bf2024f7"
+}
