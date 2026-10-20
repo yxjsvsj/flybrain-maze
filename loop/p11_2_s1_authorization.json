@@ -1,0 +1,59 @@
+{
+ "protocol": "P11-2-S1/v1",
+ "status": "APPROVED",
+ "approved_by": "user",
+ "approval_text": "我批准 P11-2-S1 仅执行一次：完整 MaleCNS 的合成 B（KC→KC-zero）网络，none/stim 两条件，seeds 101–125，每 seed 每条件 400 步，共 20,000 步。仅精确 LPLC2/LC4 共 311 个靶点，dv=0.2、amount=0.036254、窗口 [100,300)，CPU，15 分钟及 2 GiB 硬上限，不自动重跑。不批准训练、ΔW、Dijkstra、迷宫、B/C 或实体控车。",
+ "scope": {
+  "n_neurons": 166700,
+  "network": "B_synthetic_kc_kc_zero",
+  "remove_edges": 642933,
+  "conditions": [
+   "none",
+   "stim"
+  ],
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125
+  ],
+  "steps": 400,
+  "total_steps": 20000,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "exact LPLC2 + LC4 (311)",
+  "dv": 0.2,
+  "amount": 0.036254,
+  "device": "cpu",
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "one_run": true,
+  "auto_retry": false,
+  "training": false,
+  "dW": 0
+ },
+ "checksum": "d9087107c485cca57f983725a11423d65c3f2da0770b5cff7d1212424a948ab5"
+}

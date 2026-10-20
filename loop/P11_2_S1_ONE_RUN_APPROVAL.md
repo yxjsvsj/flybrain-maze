@@ -1,10 +1,15 @@
-# P11-2-S1 一次性审批申请（**未授权；未运行**）
+# P11-2-S1 一次性审批（**已批准；执行一次；RUN FAILED/INCOMPLETE**）
 
-**状态：NOT_AUTHORIZED；NOT_RUN。**
-`P11-2-S1 Execution Authorization = False`。
-`P11-2-C1` 的一次性授权已消费，不适用于本阶段；本文件只是申请，不是授权。
+**状态：APPROVED_ONE_RUN；RUN_FAILED/INCOMPLETE。**
+`P11-2-S1 Execution Authorization = APPROVED_ONE_RUN; CONSUMED。`
 
-## 0. S1 静态预检状态（NOT_AUTHORIZED；NO_RUN）
+**用户批准原文**：
+
+> 我批准 P11-2-S1 仅执行一次：完整 MaleCNS 的合成 B（KC→KC-zero）网络，none/stim 两条件，seeds 101–125，每 seed 每条件 400 步，共 20,000 步。仅精确 LPLC2/LC4 共 311 个靶点，dv=0.2、amount=0.036254、窗口 [100,300)，CPU，15 分钟及 2 GiB 硬上限，不自动重跑。不批准训练、ΔW、Dijkstra、迷宫、B/C 或实体控车。
+
+`P11-2-C1` 的一次性授权已消费，不适用于本阶段；本文件记录一次 S1 审批与执行状态。
+
+## 0. S1 静态预检状态（已批准；RUN PENDING）
 
 - 静态预检：`p11_2_s1_preflight_report.json`；未启动完整脑、未生成 S1 原始数据/run_meta/统计报告。
 - 两跳勘误：**7,883 = 聚合 source–KC 端点配对**；**独立 2-hop 路径 = 8,162**；
@@ -85,3 +90,11 @@
 > **批准一次 P11-2-S1：B synthetic KC→KC-zero；none/stim；25 seeds；每 seed 400 步；共 20,000 步；精确 LPLC2/LC4（311）；dv=0.2 amount=0.036254；[100,300)；CPU；15 分钟 / 2 GiB；一次性；不自动重跑；不训练/ΔW/Dijkstra/迷宫/B/C/实体车。**
 
 未批准前不运行。
+
+## 9. 运行结果（失败；一次性授权已消耗）
+
+- child exit 1；wall **0.82 s**；Job 峰值 **521.05 MiB**；xperiment.log **0 字节**；无 child_result.json；**0/25**；无逐 seed 原始数据；无统计报告。
+- 未触发 2 GiB / 900 s 上限（521 < 2048；0.82 < 900）；失败发生在子进程/管线阶段。日志为空，**无法从已保存记录确定具体异常**；不臆造原因。
+- 一次性授权已消耗；**不自动重跑**；不补跑、不调参、不提高上限。无模型因果/生物/学习结论。
+
+**Training Authorization=False；REAL_SYNAPTIC_LEARNING_READY=NO；Level A/B/C/Biological=NO-GO。**
