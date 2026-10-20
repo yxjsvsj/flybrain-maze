@@ -365,15 +365,14 @@ def _bins(arr, nb=20):
 
 
 def _longest(arr):
-    out = np.zeros(arr.shape[1], np.int32)
-    for j in range(arr.shape[1]):
-        best = cur = 0
-        for v in arr[:, j]:
-            cur = cur + 1 if v else 0
-            if cur > best:
-                best = cur
-        out[j] = best
-    return out
+    a = np.asarray(arr, dtype=bool)
+    if a.ndim != 2 or a.shape[0] == 0:
+        return np.zeros(a.shape[1] if a.ndim == 2 else 0, np.int32)
+    runs = np.zeros(a.shape, np.int32)
+    runs[0] = a[0]
+    for i in range(1, a.shape[0]):
+        runs[i] = (runs[i - 1] + 1) * a[i]
+    return runs.max(axis=0).astype(np.int32)
 
 
 _RAW_SHAPES = {"kc": (STEPS, 4064), "mb": (STEPS, 97), "lp": (STEPS, 311),
@@ -520,30 +519,31 @@ def analyze(out_dir, validate=True):
             raise RuntimeError("RAW_DATASET_INVALID:" + "|".join(raw["errors"][:8]))
     ids = np.load(os.path.join(out_dir, "ids.npz"), allow_pickle=True)
     rows = []
+    celln_rows = []; cells_rows = []; mbn_rows = []; mbs_rows = []
     for s in SEEDS:
         zn = np.load(os.path.join(out_dir, f"{s}_none.npz"), allow_pickle=True)
         zs = np.load(os.path.join(out_dir, f"{s}_stim.npz"), allow_pickle=True)
-        kcn = zn["kc"]; kcs = zs["kc"]; mbn = zn["mb"]; mbs = zs["mb"]
+        kcn = zn["kc"]; kcs = zs["kc"]; mbn = zs["mb"]; mbs = zs["mb"]
         lpn = zn["lp"]; lps = zs["lp"]
         kcmn = zn["kc_matched"]; kcms = zs["kc_matched"]
         mbmn = zn["mb_matched"]; mbms = zs["mb_matched"]
         entry_n = float(_window(lpn).mean()); entry_s = float(_window(lps).mean())
         kc_n = float(_window(kcmn).mean()); kc_s = float(_window(kcms).mean())
         mb_n = float(_window(mbmn).mean()); mb_s = float(_window(mbms).mean())
+        # 细胞发放数组只保留在 50 个 NPZ；JSON 只存标量和必要的短列表。
+        celln_rows.append(_window(kcn).mean(axis=0))
+        cells_rows.append(_window(kcs).mean(axis=0))
+        mbn_rows.append(_window(mbn).mean(axis=0))
+        mbs_rows.append(_window(mbs).mean(axis=0))
+        low_n = [float(x) for x in _window(kcn)[:, [2460, 2650, 3971]].mean(axis=0)]
+        low_s = [float(x) for x in _window(kcs)[:, [2460, 2650, 3971]].mean(axis=0)]
         rows.append({"seed": s, "entry_none": entry_n, "entry_stim": entry_s,
                      "entry_diff": entry_s - entry_n,
                      "kc_none": kc_n, "kc_stim": kc_s, "kc_diff": kc_s - kc_n,
                      "mb_none": mb_n, "mb_stim": mb_s, "mb_diff": mb_s - mb_n,
                      "full_kc_none": float(_window(kcn).mean()), "full_kc_stim": float(_window(kcs).mean()),
                      "full_mb_none": float(_window(mbn).mean()), "full_mb_stim": float(_window(mbs).mean()),
-                     "kc_cell_none": _window(kcn).mean(axis=0), "kc_cell_stim": _window(kcs).mean(axis=0),
-                     "mb_cell_none": _window(mbn).mean(axis=0), "mb_cell_stim": _window(mbs).mean(axis=0),
-                     "kc_matched_cell_none": _window(kcmn).mean(axis=0),
-                     "kc_matched_cell_stim": _window(kcms).mean(axis=0),
-                     "mb_matched_cell_none": _window(mbmn).mean(axis=0),
-                     "mb_matched_cell_stim": _window(mbms).mean(axis=0),
-                     "low_none": _window(kcn)[:, [2460, 2650, 3971]].mean(axis=0),
-                     "low_stim": _window(kcs)[:, [2460, 2650, 3971]].mean(axis=0),
+                     "low_none": low_n, "low_stim": low_s,
                      "none_drift": float(_window(kcmn)[100:].mean() - _window(kcmn)[:100].mean()),
                      "startup_none": _bins(kcn), "startup_stim": _bins(kcs),
                      "long_full_none": int(_longest(kcn).max()), "long_main_none": int(_longest(_window(kcn)).max()),
@@ -565,11 +565,12 @@ def analyze(out_dir, validate=True):
     neg = {"kc_negative": bool(d.mean() < 0 and pk < 0.05), "mbon_negative": bool(dm.mean() < 0 and pm < 0.05),
            "entry_negative": bool(de.mean() < 0 and pe < 0.05),
            "note": "negative effects are exploratory real observations; they do not pass the positive primary and do not mean no sensory change"}
-    celln = np.array([x["kc_cell_none"] for x in rows]); cells = np.array([x["kc_cell_stim"] for x in rows])
-    mbn = np.array([x["mb_cell_none"] for x in rows]); mbs = np.array([x["mb_cell_stim"] for x in rows])
+    celln = np.array(celln_rows); cells = np.array(cells_rows)
+    mbn = np.array(mbn_rows); mbs = np.array(mbs_rows)
     em = entry_means(rows)
     return {
-        "protocol": "P11-2-S1R/v1", "completeness": f"{len(rows)}/25",
+        "protocol": "P11-2-S1R/v1", "status": "ANALYSIS_COMPLETE",
+        "completeness": f"{len(rows)}/25",
         "per_seed": rows,
         "entry": {"A_none": round(float(em["none"]), 9),
                   "A_stim": round(float(em["stim"]), 9),

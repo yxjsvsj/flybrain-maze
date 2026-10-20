@@ -43,15 +43,16 @@ Level A/B/C/Biological=`NO-GO`
 
 ## 新授权生效前必须满足
 
-1. S1R-1a 静态缺陷修复通过，独立 commit/push。
+1. S1R-1b 统计序列化/成功链修复通过，独立 commit/push。
 2. `p11_2_s1r_script_freeze.json` 与 `p11_2_s1r_experiment.py` SHA 完全一致
-   （当前冻结 SHA：`fe15653c35eb13b6849223052279d7b28f83c4c258417816711f89d76b44a5b9`）。
+   （当前冻结 SHA：`9fbf0ab44d77adfdd9beb0a275b65181f5c3989820dd517dba22217870ae272b`）。
 3. `p11_2_s1r_authorization.json` 仍为 `NOT_AUTHORIZED`；不得手工改成旧 S1 的内容。
 4. 用户明确给出新的 S1R 一次性批准文本；新授权 scope 必须与上方冻结表完全一致。
 5. 官方 `brain.npz`/`weights.npz`、P1-mapfix/readout/tags、历史 S1 失败现场均未被修改。
 6. 运行前确认一次性锁不存在；运行后无论成功失败都保留消耗锁，禁止自动重试。
 7. 运行后先持久化 run_meta 和 50 个 NPZ 哈希，再做统计；统计后再次核验哈希。
 8. 生产 `--child` 必须在真实 2048 MiB 受控 Job 内通过 Job guard；环境变量不能单独作为凭证。
+9. 最终 `RUN_COMPLETE` 只能在 25/25、50 NPZ、统计后哈希、report 和 manifest 全部成功持久化后写入 run_meta；report/manifest 失败必须为 `PERSISTENCE_FAILED`/`INCOMPLETE_NO_GO`。
 
 ## 当前决定
 

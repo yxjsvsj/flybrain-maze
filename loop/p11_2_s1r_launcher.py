@@ -6,6 +6,7 @@ cwd=仓库根，日志/产物/退出状态均由 S1F 安全 Job 启动器负责�
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib
 import json
@@ -103,6 +104,10 @@ def acquire_one_shot(auth_checksum, lock_path=None, out_dir=None, freeze_sha=Non
         # 文件已原子创建，失败也不自动删除：该授权仍视为已消耗。
         raise Refused(f"LOCK_WRITE_FAILED:{type(e).__name__}:{e}") from e
     return path
+
+
+def _json_sha(obj):
+    return hashlib.sha256(json.dumps(obj, ensure_ascii=False, indent=1).encode("utf-8")).hexdigest()
 
 
 def _write_json(path, obj):
@@ -327,10 +332,10 @@ def _base_meta(pre, run, out_dir, wall_s, child_path, lock_path=None):
     }
 
 
-def _persist_run_meta(out_dir, meta):
+def _persist_run_meta(out_dir, meta, run_meta_path=None):
     # 必须先于任何统计后处理持久化
     _write_json(os.path.join(out_dir, "run_meta.json"), meta)
-    _write_json(RUN_META, meta)
+    _write_json(run_meta_path or RUN_META, meta)
 
 
 def _copy_if_exists(src, dst):
@@ -366,6 +371,149 @@ def _run_child_module(module, args, cwd, out_dir, limit_mib=256, wall_s=30.0,
                               job_name=job_name)
 
 
+def _failure_report(status, reason, meta, child, raw, child_raw):
+    return {"protocol": "P11-2-S1R/v1", "status": status,
+            "s1r_status": "INCOMPLETE_NO_GO",
+            "completeness": f"{child.get('seeds_observed', 0)}/{len(SEEDS)}",
+            "complete_25_pairs": False, "run_meta": meta, "child": child_raw,
+            "raw": {"ok": raw.get("ok"), "file_count": raw.get("file_count"),
+                    "dataset_sha256": raw.get("dataset_sha256"),
+                    "errors": raw.get("errors", [])[:20]},
+            "reason": reason, "training_authorized": False}
+
+
+def _try_write(path, obj):
+    try:
+        _write_json(path, obj)
+        return True
+    except Exception:                  # noqa: BLE001
+        return False
+
+
+def _write_failure_files(out_dir, report_path, manifest_path, status, reason, meta, child, raw, child_raw):
+    rep = _failure_report(status, reason, meta, child, raw, child_raw)
+    man = _manifest(out_dir, {"status": status, "s1r_status": "INCOMPLETE_NO_GO",
+                              "run_meta_sha256": _json_sha(meta),
+                              "raw_ok": raw.get("ok"),
+                              "dataset_sha256": raw.get("dataset_sha256")})
+    ok_r = _try_write(report_path, rep)
+    ok_m = _try_write(manifest_path, man)
+    return ok_r and ok_m
+
+
+def postprocess_and_persist(out_dir, run, meta, pre, child_path, report_path=None,
+                            manifest_path=None, run_meta_path=None, exp=None):
+    """生产后处理：验证 → analyze → JSON report → manifest → 最终 run_meta。
+
+    任何统计失败或持久化失败都保持 INCOMPLETE_NO_GO；最终 run_meta 的 RUN_COMPLETE
+    只在 report 与 manifest 都成功写入之后才落盘。
+    """
+    report_path = report_path or REPORT
+    manifest_path = manifest_path or RAW_MANIFEST
+    exp = exp or importlib.import_module(EXPERIMENT_MODULE)
+    raw = exp.validate_raw_dataset(out_dir, auth_sha=pre["auth"]["checksum"],
+                                   script_sha=meta["script_sha256"])
+    child = validate_child_result(child_path, raw_w_hashes=raw["w_hashes"])
+    ev = evaluate_run(run, child)
+    meta.update(ev)
+    meta["child_errors"] = child.get("errors", [])[:20]
+    meta["raw_ok"] = bool(raw["ok"])
+    meta["raw_file_count"] = raw["file_count"]
+    meta["raw_dataset_sha256"] = raw["dataset_sha256"]
+    meta["raw_noise_pairing_all"] = raw["noise_pairing_all"]
+    meta["raw_errors"] = raw["errors"][:20]
+    meta["raw_files"] = raw["files"]
+    meta["experiment_succeeded"] = False
+    meta["status"] = "INCOMPLETE_NO_GO"
+    meta["s1r_status"] = "INCOMPLETE_NO_GO"
+    _persist_run_meta(out_dir, meta, run_meta_path)
+    child_raw = None
+    if child["exists"]:
+        try:
+            with open(child_path, encoding="utf-8") as f:
+                child_raw = json.load(f)
+        except Exception:              # noqa: BLE001
+            child_raw = None
+
+    if not (ev["experiment_succeeded"] and raw["ok"]):
+        reason = (raw["errors"][0] if not raw["ok"] else
+                  child.get("reason") or meta.get("child_status") or "INCOMPLETE")
+        if not _write_failure_files(out_dir, report_path, manifest_path, "INCOMPLETE_NO_GO",
+                                    reason, meta, child, raw, child_raw):
+            meta["status"] = "PERSISTENCE_FAILED"
+            meta["s1r_status"] = "INCOMPLETE_NO_GO"
+            _persist_run_meta(out_dir, meta, run_meta_path)
+        return meta
+
+    try:
+        rep = exp.analyze(out_dir, validate=False)
+        if rep.get("status") != "ANALYSIS_COMPLETE":
+            raise RuntimeError(f"ANALYZE_BAD_STATUS:{rep.get('status')}")
+        after = exp.verify_raw_hashes(out_dir, raw["files"])
+        if not after["ok"]:
+            raise RuntimeError(f"POST_STATS_HASH_MISMATCH:{after['mismatches']}")
+    except Exception as e:             # noqa: BLE001
+        meta["stats_error"] = f"{type(e).__name__}:{e}"
+        meta["status"] = "POSTPROCESS_FAILED"
+        meta["s1r_status"] = "INCOMPLETE_NO_GO"
+        meta["experiment_succeeded"] = False
+        _persist_run_meta(out_dir, meta, run_meta_path)
+        _write_failure_files(out_dir, report_path, manifest_path, "POSTPROCESS_FAILED",
+                             meta["stats_error"], meta, child, raw, child_raw)
+        return meta
+
+    meta_final = copy.deepcopy(meta)
+    meta_final["experiment_succeeded"] = True
+    meta_final["status"] = "RUN_COMPLETE"
+    meta_final["s1r_status"] = "RUN_COMPLETE"
+    meta_final["post_stats_hashes_ok"] = True
+    rep["status"] = "RUN_COMPLETE"
+    rep["s1r_status"] = "RUN_COMPLETE"
+    rep["run_meta"] = meta_final
+    rep["child"] = child_raw
+    rep["complete_25_pairs"] = True
+    rep["gate"] = {"Training_Authorization": False,
+                   "REAL_SYNAPTIC_LEARNING_READY": "NO",
+                   "Level_A/B/C/Biological": "NO-GO", "A1_A2_A3/B": "NO-GO",
+                   "DeltaW": 0, "Dijkstra": "NO", "Maze": "NO", "B/C": "NO", "Robot": "NO"}
+    manifest = _manifest(out_dir, {
+        "status": "RUN_COMPLETE", "s1r_status": "RUN_COMPLETE",
+        "script_sha256": meta_final["script_sha256"],
+        "authorization_sha256": meta_final["auth_checksum"],
+        "run_meta_sha256": _json_sha(meta_final),
+        "raw_ok": raw["ok"], "dataset_sha256": raw["dataset_sha256"],
+        "official_hashes": pre["official"],
+    })
+    try:
+        _write_json(report_path, rep)
+        _write_json(manifest_path, manifest)
+    except Exception as e:             # noqa: BLE001
+        meta["status"] = "PERSISTENCE_FAILED"
+        meta["s1r_status"] = "INCOMPLETE_NO_GO"
+        meta["experiment_succeeded"] = False
+        meta["persistence_error"] = f"{type(e).__name__}:{e}"
+        _persist_run_meta(out_dir, meta, run_meta_path)
+        _write_failure_files(out_dir, report_path, manifest_path, "PERSISTENCE_FAILED",
+                             meta["persistence_error"], meta, child, raw, child_raw)
+        return meta
+    try:
+        # 最后一次成功 run_meta；此前不能永久写成成功。
+        _persist_run_meta(out_dir, meta_final, run_meta_path)
+    except Exception as e:             # noqa: BLE001
+        meta["status"] = "PERSISTENCE_FAILED"
+        meta["s1r_status"] = "INCOMPLETE_NO_GO"
+        meta["experiment_succeeded"] = False
+        meta["persistence_error"] = f"{type(e).__name__}:{e}"
+        try:
+            _persist_run_meta(out_dir, meta, run_meta_path)
+        except Exception:              # noqa: BLE001
+            pass
+        _write_failure_files(out_dir, report_path, manifest_path, "PERSISTENCE_FAILED",
+                             meta["persistence_error"], meta, child, raw, child_raw)
+        return meta
+    return meta_final
+
+
 def run_s1r_once(out_dir=None):
     """唯一生产运行路径；调用前必须存在独立 APPROVED S1R 授权。"""
     pre = preflight()
@@ -399,77 +547,8 @@ def run_s1r_once(out_dir=None):
     wall = time.perf_counter() - t0
     meta = _base_meta(pre, run, out_dir, wall, child_path, lock_path)
     meta["job_name"] = job_name
-    _persist_run_meta(out_dir, meta)       # 先写入运行元数据
-    raw = exp.validate_raw_dataset(out_dir, auth_sha=pre["auth"]["checksum"],
-                                   script_sha=meta["script_sha256"])
-    child = validate_child_result(child_path, raw_w_hashes=raw["w_hashes"])
-    ev = evaluate_run(run, child)
-    meta.update(ev)
-    meta["child_errors"] = child.get("errors", [])[:20]
-    meta["raw_ok"] = bool(raw["ok"])
-    meta["raw_file_count"] = raw["file_count"]
-    meta["raw_dataset_sha256"] = raw["dataset_sha256"]
-    meta["raw_noise_pairing_all"] = raw["noise_pairing_all"]
-    meta["raw_errors"] = raw["errors"][:20]
-    meta["raw_files"] = raw["files"]
-    meta["experiment_succeeded"] = bool(ev["experiment_succeeded"] and raw["ok"])
-    meta["status"] = "INCOMPLETE_NO_GO"
-    _persist_run_meta(out_dir, meta)       # 仍在统计之前
-    child_raw = None
-    if child["exists"]:
-        try:
-            with open(child_path, encoding="utf-8") as f:
-                child_raw = json.load(f)
-        except Exception:                  # noqa: BLE001
-            child_raw = None
-    rep = None
-    if meta["experiment_succeeded"]:
-        try:
-            rep = exp.analyze(out_dir, validate=False)
-            after = exp.verify_raw_hashes(out_dir, raw["files"])
-        except Exception as e:             # noqa: BLE001
-            meta["stats_error"] = f"{type(e).__name__}:{e}"
-            meta["experiment_succeeded"] = False
-            meta["status"] = "INCOMPLETE_NO_GO"
-            _persist_run_meta(out_dir, meta)
-            rep = None
-        else:
-            meta["post_stats_hashes_ok"] = bool(after["ok"])
-            if not after["ok"]:
-                meta["hash_mismatches"] = after["mismatches"]
-                meta["experiment_succeeded"] = False
-                meta["status"] = "INCOMPLETE_NO_GO"
-                _persist_run_meta(out_dir, meta)
-                rep = None
-            else:
-                meta["experiment_succeeded"] = True
-                meta["status"] = "RUN_COMPLETE"
-                rep["run_meta"] = meta
-                rep["child"] = child_raw
-                rep["complete_25_pairs"] = True
-                rep["gate"] = {"Training_Authorization": False,
-                               "REAL_SYNAPTIC_LEARNING_READY": "NO",
-                               "Level_A/B/C/Biological": "NO-GO", "A1_A2_A3/B": "NO-GO",
-                               "DeltaW": 0, "Dijkstra": "NO", "Maze": "NO", "B/C": "NO", "Robot": "NO"}
-    if rep is None:
-        reason = (raw["errors"][0] if not raw["ok"] else
-                  meta.get("child_reason") or meta.get("child_status") or meta.get("stats_error"))
-        rep = {"protocol": "P11-2-S1R/v1", "status": "INCOMPLETE_NO_GO",
-               "completeness": f"{child['seeds_observed']}/{len(SEEDS)}",
-               "complete_25_pairs": False, "run_meta": meta, "child": child_raw,
-               "raw": {"ok": raw["ok"], "file_count": raw["file_count"],
-                       "dataset_sha256": raw["dataset_sha256"], "errors": raw["errors"][:20]},
-               "reason": reason, "training_authorized": False}
     _persist_run_meta(out_dir, meta)
-    _write_json(REPORT, rep)
-    manifest = _manifest(out_dir, {"status": rep["status"], "script_sha256": meta["script_sha256"],
-                                   "authorization_sha256": meta["auth_checksum"],
-                                   "run_meta_sha256": _sha(os.path.join(out_dir, "run_meta.json")),
-                                   "lock_path": lock_path, "raw_ok": raw["ok"],
-                                   "dataset_sha256": raw["dataset_sha256"],
-                                   "official_hashes": pre["official"]})
-    _write_json(RAW_MANIFEST, manifest)
-    return meta
+    return postprocess_and_persist(out_dir, run, meta, pre, child_path, exp=exp)
 
 
 def run_synthetic_chain(module, cwd, out_dir, args=(), expected_seeds=25, limit_mib=256,

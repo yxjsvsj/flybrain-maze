@@ -3,7 +3,7 @@
  "status": "FROZEN_STATIC_ONLY_NOT_APPROVED",
  "module": "loop.p11_2_s1r_experiment",
  "script": "C:\\AA_project\\guoying\\loop\\p11_2_s1r_experiment.py",
- "sha256": "fe15653c35eb13b6849223052279d7b28f83c4c258417816711f89d76b44a5b9",
+ "sha256": "9fbf0ab44d77adfdd9beb0a275b65181f5c3989820dd517dba22217870ae272b",
  "created": "2026-10-20",
  "note": "S1R experiment module frozen for static integration only; no run authorized."
 }

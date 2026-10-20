@@ -25,6 +25,8 @@ BACKUP = r"C:\AA_project\guoying_archive\p11_2_s1_failed_20261020T104624"
 S1_RAW = r"C:\Users\yang\AppData\Local\Temp\opencode\p11_2_s1_full\20261020T104624"
 
 HASH_A_F = "abcdef0123456789" * 4
+AUTH_HASH = "b" * 64
+W_HASH = "a" * 64
 
 CHILD = r'''
 import argparse, json, os, subprocess, sys, time
@@ -132,16 +134,17 @@ class S1R0Test(unittest.TestCase):
                     "mb_matched": np.zeros((400, 95), np.uint8),
                     "seed": seed, "condition": cond, "amount": 0.036254,
                     "stim_window": np.array([100, 300]), "script_sha": script_sha,
-                    "auth_sha": "AUTH_TEST", "w_hash": HASH_A_F,
+                    "auth_sha": AUTH_HASH, "w_hash": W_HASH,
                     "rng_before": HASH_A_F, "rng_after": HASH_A_F,
                 }
                 if mutate is not None:
                     mutate(seed, cond, data)
                 np.savez_compressed(os.path.join(out, f"{seed}_{cond}.npz"), **data)
+        np.savez(os.path.join(out, "ids.npz"), ids=np.array(sorted({s for s in range(101, 126)})))
         return out
 
     def _validate(self, out):
-        return experiment.validate_raw_dataset(out, auth_sha="AUTH_TEST",
+        return experiment.validate_raw_dataset(out, auth_sha=AUTH_HASH,
                                                script_sha=_sha(experiment.__file__))
 
     def _child_payload(self):
@@ -163,6 +166,144 @@ class S1R0Test(unittest.TestCase):
         with open(p, "w", encoding="utf-8") as f:
             json.dump(obj, f)
         return p
+
+    def _postprocess_fixture(self, name):
+        out = self._dataset(name)
+        child_path = os.path.join(out, "child_result.json")
+        with open(child_path, "w", encoding="utf-8") as f:
+            json.dump(self._child_payload(), f)
+        run = {"child_status": "CHILD_EXIT_OK", "process_finished": True, "exit_code": 0,
+               "timeout": False, "mem_exceeded": False, "log_bytes": 0, "log_tail": "",
+               "job_peaks": {"PeakProcessMemoryUsed_MiB": 1.0, "PeakJobMemoryUsed_MiB": 1.0},
+               "peak_MiB": 1.0}
+        pre = {"auth": {"checksum": AUTH_HASH}, "freeze": {"sha256": "f" * 64},
+               "official": {"ok": True, "files": {}}}
+        meta = launcher._base_meta(pre, run, out, 1.0, child_path, "test-lock")
+        return {"out": out, "child_path": child_path, "run": run, "pre": pre, "meta": meta,
+                "report": os.path.join(self.tmp, name + "_report.json"),
+                "manifest": os.path.join(self.tmp, name + "_manifest.json"),
+                "run_meta": os.path.join(self.tmp, name + "_run_meta.json")}
+
+    def _post(self, fx):
+        return launcher.postprocess_and_persist(
+            fx["out"], fx["run"], fx["meta"], fx["pre"], fx["child_path"],
+            report_path=fx["report"], manifest_path=fx["manifest"],
+            run_meta_path=fx["run_meta"], exp=experiment)
+
+    def test_analyze_json_and_full_success_postprocess(self):
+        fx = self._postprocess_fixture("full_success")
+        raw = experiment.analyze(fx["out"])
+        json.dumps(raw, ensure_ascii=False)
+        self.assertEqual(raw["status"], "ANALYSIS_COMPLETE")
+        orig_analyze = experiment.analyze
+        experiment.analyze = lambda *a, **k: raw
+        for row in raw["per_seed"]:
+            for key in ("kc_cell_none", "kc_cell_stim", "mb_cell_none", "mb_cell_stim",
+                        "kc_matched_cell_none", "kc_matched_cell_stim",
+                        "mb_matched_cell_none", "mb_matched_cell_stim"):
+                self.assertNotIn(key, row)
+            self.assertIsInstance(row["low_none"], list)
+            self.assertEqual(len(row["low_none"]), 3)
+
+        try:
+            meta = self._post(fx)
+        finally:
+            experiment.analyze = orig_analyze
+        self.assertEqual(meta["status"], "RUN_COMPLETE")
+        self.assertTrue(meta["experiment_succeeded"])
+        rep = _load(fx["report"])
+        json.dumps(rep, ensure_ascii=False)
+        man = _load(fx["manifest"])
+        rm = _load(fx["run_meta"])
+        self.assertEqual(rep["status"], "RUN_COMPLETE")
+        self.assertEqual(rep["s1r_status"], "RUN_COMPLETE")
+        self.assertEqual(man["status"], "RUN_COMPLETE")
+        self.assertEqual(rm["status"], "RUN_COMPLETE")
+        self.assertTrue(rm["experiment_succeeded"])
+        self.assertEqual(rep["complete_25_pairs"], True)
+        self.assertEqual(len(rep["per_seed"]), 25)
+        self.assertIn("kc_cell_none", rep["secondary"])
+
+    def test_report_write_failure_is_persistence_failed(self):
+        fx = self._postprocess_fixture("report_fail")
+        orig = launcher._write_json
+        state = {"failed": False}
+
+        def flaky(path, obj):
+            if os.path.abspath(path) == os.path.abspath(fx["report"]) and not state["failed"]:
+                state["failed"] = True
+                raise OSError("simulated report write failure")
+            return orig(path, obj)
+
+        launcher._write_json = flaky
+        orig_analyze = experiment.analyze
+        experiment.analyze = lambda *a, **k: {"status": "ANALYSIS_COMPLETE"}
+        try:
+            meta = self._post(fx)
+        finally:
+            launcher._write_json = orig
+            experiment.analyze = orig_analyze
+        self.assertEqual(meta["status"], "PERSISTENCE_FAILED")
+        self.assertFalse(meta["experiment_succeeded"])
+        rep = _load(fx["report"])
+        man = _load(fx["manifest"])
+        rm = _load(fx["run_meta"])
+        self.assertEqual(rep["status"], "PERSISTENCE_FAILED")
+        self.assertEqual(rep["s1r_status"], "INCOMPLETE_NO_GO")
+        self.assertEqual(man["status"], "PERSISTENCE_FAILED")
+        self.assertNotEqual(rm["status"], "RUN_COMPLETE")
+        self.assertFalse(rm["experiment_succeeded"])
+
+    def test_manifest_write_failure_is_persistence_failed(self):
+        fx = self._postprocess_fixture("manifest_fail")
+        orig = launcher._write_json
+        state = {"failed": False}
+
+        def flaky(path, obj):
+            if os.path.abspath(path) == os.path.abspath(fx["manifest"]) and not state["failed"]:
+                state["failed"] = True
+                raise OSError("simulated manifest write failure")
+            return orig(path, obj)
+
+        launcher._write_json = flaky
+        orig_analyze = experiment.analyze
+        experiment.analyze = lambda *a, **k: {"status": "ANALYSIS_COMPLETE"}
+        try:
+            meta = self._post(fx)
+        finally:
+            launcher._write_json = orig
+            experiment.analyze = orig_analyze
+        self.assertEqual(meta["status"], "PERSISTENCE_FAILED")
+        self.assertFalse(meta["experiment_succeeded"])
+        rep = _load(fx["report"])
+        man = _load(fx["manifest"])
+        rm = _load(fx["run_meta"])
+        self.assertEqual(rep["status"], "PERSISTENCE_FAILED")
+        self.assertEqual(man["status"], "PERSISTENCE_FAILED")
+        self.assertNotEqual(rm["status"], "RUN_COMPLETE")
+        self.assertFalse(rm["experiment_succeeded"])
+
+    def test_postprocess_exception_is_postprocess_failed(self):
+        fx = self._postprocess_fixture("post_fail")
+        orig = experiment.analyze
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("simulated analyze failure")
+
+        experiment.analyze = boom
+        try:
+            meta = self._post(fx)
+        finally:
+            experiment.analyze = orig
+        self.assertEqual(meta["status"], "POSTPROCESS_FAILED")
+        self.assertFalse(meta["experiment_succeeded"])
+        rep = _load(fx["report"])
+        man = _load(fx["manifest"])
+        rm = _load(fx["run_meta"])
+        self.assertEqual(rep["status"], "POSTPROCESS_FAILED")
+        self.assertEqual(man["status"], "POSTPROCESS_FAILED")
+        self.assertNotEqual(rm["status"], "RUN_COMPLETE")
+        self.assertFalse(rm["experiment_succeeded"])
 
     def test_strict_child_result_valid_and_counterexamples(self):
         raw_hash = "a" * 64
@@ -603,6 +744,28 @@ class S1R0Test(unittest.TestCase):
         self.assertEqual(r["historical_s1"]["report_status"], "INCOMPLETE_NO_GO")
         self.assertTrue(r["historical_s1"]["all_raw_hashes_ok"])
         self.assertTrue(r["historical_s1"]["all_backup_hashes_ok"])
+
+    def test_s1r1b_postprocess_report(self):
+        r = _load(os.path.join(HERE, "p11_2_s1r1b_report.json"))
+        self.assertEqual(r["status"], "S1R1B_POSTPROCESS_COMPLETE; NOT_AUTHORIZED; NO_RUN")
+        self.assertEqual(r["ready_to_request_one_s1r_run"], "YES")
+        self.assertFalse(r["new_s1r_execution_authorization"])
+        self.assertTrue(r["json_serialization"]["per_seed_scalar_only"])
+        self.assertTrue(r["json_serialization"]["json_dumps_analyze_ok"])
+        self.assertEqual(r["status_chain"]["success"], "RUN_COMPLETE")
+        self.assertEqual(r["status_chain"]["postprocess_failure"], "POSTPROCESS_FAILED")
+        self.assertEqual(r["status_chain"]["persistence_failure"], "PERSISTENCE_FAILED")
+        self.assertTrue(r["full_success_chain"]["run_meta_status"])
+        self.assertTrue(r["full_success_chain"]["report_status"])
+        self.assertTrue(r["full_success_chain"]["manifest_status"])
+        self.assertEqual(r["tests"]["s1r_ran"], 34)
+        self.assertEqual(r["tests"]["s1r_passed"], 34)
+        self.assertEqual(r["tests"]["s1f_ran"], 9)
+        self.assertEqual(r["tests"]["s1f_passed"], 9)
+        self.assertEqual(r["authorization"]["status"], "NOT_AUTHORIZED")
+        self.assertTrue(r["freeze"]["match"])
+        self.assertFalse(r["one_shot_lock"]["lock_present_now"])
+        self.assertEqual(r["historical_s1"]["report_status"], "INCOMPLETE_NO_GO")
 
     def test_approval_file_not_authorized(self):
         p = os.path.join(HERE, "P11_2_S1R_ONE_RUN_APPROVAL.md")
