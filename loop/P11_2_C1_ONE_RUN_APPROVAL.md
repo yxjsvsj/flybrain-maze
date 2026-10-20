@@ -1,7 +1,11 @@
-# P11-2-C1 一次性审批申请（**未授权；未运行**）
+# P11-2-C1 一次性审批（**已批准；已运行一次；25/25**）
 
-**状态：PENDING；NOT AUTHORIZED；NOT RUN。**
-`P11-2-C1 Execution Authorization = False`。本文件只是申请，不是授权。
+**状态：APPROVED；RUN COMPLETED；CONSUMED。**
+`P11-2-C1 Execution Authorization = APPROVED_ONE_RUN; CONSUMED`。
+
+**用户授权原文**：> 批准一次 P11-2-C1：A/B，25 seeds，每 seed 400 步，共 20,000 步，15 分钟 / 2 GiB，一次性，不自动重跑。
+
+本文件是授权与执行记录；只覆盖一次 A/B；不覆盖训练/ΔW/Dijkstra/迷宫/B/C/实体车。
 
 ## 1. 请求
 
@@ -79,4 +83,17 @@
 `Training Authorization=False`；`REAL_SYNAPTIC_LEARNING_READY=NO`；
 Level A/B/C/Biological = **NO-GO**。
 
-**请明确批准/拒绝本次一次性 P11-2-C1。未批准前不运行。**
+## 9. 执行结果（本次一次性运行）
+
+- **25/25 A/B pairs**；全部 seed 有限；A/B 逐 seed RNG 状态配对 **25/25 true**。
+- 匹配 320 KC [100,300)：**A 0.956807，B 0.194136，B−A −0.762671**；
+  exact two-sided sign-flip **p = 5.960464477539063e-08**；
+  95% CI **[-0.766145, -0.759004]**。
+- **实测 Job 峰值 1942.7 MiB / wall 290.38 s**；exit 0；无超时/超内存；< 2 GiB / 15 min。
+- W_B：删除 **642,933** 条 KC→KC；`W_B` 非零 **24,940,005**；无新增/无重归一化；官方 W 前后哈希相同。
+- 判定：**CAUSAL_CONTRIBUTION_SUPPORTED**（模型内）；B 后仅 2 个 KC per-cell ≥0.85
+  （2460 0.9545、3971 0.9516；2650 0.6016），匹配 320 降至 0.194136。
+- 后续感觉传递：**仅可另提独立提案**；本轮不授权训练/ΔW/Dijkstra/迷宫/B/C/实体车。
+- `Training Authorization=False`；`REAL_SYNAPTIC_LEARNING_READY=NO`；Level A/B/C/Biological **NO-GO**。
+
+**本次一次性授权已消耗；不自动重跑。**

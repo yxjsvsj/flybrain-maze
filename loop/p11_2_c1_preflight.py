@@ -33,6 +33,7 @@ MEM_CAP_BYTES = MEM_CAP_MIB * 1024 ** 2
 MIN_EFFECT = 0.10
 BOOTSTRAP_N = 10000
 BOOTSTRAP_SEED = 20261019
+BASELINE_COMMIT = "b5b8f61"
 
 # Known official hashes
 OFFICIAL = {
@@ -275,7 +276,7 @@ def freeze_audit():
         "readout_status": readout_status["out"], "readout_working_tree_modified": readout_status["out"] != "",
         "tags": dict(line.split(" ", 1) for line in tags["out"].splitlines() if line.strip()),
         "tags_modified": False,
-        "head": head["out"], "baseline_commit": "ff8466b", "head_matches_baseline": head["out"].startswith("ff8466b"),
+        "head": head["out"], "baseline_commit": BASELINE_COMMIT, "head_matches_baseline": head["out"].startswith(BASELINE_COMMIT),
         "dirty_files": dirty, "dirty_files_preserved": dirty_present,
         "three_dirty_files_unchanged": dirty_present,
     }
@@ -287,23 +288,25 @@ def resource_numbers(WB):
     wall = float(c["reconstructed_child_wall_s"]); steps = 10000
     ms = wall / steps * 1000.0
     est_s = wall / steps * TOTAL_STEPS
-    peak = float(b["peak_mem_MB"])
+    peak_mb = float(b["peak_mem_MB"])
+    peak_mib = peak_mb / 1.048576
     wb_mib = (WB.data.nbytes + WB.indices.nbytes + WB.indptr.nbytes) / 1024 ** 2
-    est_peak = peak + wb_mib
+    est_peak = peak_mib + wb_mib
     return {
         "conditions": CONDITIONS, "seeds": len(SEEDS), "steps_per_seed": STEPS,
         "total_steps": TOTAL_STEPS,
         "p11_1c_wall_s": wall, "p11_1c_steps": steps, "ms_per_step": round(ms, 3),
         "estimated_wall_s": round(est_s, 2), "wall_cap_s": WALL_CAP_S,
         "wall_margin_s": round(WALL_CAP_S - est_s, 2),
-        "p11_1b_peak_MB": peak, "mem_cap_MiB": MEM_CAP_MIB,
-        "mem_margin_MiB": round(MEM_CAP_MIB - peak, 2),
+        "p11_1b_peak_MB": peak_mb, "p11_1b_peak_MiB": round(peak_mib, 2),
+        "mem_cap_MiB": MEM_CAP_MIB,
+        "mem_margin_MiB": round(MEM_CAP_MIB - peak_mib, 2),
         "W_B_csc_MiB": round(wb_mib, 2), "estimated_peak_with_W_B_MiB": round(est_peak, 2),
         "estimated_mem_margin_MiB": round(MEM_CAP_MIB - est_peak, 2),
-        "estimate_basis": "P11-1c 152.54 s / 10,000 steps; P11-1b peak 1497.87 MB; linear extrapolation + one W_B copy",
+        "estimate_basis": "P11-1c 152.54 s / 10,000 steps; P11-1b 1497.87 MB = 1428.48 MiB; + one W_B copy 190.91 MiB",
         "status": "PLAUSIBLE_UNVERIFIED", "verified": False,
         "full_brain_run_this_round": False,
-        "note": "No real full-brain initialization/run was used to validate this budget.",
+        "note": "No real full-brain initialization/run was used to validate this budget. 1497.87 MB is decimal MB; 1428.48 MiB; 1619.39 MiB is a rough static estimate, not a peak guarantee.",
     }
 
 
@@ -414,7 +417,7 @@ def main(argv=None) -> int:
     }
     report = {
         "protocol": "P11-2-C1-0/v1", "status": "PREFLIGHT_COMPLETE; NO_DYNAMICS_RUN",
-        "baseline_commit": "ff8466b", "official_hashes": {"ok": h.get("ok"), "files": {k: v.get("sha256") for k, v in h.get("files", {}).items()}},
+        "baseline_commit": BASELINE_COMMIT, "official_hashes": {"ok": h.get("ok"), "files": {k: v.get("sha256") for k, v in h.get("files", {}).items()}},
         "archive": arc, "mechanism_localization": mech, "p11_2_0a_crosscheck": {"values": p0, "checks": consist},
         "W_B": {"derived": wb, "verification": wb},
         "noise": {"audit": noise, "synthetic": nsyn},

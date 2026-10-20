@@ -1,0 +1,29 @@
+{
+ "protocol": "P11-2-C1/v1",
+ "status": "RUN_COMPLETE",
+ "out_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_2_c1_full\\20261020T092703",
+ "run_wall_s": 290.38,
+ "job_peaks": {
+  "PeakProcessMemoryUsed_MiB": 1941.0,
+  "PeakJobMemoryUsed_MiB": 1942.7
+ },
+ "peak_working_set_MiB": 4.54,
+ "job_peak_MiB": 1942.7,
+ "exit_code": 0,
+ "timeout": false,
+ "mem_exceeded": false,
+ "reason": "completed",
+ "script_sha256": "136bb62890165af551e1a65ae3db9d24b8085755106de3d4b15b19c11eeb1543",
+ "authorization_sha256": "57ac353a449edb8a6bdaa8f4da7039db34df24b8356bb559e4333503662b57b4",
+ "freeze_sha256": "60a5d547a0a25fff6cefd09cea7cffa55ba6fc28a551f1e310a2ab6430cc9bc7",
+ "official_hashes": {
+  "ok": true,
+  "files": {
+   "brain.npz": "cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca",
+   "weights.npz": "c29919aa44069a271b1ee978abe05fa9bf6e45e4ba3e436e92b624ef1b5be40c"
+  }
+ },
+ "archive_status": "VERIFIED",
+ "log_tail": "",
+ "created": "20261020T092703"
+}

@@ -1,14 +1,27 @@
 # P11-2-C1 最小因果预注册：KC→KC 递归删除（A intact vs B zero）
 
-**状态：PREFLIGHT COMPLETE；NO NEURAL DYNAMICS RUN。**
-**P11-2-C1 Execution Authorization = False。Training Authorization = False。**
+**状态：PREFLIGHT COMPLETE；ONE-RUN EXECUTED（25/25）。**
+**P11-2-C1 Execution Authorization = APPROVED_ONE_RUN; CONSUMED。Training Authorization = False。**
 
-基线：`ff8466b`。本文件、`P11_2_C1_RESOURCE_PLAN.md`、`p11_2_c1_preflight.py`、
-`test_p11_2_c1_preflight.py`、`p11_2_c1_preflight_report.json`、`P11_2_C1_ONE_RUN_APPROVAL.md`
+基线：`ff8466b`（预注册）；执行基线 `b5b8f61`。本文件、`P11_2_C1_RESOURCE_PLAN.md`、
+`p11_2_c1_preflight.py`、`test_p11_2_c1_preflight.py`、`p11_2_c1_preflight_report.json`、
+`P11_2_C1_ONE_RUN_APPROVAL.md`、`p11_2_c1_experiment.py`、`p11_2_c1_report.json`
 一并提交。
 
-本轮只做：静态代码审查、闭式数学、历史归档只读分析、预注册脚本、合成矩阵测试。
-**未运行**完整脑、`FlyBrain.step`、P11-2-C1 干预、A1/A2/A3/B、训练、ΔW、Dijkstra、迷宫、B/C、实体车。
+**执行结果（post-run addendum）**：
+
+- 25/25 A/B pairs；全部 seed 有限；A/B 逐 seed 噪声状态配对全部为 true。
+- 匹配 320 KC [100,300)：**A 0.956807，B 0.194136，B−A −0.762671**；
+  exact two-sided sign-flip **p = 5.960464477539063e-08**；
+  95% CI **[-0.766145, -0.759004]**。
+- 实测 **Job 峰值 1942.7 MiB / wall 290.38 s**（< 2048 MiB / 900 s）；exit 0；无超时/超内存。
+- 删除 KC→KC 对饱和表型有**模型内因果贡献**（预注册意义）；不证明生物机制、连接组学习或导航。
+- B 后仍饱和：完整 4,064 中 **2 个 KC** 的 per-cell 均值 ≥0.85（局部 2460 0.9545、3971 0.9516；
+  2650 为 0.6016）；匹配 320 已降至 0.194136。
+- 后续感觉传递实验：**仅可另提独立提案**；本轮不授权训练/ΔW/Dijkstra/迷宫/B/C/实体车。
+
+预注册阶段只做：静态代码审查、闭式数学、历史归档只读分析、预注册脚本、合成矩阵测试。
+实验执行严格按下方冻结范围；未运行 A1/A2/A3/B、训练、ΔW、Dijkstra、迷宫、B/C、实体车。
 
 ---
 
@@ -182,12 +195,13 @@ Bernoulli 事件是阈值化视图，可能偶合；配对单位是**原始随�
 - 原始 W 不变，结束再次验证；3 个既有无关改动不清理；
 - 合成测试覆盖：内存限制、超时、启动/分配失败、崩溃退出、禁止重试。
 
-资源估算（**未用真实完整脑验证**）：
+资源估算与实测：
 
 - P11-1c：152.54 s / 10,000 步 → 15.254 ms/步；
-- 20,000 步 ≈ **305.08 s** < 900 s（余量 594.92 s）；
-- P11-1b 峰值 **1497.87 MB**；加一个 W_B 副本 ≈ **1688.78 MiB** < 2048 MiB（余量 359.22 MiB）。
-- **`RESOURCE_PLAN = PLAUSIBLE_UNVERIFIED`**；本轮不运行完整脑。
+- 20,000 步估算 **305.08 s**；**实测 290.38 s** < 900 s（余量 609.62 s）；
+- P11-1b 峰值 **1497.87 MB = 1428.48 MiB**；加一个 W_B 副本 190.91 MiB ≈ **1619.39 MiB**（静态估算）；
+  **实测 Job 峰值 1942.7 MiB** < 2048 MiB（余量 105.3 MiB）。
+- 静态估算偏低；实测仍通过硬限制，但内存余量较小。**`RESOURCE = MEASURED_UNDER_LIMIT`**。
 
 ---
 
@@ -195,21 +209,22 @@ Bernoulli 事件是阈值化视图，可能偶合；配对单位是**原始随�
 
 | 项目 | 值 |
 |---|---|
-| P11-2-C1 Execution Authorization | **False** |
+| P11-2-C1 Execution Authorization | **APPROVED_ONE_RUN; CONSUMED** |
 | Training Authorization | **False** |
 | REAL_SYNAPTIC_LEARNING_READY | **NO** |
 | Level A / B / C / Biological | **NO-GO** |
 | A1 / A2 / A3 / B | **NO-GO** |
-| FULL_BRAIN_RUN_THIS_ROUND | **False** |
-| KC_KC_REMOVAL_EXECUTED | **False** |
+| FULL_BRAIN_RUN_THIS_ROUND | **True（一次 A/B，25 seeds）** |
+| KC_KC_REMOVAL_EXECUTED | **True（642,933 edges）** |
 | KC_KC_REMOVAL_STRICT_IMPLEMENTABLE | **YES** |
-| NOISE_PAIRING_STRICT | **YES**（条件如上） |
+| NOISE_PAIRING_STRICT | **YES（25/25 实测 RNG 状态配对）** |
 | RESOURCE_PLAUSIBLE | **YES** |
-| RESOURCE_VERIFIED | **NO** |
+| RESOURCE_VERIFIED | **YES（1942.7 MiB / 290.38 s）** |
 | MINIMAL_PREREG_FROZEN | **YES** |
-| READY_TO_APPLY_FOR_ONE_RUN | **YES** |
+| READY_TO_APPLY_FOR_ONE_RUN | **EXECUTED_ONE_RUN** |
 
-**本文件不是执行授权。** 需用户单独书面批准一次 P11-2-C1；未批准前不运行。
+**本文件不是执行授权本身。** 用户已单独批准一次 P11-2-C1；该一次运行已完成并被消耗。
+不得自动重跑；训练/ΔW/Dijkstra/迷宫/B/C/实体车仍未授权。
 
 ---
 

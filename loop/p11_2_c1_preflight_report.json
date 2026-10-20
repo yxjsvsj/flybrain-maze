@@ -1,7 +1,7 @@
 {
  "protocol": "P11-2-C1-0/v1",
  "status": "PREFLIGHT_COMPLETE; NO_DYNAMICS_RUN",
- "baseline_commit": "ff8466b",
+ "baseline_commit": "b5b8f61",
  "official_hashes": {
   "ok": true,
   "files": {
@@ -441,16 +441,17 @@
   "wall_cap_s": 900.0,
   "wall_margin_s": 594.92,
   "p11_1b_peak_MB": 1497.87,
+  "p11_1b_peak_MiB": 1428.48,
   "mem_cap_MiB": 2048,
-  "mem_margin_MiB": 550.13,
+  "mem_margin_MiB": 619.52,
   "W_B_csc_MiB": 190.91,
-  "estimated_peak_with_W_B_MiB": 1688.78,
-  "estimated_mem_margin_MiB": 359.22,
-  "estimate_basis": "P11-1c 152.54 s / 10,000 steps; P11-1b peak 1497.87 MB; linear extrapolation + one W_B copy",
+  "estimated_peak_with_W_B_MiB": 1619.39,
+  "estimated_mem_margin_MiB": 428.61,
+  "estimate_basis": "P11-1c 152.54 s / 10,000 steps; P11-1b 1497.87 MB = 1428.48 MiB; + one W_B copy 190.91 MiB",
   "status": "PLAUSIBLE_UNVERIFIED",
   "verified": false,
   "full_brain_run_this_round": false,
-  "note": "No real full-brain initialization/run was used to validate this budget."
+  "note": "No real full-brain initialization/run was used to validate this budget. 1497.87 MB is decimal MB; 1428.48 MiB; 1619.39 MiB is a rough static estimate, not a peak guarantee."
  },
  "stats": {
   "primary_endpoint": "matched 320 KC per-step firing fraction in [100,300), per seed",
@@ -503,8 +504,8 @@
    "P2c-ground-commissioning": "b58e2d353b364d9d6563491540675638b14d2f38"
   },
   "tags_modified": false,
-  "head": "ff8466b614e5c4952d64785bb4d6682063f2e8a4",
-  "baseline_commit": "ff8466b",
+  "head": "b5b8f619c3ecc57320c1a311c499da048546326b",
+  "baseline_commit": "b5b8f61",
   "head_matches_baseline": true,
   "dirty_files": [
    "hardware/tof5_client.py",
@@ -533,7 +534,7 @@
    },
    "timeout": {
     "timeout": true,
-    "wall_s": 1.238,
+    "wall_s": 1.181,
     "exit_code": 1,
     "ok": true
    },
