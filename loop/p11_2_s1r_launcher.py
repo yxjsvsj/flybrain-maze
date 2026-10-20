@@ -26,6 +26,7 @@ FREEZE = os.path.join(HERE, "p11_2_s1r_script_freeze.json")
 REPORT = os.path.join(HERE, "p11_2_s1r_report.json")
 RUN_META = os.path.join(HERE, "p11_2_s1r_run_meta.json")
 RAW_MANIFEST = os.path.join(HERE, "p11_2_s1r_raw_manifest.json")
+LOCK_DIR = os.path.join(HERE, "p11_2_s1r_authorization_locks")
 DATA_DIR = os.path.join(os.path.expanduser("~"), "fly-data")
 SEEDS = list(range(101, 126))
 STEPS = 400
@@ -63,6 +64,35 @@ def _sha(path):
         for c in iter(lambda: f.read(1 << 20), b""):
             h.update(c)
     return h.hexdigest()
+
+
+def lock_path_for(auth_checksum):
+    return os.path.join(LOCK_DIR, f"{auth_checksum}.consumed.json")
+
+
+def acquire_one_shot(auth_checksum, lock_path=None, out_dir=None, freeze_sha=None):
+    """原子创建持久锁；O_EXCL 成功才算获得唯一执行权；任何失败都不删除。"""
+    path = os.path.abspath(lock_path or lock_path_for(auth_checksum))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as e:
+        raise Refused("AUTHORIZATION_ALREADY_CONSUMED") from e
+    except OSError as e:
+        raise Refused(f"LOCK_CREATE_FAILED:{type(e).__name__}:{e}") from e
+    payload = {"protocol": "P11-2-S1R/v1", "status": "CONSUMED_STARTED",
+               "auth_checksum": auth_checksum, "freeze_sha256": freeze_sha,
+               "scope_sha256": hashlib.sha256(_canon(SCOPE)).hexdigest(),
+               "out_dir": out_dir, "pid": os.getpid(), "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception as e:             # noqa: BLE001
+        # 文件已原子创建，失败也不自动删除：该授权仍视为已消耗。
+        raise Refused(f"LOCK_WRITE_FAILED:{type(e).__name__}:{e}") from e
+    return path
 
 
 def _write_json(path, obj):
@@ -177,10 +207,11 @@ def evaluate_run(run, child):
     }
 
 
-def _base_meta(pre, run, out_dir, wall_s, child_path):
+def _base_meta(pre, run, out_dir, wall_s, child_path, lock_path=None):
     peaks = run.get("job_peaks") or {}
     return {
         "protocol": "P11-2-S1R/v1", "out_dir": out_dir, "created": time.strftime("%Y%m%dT%H%M%S"),
+        "lock_path": lock_path,
         "status": "INCOMPLETE_NO_GO", "experiment_succeeded": False,
         "process_finished": bool(run.get("process_finished")),
         "child_status": run.get("child_status"), "exit_code": run.get("exit_code"),
@@ -226,11 +257,15 @@ def _env():
 
 
 def _run_child_module(module, args, cwd, out_dir, limit_mib=256, wall_s=30.0,
-                      required_artifact=None, inherit_log=True):
+                      required_artifact=None, inherit_log=True, job_name=None):
+    env = _env()
+    if job_name:
+        env["P11_2_S1R_JOB_NAME"] = job_name       # hint only; child must open/verify real Job
     return run_under_job_safe(limit_mib * 1024 ** 2, module=module, args=args, cwd=cwd,
-                              env=_env(), wall_cap_s=wall_s, mem_cap_mib=limit_mib,
+                              env=env, wall_cap_s=wall_s, mem_cap_mib=limit_mib,
                               log_path=os.path.join(out_dir, "experiment.log"),
-                              inherit_log=inherit_log, required_artifact=required_artifact)
+                              inherit_log=inherit_log, required_artifact=required_artifact,
+                              job_name=job_name)
 
 
 def run_s1r_once(out_dir=None):
@@ -241,7 +276,13 @@ def run_s1r_once(out_dir=None):
         tempfile.gettempdir(), "opencode", "p11_2_s1r_full", stamp))
     if os.path.exists(out_dir):
         raise Refused("OUT_DIR_EXISTS")
-    os.makedirs(out_dir, exist_ok=False)
+    # 先原子消耗授权；失败/崩溃都不自动恢复，第二次执行必然拒绝。
+    lock_path = acquire_one_shot(pre["auth"]["checksum"], out_dir=out_dir,
+                                 freeze_sha=pre["freeze"]["sha256"])
+    try:
+        os.makedirs(out_dir, exist_ok=False)
+    except Exception as e:             # noqa: BLE001
+        raise Refused(f"OUT_DIR_CREATE_FAILED:{type(e).__name__}:{e}") from e
     _copy_if_exists(AUTH, os.path.join(out_dir, "authorization.json"))
     _copy_if_exists(FREEZE, os.path.join(out_dir, "script_freeze.json"))
     try:
@@ -252,17 +293,28 @@ def run_s1r_once(out_dir=None):
     except Exception as e:             # noqa: BLE001
         raise Refused(f"ARCHIVE_PREP_FAILED:{type(e).__name__}:{e}") from e
     child_path = os.path.join(out_dir, "child_result.json")
+    job_name = f"Local\\P11_2_S1R_{os.getpid()}_{time.time_ns()}"
     t0 = time.perf_counter()
     run = _run_child_module(EXPERIMENT_MODULE, ["--child", out_dir], ROOT, out_dir,
                             limit_mib=MEM_CAP_MIB, wall_s=WALL_CAP_S,
-                            required_artifact=child_path)
+                            required_artifact=child_path, job_name=job_name)
     wall = time.perf_counter() - t0
-    meta = _base_meta(pre, run, out_dir, wall, child_path)
+    meta = _base_meta(pre, run, out_dir, wall, child_path, lock_path)
+    meta["job_name"] = job_name
     _persist_run_meta(out_dir, meta)       # 先写入运行元数据
     child = validate_child_result(child_path)
     ev = evaluate_run(run, child)
+    raw = exp.validate_raw_dataset(out_dir, auth_sha=pre["auth"]["checksum"],
+                                   script_sha=meta["script_sha256"])
     meta.update(ev)
-    meta["status"] = "RUN_COMPLETE" if ev["experiment_succeeded"] else "INCOMPLETE_NO_GO"
+    meta["raw_ok"] = bool(raw["ok"])
+    meta["raw_file_count"] = raw["file_count"]
+    meta["raw_dataset_sha256"] = raw["dataset_sha256"]
+    meta["raw_noise_pairing_all"] = raw["noise_pairing_all"]
+    meta["raw_errors"] = raw["errors"][:20]
+    meta["raw_files"] = raw["files"]
+    meta["experiment_succeeded"] = bool(ev["experiment_succeeded"] and raw["ok"])
+    meta["status"] = "INCOMPLETE_NO_GO"
     _persist_run_meta(out_dir, meta)       # 仍在统计之前
     child_raw = None
     if child["exists"]:
@@ -271,24 +323,51 @@ def run_s1r_once(out_dir=None):
                 child_raw = json.load(f)
         except Exception:                  # noqa: BLE001
             child_raw = None
-    if ev["experiment_succeeded"]:
-        rep = exp.analyze(out_dir)
-        rep["run_meta"] = meta
-        rep["child"] = child_raw
-        rep["complete_25_pairs"] = True
-        rep["gate"] = {"Training_Authorization": False, "REAL_SYNAPTIC_LEARNING_READY": "NO",
-                       "Level_A/B/C/Biological": "NO-GO", "A1_A2_A3/B": "NO-GO",
-                       "DeltaW": 0, "Dijkstra": "NO", "Maze": "NO", "B/C": "NO", "Robot": "NO"}
-    else:
+    rep = None
+    if meta["experiment_succeeded"]:
+        try:
+            rep = exp.analyze(out_dir, validate=False)
+            after = exp.verify_raw_hashes(out_dir, raw["files"])
+        except Exception as e:             # noqa: BLE001
+            meta["stats_error"] = f"{type(e).__name__}:{e}"
+            meta["experiment_succeeded"] = False
+            meta["status"] = "INCOMPLETE_NO_GO"
+            _persist_run_meta(out_dir, meta)
+            rep = None
+        else:
+            meta["post_stats_hashes_ok"] = bool(after["ok"])
+            if not after["ok"]:
+                meta["hash_mismatches"] = after["mismatches"]
+                meta["experiment_succeeded"] = False
+                meta["status"] = "INCOMPLETE_NO_GO"
+                _persist_run_meta(out_dir, meta)
+                rep = None
+            else:
+                meta["experiment_succeeded"] = True
+                meta["status"] = "RUN_COMPLETE"
+                rep["run_meta"] = meta
+                rep["child"] = child_raw
+                rep["complete_25_pairs"] = True
+                rep["gate"] = {"Training_Authorization": False,
+                               "REAL_SYNAPTIC_LEARNING_READY": "NO",
+                               "Level_A/B/C/Biological": "NO-GO", "A1_A2_A3/B": "NO-GO",
+                               "DeltaW": 0, "Dijkstra": "NO", "Maze": "NO", "B/C": "NO", "Robot": "NO"}
+    if rep is None:
+        reason = (raw["errors"][0] if not raw["ok"] else
+                  meta.get("child_reason") or meta.get("child_status") or meta.get("stats_error"))
         rep = {"protocol": "P11-2-S1R/v1", "status": "INCOMPLETE_NO_GO",
                "completeness": f"{child['seeds_observed']}/{len(SEEDS)}",
                "complete_25_pairs": False, "run_meta": meta, "child": child_raw,
-               "reason": child.get("reason") or meta.get("child_status"),
-               "training_authorized": False}
+               "raw": {"ok": raw["ok"], "file_count": raw["file_count"],
+                       "dataset_sha256": raw["dataset_sha256"], "errors": raw["errors"][:20]},
+               "reason": reason, "training_authorized": False}
+    _persist_run_meta(out_dir, meta)
     _write_json(REPORT, rep)
     manifest = _manifest(out_dir, {"status": rep["status"], "script_sha256": meta["script_sha256"],
                                    "authorization_sha256": meta["auth_checksum"],
                                    "run_meta_sha256": _sha(os.path.join(out_dir, "run_meta.json")),
+                                   "lock_path": lock_path, "raw_ok": raw["ok"],
+                                   "dataset_sha256": raw["dataset_sha256"],
                                    "official_hashes": pre["official"]})
     _write_json(RAW_MANIFEST, manifest)
     return meta

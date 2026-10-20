@@ -17,7 +17,11 @@ from loop.p11_1c_full_brain_bench import (kernel32, psapi, STARTUPINFO, PROCESS_
                                           STARTF_USESTDHANDLES, STILL_ACTIVE, GENERIC_WRITE,
                                           FILE_SHARE_READ, FILE_SHARE_WRITE, CREATE_ALWAYS,
                                           FILE_ATTRIBUTE_NORMAL, create_job, close_job,
-                                          assign_resume_or_terminate, wait_exit, job_peaks_mib, _mib)
+                                          assign_resume_or_terminate, wait_exit, job_peaks_mib, _mib,
+                                          JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+                                          JobObjectExtendedLimitInformation,
+                                          JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_JOB_MEMORY,
+                                          JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)
 
 EXTENDED_STARTUPINFO_PRESENT = 0x00080000
 CREATE_UNICODE_ENVIRONMENT = 0x00000400
@@ -67,6 +71,23 @@ def _command(script=None, module=None, args=()):
 def _env_block(env):
     items = [f"{k}={v}" for k, v in sorted(env.items())] + [""]
     return ctypes.create_unicode_buffer("\0".join(items) + "\0")
+
+
+def _create_named_job(limit_bytes, name):
+    job = kernel32.CreateJobObjectW(None, name)
+    if not job:
+        return 0, False
+    info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+    info.BasicLimitInformation.LimitFlags = (JOB_OBJECT_LIMIT_PROCESS_MEMORY
+                                             | JOB_OBJECT_LIMIT_JOB_MEMORY
+                                             | JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)
+    info.ProcessMemoryLimit = ctypes.c_size_t(limit_bytes)
+    info.JobMemoryLimit = ctypes.c_size_t(limit_bytes)
+    if not kernel32.SetInformationJobObject(job, JobObjectExtendedLimitInformation,
+                                            ctypes.byref(info), ctypes.sizeof(info)):
+        kernel32.CloseHandle(job)
+        return 0, False
+    return job, True
 
 
 def _open_log(path, inherit_log=True):
@@ -143,9 +164,10 @@ def launch_suspended_safe(script=None, module=None, args=(), log_path=None, cwd=
 
 def run_under_job_safe(limit_bytes, script=None, module=None, args=(), wall_cap_s=15.0,
                        mem_cap_mib=2048, log_path=None, cwd=None, env=None, inherit_log=True,
-                       simulate_assign_fail=False, required_artifact=None):
+                       simulate_assign_fail=False, required_artifact=None, job_name=None):
     """One run; explicit child status; no retry."""
-    job, job_ok = create_job(limit_bytes)
+    job, job_ok = (_create_named_job(limit_bytes, job_name) if job_name
+                   else create_job(limit_bytes))
     if not job_ok:
         return {"child_status": "CHILD_ASSIGN_FAILED", "process_finished": False,
                 "experiment_succeeded": False, "log_available": False, "log_bytes": 0,

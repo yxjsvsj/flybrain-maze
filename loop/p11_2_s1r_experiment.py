@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+import ctypes
+import ctypes.wintypes as wt
 import gc
 import hashlib
 import json
@@ -43,6 +45,120 @@ MEM_CAP_MIB = 2048
 MEM_CAP_BYTES = MEM_CAP_MIB * 1024 ** 2
 BOOT_N = 10000
 BOOT_SEED = 20261019
+
+_JOB_OBJECT_EXTENDED_LIMIT_INFORMATION = 9
+_JOB_OBJECT_BASIC_PROCESS_ID_LIST = 3
+_JOB_OBJECT_LIMIT_PROCESS_MEMORY = 0x00000100
+_JOB_OBJECT_LIMIT_JOB_MEMORY = 0x00000200
+_JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
+_JOB_OBJECT_ALL_ACCESS = 0x1F001F
+_kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+_kernel32.GetCurrentProcess.restype = wt.HANDLE
+_kernel32.GetCurrentProcessId.restype = wt.DWORD
+_kernel32.IsProcessInJob.argtypes = [wt.HANDLE, wt.HANDLE, ctypes.POINTER(wt.BOOL)]
+_kernel32.IsProcessInJob.restype = wt.BOOL
+_kernel32.QueryInformationJobObject.argtypes = [wt.HANDLE, ctypes.c_int, wt.LPVOID,
+                                                wt.DWORD, ctypes.POINTER(wt.DWORD)]
+_kernel32.QueryInformationJobObject.restype = wt.BOOL
+_kernel32.OpenJobObjectW.argtypes = [wt.DWORD, wt.BOOL, wt.LPCWSTR]
+_kernel32.OpenJobObjectW.restype = wt.HANDLE
+_kernel32.CloseHandle.argtypes = [wt.HANDLE]
+
+
+class _IO_COUNTERS(ctypes.Structure):
+    _fields_ = [("ReadOperationCount", ctypes.c_ulonglong), ("WriteOperationCount", ctypes.c_ulonglong),
+                ("OtherOperationCount", ctypes.c_ulonglong), ("ReadTransferCount", ctypes.c_ulonglong),
+                ("WriteTransferCount", ctypes.c_ulonglong), ("OtherTransferCount", ctypes.c_ulonglong)]
+
+
+class _JOB_BASIC_LIMIT(ctypes.Structure):
+    _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                ("LimitFlags", wt.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wt.DWORD),
+                ("Affinity", ctypes.c_size_t), ("PriorityClass", wt.DWORD), ("SchedulingClass", wt.DWORD)]
+
+
+class _JOB_EXTENDED_LIMIT(ctypes.Structure):
+    _fields_ = [("BasicLimitInformation", _JOB_BASIC_LIMIT), ("IoInfo", _IO_COUNTERS),
+                ("ProcessMemoryLimit", ctypes.c_size_t), ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t), ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+
+class _JOB_PID_LIST(ctypes.Structure):
+    _fields_ = [("NumberOfAssignedProcesses", wt.DWORD), ("NumberOfProcessIdsInList", wt.DWORD),
+                ("ProcessIdList", ctypes.c_size_t * 2048)]
+
+
+def _query_extended(job):
+    info = _JOB_EXTENDED_LIMIT()
+    ret = wt.DWORD(0)
+    if not _kernel32.QueryInformationJobObject(job, _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION,
+                                               ctypes.byref(info), ctypes.sizeof(info), ctypes.byref(ret)):
+        return None
+    return info
+
+
+def _pid_in_job(job, pid):
+    rows = _JOB_PID_LIST()
+    ret = wt.DWORD(0)
+    if not _kernel32.QueryInformationJobObject(job, _JOB_OBJECT_BASIC_PROCESS_ID_LIST,
+                                               ctypes.byref(rows), ctypes.sizeof(rows), ctypes.byref(ret)):
+        return False
+    n = min(int(rows.NumberOfProcessIdsInList), 2048)
+    return int(pid) in [int(rows.ProcessIdList[i]) for i in range(n)]
+
+
+def assert_in_controlled_job(expected_bytes=MEM_CAP_BYTES):
+    """真实 Job 句柄/内存限制/PID 成员核验；环境变量只是名称提示，不是凭证。"""
+    in_job = wt.BOOL(0)
+    if not _kernel32.IsProcessInJob(_kernel32.GetCurrentProcess(), None, ctypes.byref(in_job)):
+        return {"ok": False, "reason": "IS_PROCESS_IN_JOB_FAILED"}
+    if not in_job.value:
+        return {"ok": False, "reason": "NOT_IN_JOB"}
+    pid = int(_kernel32.GetCurrentProcessId())
+    name = os.environ.get("P11_2_S1R_JOB_NAME")
+    job = 0
+    if name:
+        job = _kernel32.OpenJobObjectW(_JOB_OBJECT_ALL_ACCESS, False, name)
+        if not job:
+            return {"ok": False, "reason": "NAMED_JOB_OPEN_FAILED", "job_name": name}
+        try:
+            info = _query_extended(job)
+            if info is None:
+                return {"ok": False, "reason": "QUERY_JOB_FAILED", "job_name": name}
+            flags = int(info.BasicLimitInformation.LimitFlags)
+            if not (flags & _JOB_OBJECT_LIMIT_PROCESS_MEMORY and flags & _JOB_OBJECT_LIMIT_JOB_MEMORY):
+                return {"ok": False, "reason": "JOB_MEMORY_LIMIT_FLAGS_MISSING",
+                        "limit_flags": flags, "job_name": name}
+            if int(info.ProcessMemoryLimit) != expected_bytes or int(info.JobMemoryLimit) != expected_bytes:
+                return {"ok": False, "reason": "JOB_MEMORY_LIMIT_MISMATCH",
+                        "process_mem_limit": int(info.ProcessMemoryLimit),
+                        "job_mem_limit": int(info.JobMemoryLimit), "limit_flags": flags,
+                        "job_name": name}
+            if not _pid_in_job(job, pid):
+                return {"ok": False, "reason": "PID_NOT_IN_NAMED_JOB", "job_name": name}
+        finally:
+            _kernel32.CloseHandle(job)
+        return {"ok": True, "reason": "CONTROLLED_JOB_OK", "job_name": name,
+                "limit_flags": flags, "process_mem_limit": int(info.ProcessMemoryLimit),
+                "job_mem_limit": int(info.JobMemoryLimit),
+                "peak_process_MiB": round(info.PeakProcessMemoryUsed / 1024 ** 2, 2),
+                "peak_job_MiB": round(info.PeakJobMemoryUsed / 1024 ** 2, 2)}
+    info = _query_extended(None)
+    if info is None:
+        return {"ok": False, "reason": "QUERY_JOB_FAILED"}
+    flags = int(info.BasicLimitInformation.LimitFlags)
+    if not (flags & _JOB_OBJECT_LIMIT_PROCESS_MEMORY and flags & _JOB_OBJECT_LIMIT_JOB_MEMORY):
+        return {"ok": False, "reason": "JOB_MEMORY_LIMIT_FLAGS_MISSING", "limit_flags": flags}
+    if int(info.ProcessMemoryLimit) != expected_bytes or int(info.JobMemoryLimit) != expected_bytes:
+        return {"ok": False, "reason": "JOB_MEMORY_LIMIT_MISMATCH",
+                "process_mem_limit": int(info.ProcessMemoryLimit),
+                "job_mem_limit": int(info.JobMemoryLimit), "limit_flags": flags}
+    return {"ok": True, "reason": "CONTROLLED_JOB_OK", "job_name": None,
+            "limit_flags": flags, "process_mem_limit": int(info.ProcessMemoryLimit),
+            "job_mem_limit": int(info.JobMemoryLimit),
+            "peak_process_MiB": round(info.PeakProcessMemoryUsed / 1024 ** 2, 2),
+            "peak_job_MiB": round(info.PeakJobMemoryUsed / 1024 ** 2, 2)}
 
 
 def _canon(o):
@@ -271,7 +387,139 @@ def _longest(arr):
     return out
 
 
-def analyze(out_dir):
+_RAW_SHAPES = {"kc": (STEPS, 4064), "mb": (STEPS, 97), "lp": (STEPS, 311),
+               "kc_matched": (STEPS, 320), "mb_matched": (STEPS, 95)}
+
+
+def _scalar_str(v):
+    if hasattr(v, "item"):
+        v = v.item()
+    if isinstance(v, bytes):
+        v = v.decode("utf-8", "replace")
+    return str(v)
+
+
+def entry_means(rows):
+    """真实的 none/stim 绝对均值；diff = stim_mean - none_mean。"""
+    if not rows:
+        return {"none": None, "stim": None, "diff": None, "n": 0}
+    n = np.asarray([float(x["entry_none"]) for x in rows], float)
+    s = np.asarray([float(x["entry_stim"]) for x in rows], float)
+    return {"none": float(n.mean()), "stim": float(s.mean()),
+            "diff": float(s.mean() - n.mean()), "n": len(rows)}
+
+
+def validate_raw_dataset(out_dir, auth_sha=None, script_sha=None):
+    """严格核验 25 seeds × none/stim = 50 个原始 NPZ；返回文件哈希。"""
+    errors = []
+    files = []
+    expected = {f"{s}_{c}.npz" for s in SEEDS for c in ("none", "stim")}
+    actual = {n for n in os.listdir(out_dir)
+              if n.endswith("_none.npz") or n.endswith("_stim.npz")}
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing:
+        errors.append(f"MISSING_FILES:{','.join(missing)}")
+    if extra:
+        errors.append(f"EXTRA_FILES:{','.join(extra)}")
+    script_expect = script_sha or _sha256(__file__)
+    w_hashes = set()
+    rng_pairs = {}
+    seeds_seen = set()
+    conditions_seen = set()
+    for seed in SEEDS:
+        for cond in ("none", "stim"):
+            name = f"{seed}_{cond}.npz"
+            path = os.path.join(out_dir, name)
+            if not os.path.exists(path):
+                continue
+            try:
+                with np.load(path, allow_pickle=True) as z:
+                    for key in ("seed", "condition", "amount", "stim_window", "script_sha",
+                                "auth_sha", "w_hash", "rng_before", "rng_after"):
+                        if key not in z.files:
+                            errors.append(f"{name}:MISSING_KEY:{key}")
+                    for key, shape in _RAW_SHAPES.items():
+                        if key not in z.files:
+                            errors.append(f"{name}:MISSING_ARRAY:{key}")
+                            continue
+                        arr = z[key]
+                        if tuple(arr.shape) != shape:
+                            errors.append(f"{name}:SHAPE:{key}:{arr.shape}!={shape}")
+                        if not np.issubdtype(arr.dtype, np.number):
+                            errors.append(f"{name}:DTYPE:{key}:{arr.dtype}")
+                        elif not bool(np.isfinite(arr).all()):
+                            errors.append(f"{name}:NONFINITE:{key}")
+                    if "seed" in z.files:
+                        got_seed = int(z["seed"].item() if hasattr(z["seed"], "item") else z["seed"])
+                        if got_seed != seed:
+                            errors.append(f"{name}:SEED_LABEL:{got_seed}!={seed}")
+                        seeds_seen.add(got_seed)
+                    if "condition" in z.files:
+                        got_cond = _scalar_str(z["condition"])
+                        conditions_seen.add(got_cond)
+                        if got_cond != cond:
+                            errors.append(f"{name}:CONDITION_LABEL:{got_cond}!={cond}")
+                    if "amount" in z.files:
+                        amt = float(z["amount"].item() if hasattr(z["amount"], "item") else z["amount"])
+                        if abs(amt - AMOUNT) > 1e-9:
+                            errors.append(f"{name}:AMOUNT:{amt}")
+                    if "stim_window" in z.files:
+                        win = [int(x) for x in np.asarray(z["stim_window"]).reshape(-1).tolist()]
+                        if win != list(STIM):
+                            errors.append(f"{name}:STIM_WINDOW:{win}")
+                    if "script_sha" in z.files:
+                        got = _scalar_str(z["script_sha"])
+                        if got != script_expect:
+                            errors.append(f"{name}:SCRIPT_SHA:{got}")
+                    if "auth_sha" in z.files and auth_sha is not None:
+                        got = _scalar_str(z["auth_sha"])
+                        if got != auth_sha:
+                            errors.append(f"{name}:AUTH_SHA:{got}")
+                    if "w_hash" in z.files:
+                        w_hashes.add(_scalar_str(z["w_hash"]))
+                    if "rng_before" in z.files and "rng_after" in z.files:
+                        rng_pairs.setdefault(seed, {})[cond] = (
+                            int(z["rng_before"].item() if hasattr(z["rng_before"], "item") else z["rng_before"]),
+                            int(z["rng_after"].item() if hasattr(z["rng_after"], "item") else z["rng_after"]))
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{name}:LOAD_FAILED:{type(e).__name__}:{e}")
+            files.append({"name": name, "sha256": _sha256(path), "size": os.path.getsize(path)})
+    noise_ok = True
+    for seed in SEEDS:
+        pair = rng_pairs.get(seed, {})
+        if pair.get("none") != pair.get("stim"):
+            noise_ok = False
+            errors.append(f"NOISE_PAIR_MISMATCH:{seed}")
+    if len(w_hashes) != 1:
+        errors.append(f"W_HASH_COUNT:{len(w_hashes)}")
+    if set(seeds_seen) != set(SEEDS):
+        errors.append(f"SEED_COVERAGE:{len(seeds_seen)}/{len(SEEDS)}")
+    if set(conditions_seen) != {"none", "stim"}:
+        errors.append(f"CONDITION_COVERAGE:{sorted(conditions_seen)}")
+    h = hashlib.sha256()
+    for row in sorted(files, key=lambda x: x["name"]):
+        h.update(f"{row['name']}:{row['sha256']}\n".encode())
+    return {"ok": not errors, "errors": errors, "files": files, "file_count": len(files),
+            "seeds_observed": sorted(seeds_seen), "conditions_observed": sorted(conditions_seen),
+            "noise_pairing_all": noise_ok, "w_hashes": sorted(w_hashes),
+            "dataset_sha256": h.hexdigest(), "expected_files": len(expected)}
+
+
+def verify_raw_hashes(out_dir, files):
+    bad = []
+    for row in files:
+        p = os.path.join(out_dir, row["name"])
+        if not os.path.exists(p) or _sha256(p) != row["sha256"]:
+            bad.append(row["name"])
+    return {"ok": not bad, "mismatches": bad}
+
+
+def analyze(out_dir, validate=True):
+    if validate:
+        raw = validate_raw_dataset(out_dir)
+        if not raw["ok"]:
+            raise RuntimeError("RAW_DATASET_INVALID:" + "|".join(raw["errors"][:8]))
     ids = np.load(os.path.join(out_dir, "ids.npz"), allow_pickle=True)
     rows = []
     for s in SEEDS:
@@ -321,12 +569,14 @@ def analyze(out_dir):
            "note": "negative effects are exploratory real observations; they do not pass the positive primary and do not mean no sensory change"}
     celln = np.array([x["kc_cell_none"] for x in rows]); cells = np.array([x["kc_cell_stim"] for x in rows])
     mbn = np.array([x["mb_cell_none"] for x in rows]); mbs = np.array([x["mb_cell_stim"] for x in rows])
+    em = entry_means(rows)
     return {
         "protocol": "P11-2-S1R/v1", "completeness": f"{len(rows)}/25",
         "per_seed": rows,
-        "entry": {"A_none": round(float(de.mean() + np.mean([x['entry_none'] for x in rows])), 9),
-                  "A_stim": round(float(de.mean() + np.mean([x['entry_stim'] for x in rows])), 9),
-                  "diff": _st(de), "exact_p": pe, "pass": entry_pass,
+        "entry": {"A_none": round(float(em["none"]), 9),
+                  "A_stim": round(float(em["stim"]), 9),
+                  "diff": {**_st(de), "mean": round(float(em["diff"]), 9)},
+                  "exact_p": pe, "pass": entry_pass,
                   "note": "311 exact LPLC2/LC4; stim-none; mean>0 and p<0.05"},
         "primary": {"endpoint": "matched-320 KC [100,300) stim-none", "diff": _st(d),
                     "exact_p": pk, "ci": _boot(d), "min_positive_effect": MIN_KC,
@@ -408,6 +658,10 @@ def main(argv=None):
         return 0 if r["ok"] else 2
     if "--child" in argv:
         i = argv.index("--child"); out_dir = os.path.abspath(argv[i + 1])
+        guard = assert_in_controlled_job()
+        if not guard["ok"]:
+            print("[child] S1R_CHILD_JOB_GUARD_FAILED", json.dumps(guard, ensure_ascii=False))
+            return 9
         auth = load_auth(); freeze = load_freeze(); repo = load_archive()
         res = run_child(DATA_DIR, os.path.join(repo["raw_dir"], "ids.npz"),
                         os.path.join(repo["raw_dir"], "matched_ids.json"), out_dir,
