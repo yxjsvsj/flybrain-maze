@@ -43,7 +43,7 @@ matched-320 KC primary−sham：
 其他 KC / full KC：
 
 - other-3744 KC：mean `-0.0022875`，2734 负、835 正、175 零；
-- full-4064 KC：mean `-0.000307530`，2734 负、1146 正、181 零；
+- full-4064 KC：mean `-0.000307530`，2737 负、1146 正、181 零；
 - 被注入的 matched KC 正向，而未注入的其他 KC 净负向；这是网络交互/重分布的描述性证据，不能直接归因。
 
 matched-95 MBON（仅 EXPLORATORY）：
