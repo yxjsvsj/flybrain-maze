@@ -1,0 +1,104 @@
+{
+ "protocol": "P11-2-S5-2/v1",
+ "baseline": "338ee94",
+ "status": "TRACE_CORRECTNESS_GO; IMPLEMENTATION_EQUIVALENCE_GO; CPU_BATCH1_ONLY; BIOLOGICAL_VALIDITY_UNVALIDATED",
+ "source": {
+  "file": "C:\\AA_project\\guoying\\.venv\\Lib\\site-packages\\flybrain\\brain.py",
+  "sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "expected_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "match": true
+ },
+ "inject_fix": {
+  "method": "actual v[target] after all injection groups minus v[target] before injection",
+  "supports_multiple_groups": true,
+  "handles_overlap_and_duplicates": true,
+  "per_target_isin_scan_removed": true,
+  "unsupported_nonuniform_per_neuron_vector": "explicit ValueError(UNSUPPORTED_INJECT_AMOUNT); no v/RNG/state change",
+  "scalar_and_single_element_amounts": "accepted in batch=1 FlyBrain semantics",
+  "source_calculation_changed": false,
+  "rng_order_changed": false,
+  "test_case": "three overlapping groups; expected inject [0.0, +0.040, +0.005, -0.005]"
+ },
+ "backend_scope": {
+  "cpu_numpy": true,
+  "batch": 1,
+  "cuda_rejected": true,
+  "other_backend_rejected": true,
+  "batch_gt_1_rejected": true,
+  "enforced_in_constructor_and_step": true,
+  "installed_package_modified": false
+ },
+ "trace_io": {
+  "format": "S5TRACE/1",
+  "binary": ".bin fixed 90-byte records",
+  "header": ".bin.json with target_indices, target_order_sha256, fields, dtypes, units, records, sha256",
+  "fields": ["step", "neuron", "v_start", "v_leak", "synaptic", "tonic", "noise", "eye", "inject", "v_pre_threshold", "v_post_reset", "threshold_distance", "fired", "refractory_zeroed"],
+  "dtype_itemsize": 90,
+  "roundtrip_content_checked": true,
+  "rejects_missing": true,
+  "rejects_truncated": true,
+  "rejects_sha_mismatch": true,
+  "rejects_target_order_mismatch": true,
+  "row_order": "step then header target_indices"
+ },
+ "equivalence": {
+  "tests_ran": 14,
+  "tests_passed": 14,
+  "synthetic_neurons": 12,
+  "cases": ["no injection", "low", "primary", "positive/negative weights", "Bernoulli noise", "reset", "no firing", "sustained firing", "eye_drive", "refractory", "logging on/off", "nonuniform overlapping injection", "unsupported vector rejection", "trace roundtrip/reader rejection"],
+  "fired_bitwise_equal": true,
+  "v_bitwise_equal": true,
+  "rng_state_equal": true,
+  "steps_and_last_spike_equal": true,
+  "logging_on_off_same": true,
+  "component_closure_tolerance": 2e-06,
+  "note": "Only tiny synthetic CPU batch=1 networks; official 166,700 brain not tested."
+ },
+ "resource_measured": {
+  "one_group_415": {
+   "targets": 415, "steps": 400, "records": 166000,
+   "bytes": 14940000, "MiB": 14.247894287109375,
+   "wall_s_writer_only": 0.0409, "tracemalloc_peak_MiB_writer_only": 0.0838
+  },
+  "one_group_1415": {
+   "targets": 1415, "steps": 400, "records": 566000,
+   "bytes": 50940000, "MiB": 48.580169677734375,
+   "wall_s_writer_only": 0.0974, "tracemalloc_peak_MiB_writer_only": 0.264
+  },
+  "full_protocol_not_written": true,
+  "groups": 75,
+  "disk_total_415_MiB": 1068.592,
+  "disk_total_415_GiB": 1.0435,
+  "backup_total_415_MiB": 2137.184,
+  "backup_total_415_GiB": 2.0871,
+  "disk_total_1415_MiB": 3643.513,
+  "disk_total_1415_GiB": 3.5581,
+  "backup_total_1415_MiB": 7287.025,
+  "backup_total_1415_GiB": 7.1162,
+  "writer_time_estimate_415_s": 3.0675,
+  "writer_time_estimate_1415_s": 7.305,
+  "full_brain_memory_verified": false,
+  "full_brain_time_verified": false,
+  "time_safety_claim": "NO",
+  "note": "Measured only one synthetic group; full-protocol disk/time is arithmetic. Process RSS/complete instrumentation overhead unverified."
+ },
+ "answers": {
+  "q1_trace_correctness": "PASS: nonuniform/overlapping groups and round-trip content are correct; unsupported per-neuron vector rejected.",
+  "q2_implementation_equivalence": "PASS on 12-neuron synthetic CPU batch=1; official full brain untested.",
+  "q3_backend_scope": "STRICT: NumPy CPU batch=1 only; CUDA/other/batch>1 rejected.",
+  "q4_resource": "Correctly separated: one group measured 14.25/48.58 MiB; 75 groups arithmetic 1.0435/3.5581 GiB; backups 2.0871/7.1162 GiB; writer-only time 3.07/7.31 s; full-brain memory/time UNVERIFIED.",
+  "q5_ready_for_observation_prereg": "YES for designing a new independent observation preregistration, but NOT for executing a full-brain observation yet; integration/equivalence on official brain, resource validation, and new authorization are still required."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "biological_validity": "UNVALIDATED",
+ "no_official_full_brain_run": true
+}

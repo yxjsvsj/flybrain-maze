@@ -8,6 +8,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
+import tracemalloc
 from typing import Iterable
 
 import numpy as np
@@ -58,12 +60,16 @@ class TraceWriter:
     def close(self):
         self._f.close()
         digest = self._h.hexdigest()
+        order_sha = hashlib.sha256(np.asarray(self.targets, "<i8").tobytes()).hexdigest()
         header = {
             "protocol": "P11-2-S5-1/TRACE/v1",
+            "format_version": "S5TRACE/1",
             "binary": os.path.basename(self.path),
             "target_indices": self.targets,
+            "target_order_sha256": order_sha,
             "index_order": "header target_indices order; one row per target per step",
             "fields": [{"name": n, "dtype": d} for n, d in TRACE_FIELDS],
+            "dtype_itemsize": TRACE_DTYPE.itemsize,
             "units": "FlyBrain model units; v is dimensionless; not mV/nA",
             "records": self.records,
             "sha256": digest,
@@ -71,6 +77,79 @@ class TraceWriter:
         with open(self.path + ".json", "w", encoding="utf-8", newline="\n") as f:
             json.dump(header, f, ensure_ascii=False, indent=1)
         return header
+
+
+class TraceReadError(ValueError):
+    pass
+
+
+def read_trace(path: str):
+    """Strict round-trip reader: header, SHA, size, target order, rows."""
+    path = os.path.abspath(path)
+    header_path = path + ".json"
+    if not os.path.exists(path) or not os.path.exists(header_path):
+        raise TraceReadError("TRACE_OR_HEADER_MISSING")
+    with open(header_path, encoding="utf-8") as f:
+        h = json.load(f)
+    if h.get("protocol") != "P11-2-S5-1/TRACE/v1" or h.get("format_version") != "S5TRACE/1":
+        raise TraceReadError("TRACE_FORMAT_MISMATCH")
+    fields = [{"name": n, "dtype": d} for n, d in TRACE_FIELDS]
+    if h.get("fields") != fields or h.get("dtype_itemsize") != TRACE_DTYPE.itemsize:
+        raise TraceReadError("TRACE_SCHEMA_MISMATCH")
+    targets = [int(x) for x in h.get("target_indices", [])]
+    if not targets or len(set(targets)) != len(targets):
+        raise TraceReadError("TRACE_TARGET_ORDER_INVALID")
+    order_sha = hashlib.sha256(np.asarray(targets, "<i8").tobytes()).hexdigest()
+    if h.get("target_order_sha256") != order_sha:
+        raise TraceReadError("TRACE_TARGET_ORDER_HASH_MISMATCH")
+    records = int(h.get("records", -1))
+    if records < 0 or records % len(targets):
+        raise TraceReadError("TRACE_RECORD_COUNT_INVALID")
+    size = os.path.getsize(path)
+    if size != records * TRACE_DTYPE.itemsize:
+        raise TraceReadError("TRACE_SIZE_MISMATCH")
+    with open(path, "rb") as f:
+        digest = hashlib.sha256(f.read()).hexdigest()
+    if digest != h.get("sha256"):
+        raise TraceReadError("TRACE_SHA256_MISMATCH")
+    rows = np.fromfile(path, dtype=TRACE_DTYPE)
+    if rows.size != records:
+        raise TraceReadError("TRACE_TRUNCATED")
+    steps = records // len(targets)
+    for i in range(steps):
+        block = rows[i * len(targets):(i + 1) * len(targets)]
+        if not np.all(block["step"] == i):
+            raise TraceReadError(f"TRACE_STEP_ORDER_MISMATCH:{i}")
+        if not np.array_equal(block["neuron"], np.asarray(targets, np.int32)):
+            raise TraceReadError(f"TRACE_NEURON_ORDER_MISMATCH:{i}")
+    return h, rows.reshape(steps, len(targets))
+
+
+def benchmark_writer(n_targets, steps=400, path=None):
+    """Write one synthetic 400-step group; measure wall time and tracemalloc peak."""
+    path = path or os.path.join(os.environ.get("TEMP", "."), f"s5_2_bench_{n_targets}.bin")
+    targets = list(range(int(n_targets)))
+    n = len(targets)
+    zeros = np.zeros(n, np.float64)
+    fired = np.zeros(n, np.uint8)
+    ref = np.zeros(n, np.uint8)
+    fields = {"v_start": zeros, "v_leak": zeros, "synaptic": zeros, "tonic": zeros,
+              "noise": zeros, "eye": zeros, "inject": zeros,
+              "v_pre_threshold": zeros, "v_post_reset": zeros, "threshold_distance": zeros,
+              "fired": fired, "refractory_zeroed": ref}
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    w = TraceWriter(path, targets)
+    for step in range(int(steps)):
+        w.write_step(step, fields)
+    hdr = w.close()
+    elapsed = time.perf_counter() - t0
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return {"targets": n, "steps": int(steps), "records": hdr["records"],
+            "bytes": os.path.getsize(path), "MiB": os.path.getsize(path) / 1024 ** 2,
+            "wall_s": round(elapsed, 4), "tracemalloc_peak_MiB": round(peak / 1024 ** 2, 4),
+            "sha256": hdr["sha256"], "path": path}
 
 
 class InstrumentedFlyBrain(FlyBrain):
@@ -81,6 +160,7 @@ class InstrumentedFlyBrain(FlyBrain):
 
     def __init__(self, *args, targets=None, trace_path=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self._check_supported()
         self._targets = None if targets is None else np.asarray(sorted(set(int(x) for x in targets)), dtype=np.int64)
         if self._targets is not None and (self._targets.size == 0 or self._targets.min() < 0 or self._targets.max() >= self.n):
             raise ValueError("targets out of range")
@@ -88,9 +168,21 @@ class InstrumentedFlyBrain(FlyBrain):
         self._writer = TraceWriter(trace_path, self._targets) if (self._trace and trace_path) else None
         self.last_trace = None
 
+    def _check_supported(self):
+        if self.device != "cpu" or self.xp is not np or self.batch != 1:
+            raise NotImplementedError("tracer supports NumPy CPU batch=1 only")
+
     def step(self, eye_drive=None, inject=()):
-        if self.batch != 1:
-            raise NotImplementedError("tracer supports batch=1 only")
+        self._check_supported()
+        # Validate every injection group before touching v; non-uniform per-neuron
+        # vectors are not supported by FlyBrain batch=1 semantics.
+        groups = []
+        for idx, amount in inject:
+            idx_arr = self.xp.asarray(idx)
+            amt = self._amount(amount)
+            if np.asarray(amt).size != 1:
+                raise ValueError("UNSUPPORTED_INJECT_AMOUNT: batch=1 inject amount must be scalar/size-1")
+            groups.append((idx_arr, amt))
         xp, B = self.xp, self.batch
         target = self._targets
         log = self._trace
@@ -119,17 +211,11 @@ class InstrumentedFlyBrain(FlyBrain):
                         eye_log[j] = float(eye_add[pos[0], 0])
         elif log:
             eye_log = np.zeros(len(target), np.float64)
-        if log:
-            inject_log = np.zeros(len(target), np.float64)
-        for idx, amount in inject:
-            idx_arr = xp.asarray(idx)
-            amt = self._amount(amount)
+        v_before_inject = self.v[target, 0].copy() if log else None
+        for idx_arr, amt in groups:
             self.v[idx_arr] += amt
-            if log:
-                val = float(np.asarray(amt).reshape(-1)[0])
-                for j, t in enumerate(target):
-                    if np.isin(t, idx_arr):
-                        inject_log[j] += val
+        inject_log = ((self.v[target, 0] - v_before_inject).astype(np.float64)
+                      if log else None)
         if self.refractory_steps:
             ref = (self.steps - self.last_spike) <= self.refractory_steps
             self.v[ref] = 0.0

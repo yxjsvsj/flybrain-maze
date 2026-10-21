@@ -181,5 +181,146 @@ class S51Test(unittest.TestCase):
         self.assertEqual(r["gates"]["REAL_SYNAPTIC_LEARNING_READY"], "NO")
 
 
+    def test_nonuniform_overlapping_injection(self):
+        orig, inst, tp = self._pair(with_trace=True)
+        try:
+            for t in range(20):
+                inj = [(np.array([1]), 0.030),
+                       (np.array([1, 2]), 0.010),
+                       (np.array([2, 3]), -0.005)]
+                fo = np.asarray(orig.step(inject=inj))
+                fi = np.asarray(inst.step(inject=inj))
+                self.assertTrue(np.array_equal(fo, fi))
+                self.assertTrue(np.array_equal(orig.v, inst.v))
+                self.assertEqual(self._state(orig), self._state(inst))
+                tr = inst.last_trace
+                expected = np.array([0.0, 0.040, 0.005, -0.005])
+                np.testing.assert_allclose(tr["inject"], expected, rtol=0, atol=1e-7)
+                pred = (tr["v_start"] * self.decay + tr["synaptic"] + tr["tonic"]
+                        + tr["noise"] + tr["eye"] + tr["inject"])
+                keep = tr["refractory_zeroed"] == 0
+                np.testing.assert_allclose(tr["v_pre_threshold"][keep], pred[keep], atol=2e-6)
+        finally:
+            inst.close_trace()
+
+    def test_unsupported_vector_injection_rejected_without_state_change(self):
+        orig, inst, tp = self._pair(with_trace=True)
+        try:
+            v0 = inst.v.copy(); st0 = self._state(inst); steps0 = inst.steps
+            with self.assertRaises(ValueError) as cm:
+                inst.step(inject=[(np.array([1, 2]), np.array([0.01, 0.02]))])
+            self.assertIn("UNSUPPORTED_INJECT_AMOUNT", str(cm.exception))
+            self.assertTrue(np.array_equal(inst.v, v0))
+            self.assertEqual(self._state(inst), st0)
+            self.assertEqual(inst.steps, steps0)
+        finally:
+            inst.close_trace()
+
+    def test_backend_rejects_batch_and_cuda(self):
+        kw = dict(data=self.tmp, seed=7, device="cpu", batch=2, dt=0.020)
+        with self.assertRaises(NotImplementedError):
+            tracer.InstrumentedFlyBrain(**kw, targets=[0])
+        inst = tracer.InstrumentedFlyBrain(data=self.tmp, seed=7, device="cpu",
+                                           batch=1, dt=0.020, targets=[0])
+        inst.device = "cuda"
+        with self.assertRaises(NotImplementedError):
+            inst.step()
+
+    def test_trace_roundtrip_content(self):
+        orig, inst, tp = self._pair(refractory=0.040, with_trace=True)
+        traces = []
+        try:
+            for t in range(15):
+                inj = [(np.array([1, 2]), 0.03), (np.array([2, 3]), 0.01)] if t < 10 else []
+                eye = np.array([0.2], np.float32) if t < 5 else None
+                fo = np.asarray(orig.step(eye_drive=eye, inject=inj))
+                fi = np.asarray(inst.step(eye_drive=eye, inject=inj))
+                self.assertTrue(np.array_equal(fo, fi))
+                self.assertTrue(np.array_equal(orig.v, inst.v))
+                traces.append({k: (v.copy() if isinstance(v, np.ndarray) else v)
+                               for k, v in inst.last_trace.items()})
+            inst.close_trace()
+        except Exception:
+            inst.close_trace()
+            raise
+        h, rows = tracer.read_trace(tp)
+        self.assertEqual(h["records"], 15 * len(self.targets))
+        self.assertEqual(rows.shape, (15, len(self.targets)))
+        self.assertEqual(h["sha256"], _sha(tp))
+        for i, tr in enumerate(traces):
+            for j, target in enumerate(self.targets):
+                row = rows[i, j]
+                self.assertEqual(int(row["step"]), i)
+                self.assertEqual(int(row["neuron"]), target)
+                for name in ("v_start", "v_leak", "synaptic", "tonic", "noise", "eye",
+                             "inject", "v_pre_threshold", "v_post_reset", "threshold_distance"):
+                    self.assertEqual(float(row[name]), float(tr[name][j]))
+                self.assertEqual(int(row["fired"]), int(tr["fired"][j]))
+                self.assertEqual(int(row["refractory_zeroed"]), int(tr["refractory_zeroed"][j]))
+
+    def test_trace_reader_rejects_truncation_hash_and_target_order(self):
+        orig, inst, tp = self._pair(with_trace=True)
+        for t in range(3):
+            inst.step(inject=[(np.array([1]), 0.01)])
+        hdr = inst.close_trace()
+        with open(tp, "rb") as f:
+            data = f.read()
+        bad = tp + ".trunc.bin"
+        with open(bad, "wb") as f:
+            f.write(data[:-1])
+        with open(bad + ".json", "w", encoding="utf-8") as f:
+            json.dump(hdr, f)
+        with self.assertRaises(tracer.TraceReadError):
+            tracer.read_trace(bad)
+        bad2 = tp + ".hash.bin"
+        b = bytearray(data); b[0] ^= 0x01
+        with open(bad2, "wb") as f:
+            f.write(b)
+        with open(bad2 + ".json", "w", encoding="utf-8") as f:
+            json.dump(hdr, f)
+        with self.assertRaises(tracer.TraceReadError):
+            tracer.read_trace(bad2)
+        bad3 = tp + ".order.bin"
+        with open(bad3, "wb") as f:
+            f.write(data)
+        h2 = dict(hdr); h2["target_indices"] = list(reversed(hdr["target_indices"]))
+        with open(bad3 + ".json", "w", encoding="utf-8") as f:
+            json.dump(h2, f)
+        with self.assertRaises(tracer.TraceReadError):
+            tracer.read_trace(bad3)
+        with self.assertRaises(tracer.TraceReadError):
+            tracer.read_trace(tp + ".missing.bin")
+
+    def test_writer_benchmark_415_and_1415(self):
+        for n, expected_mib in ((415, 14.247894287109375), (1415, 48.580169677734375)):
+            p = os.path.join(self.tmp, f"bench_{n}.bin")
+            r = tracer.benchmark_writer(n, 400, p)
+            self.assertEqual(r["records"], n * 400)
+            self.assertAlmostEqual(r["MiB"], expected_mib, places=6)
+            self.assertGreater(r["wall_s"], 0)
+            self.assertGreaterEqual(r["tracemalloc_peak_MiB"], 0)
+            self.assertEqual(r["sha256"], _sha(p))
+
+
+    def test_s5_2_report(self):
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "p11_2_s5_2_report.json"), encoding="utf-8") as f:
+            r = json.load(f)
+        self.assertEqual(r["status"], "TRACE_CORRECTNESS_GO; IMPLEMENTATION_EQUIVALENCE_GO; CPU_BATCH1_ONLY; BIOLOGICAL_VALIDITY_UNVALIDATED")
+        self.assertEqual(r["source"]["sha256"], tracer.EXPECTED_SOURCE_SHA256)
+        self.assertEqual(r["equivalence"]["tests_ran"], 14)
+        self.assertEqual(r["equivalence"]["tests_passed"], 14)
+        self.assertTrue(r["inject_fix"]["handles_overlap_and_duplicates"])
+        self.assertTrue(r["inject_fix"]["per_target_isin_scan_removed"])
+        self.assertTrue(r["backend_scope"]["cuda_rejected"])
+        self.assertTrue(r["trace_io"]["rejects_truncated"])
+        self.assertTrue(r["trace_io"]["rejects_sha_mismatch"])
+        self.assertEqual(r["resource_measured"]["one_group_415"]["MiB"], 14.247894287109375)
+        self.assertEqual(r["resource_measured"]["one_group_1415"]["MiB"], 48.580169677734375)
+        self.assertFalse(r["resource_measured"]["full_brain_memory_verified"])
+        self.assertFalse(r["gates"]["NEW_FULL_BRAIN_AUTHORIZATION"])
+        self.assertEqual(r["biological_validity"], "UNVALIDATED")
+
+
 if __name__ == "__main__":
     unittest.main()
