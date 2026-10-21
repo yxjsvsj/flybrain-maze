@@ -1,0 +1,10 @@
+{
+ "protocol": "P11-2-S3/v1",
+ "status": "CONSUMED_STARTED",
+ "auth_checksum": "259da39ce09dff24c4f61b34a0a133e5bdd4f2d4b91407f7dfaf0e44cacdbad7",
+ "freeze_sha256": "63154938b2d887cccfea7918ae27624e3c105ed5a86aa127b291d65239a2568e",
+ "scope_sha256": "2986221f37cc4920a89ac4ec41c07485149029b4c8a1d4b471fc505e7035dd79",
+ "out_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_2_s3_full\\20261021T102823",
+ "pid": 35420,
+ "created": "2026-10-21T10:28:23"
+}

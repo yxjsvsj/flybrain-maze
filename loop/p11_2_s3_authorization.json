@@ -1,8 +1,8 @@
 {
  "protocol": "P11-2-S3/v1",
- "status": "NOT_AUTHORIZED",
- "approved_by": null,
- "approval_text": null,
+ "status": "APPROVED",
+ "approved_by": "user",
+ "approval_text": "用户已明确批准本次 P11-2-S3 正式实验。授权基线 52423b2，实验协议 P11-2-S3/v1。官方完整 MaleCNS 166,700 神经元，合成 B 网络仅删除 642,933 条 KC→KC 连接；靶点 S1R matched-320 KC 全局索引，SHA-256 6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385；seeds 201–225，条件 sham/kc_low/kc_primary，每 seed 每条件 400 步，共 30,000 步；窗口 [100,300)；kc_primary 每步膜电位注入 0.03625384938440364，kc_low 0.01812692469220182，sham 不注入；不向感觉神经元或 MBON 直接注入；CPU only；原始 LIF/噪声/权重和预注册统计规则不变；75 NPZ。仅一次整体运行，900 秒/2048 MiB；失败/超时/内存超限/异常后不重试、不补跑、不提高上限、不改参数。不包含训练、真实 ΔW、Dijkstra、迷宫、Level B/C、实体机器人或第二次完整脑运行。",
  "scope": {
   "n_neurons": 166700,
   "network": "B_synthetic_kc_kc_zero",
@@ -59,5 +59,5 @@
   "training": false,
   "dW": 0
  },
- "checksum": "14a6dce0ed51d8c6480bacb8347fe972a037a0176c311618bca2d906bf2024f7"
+ "checksum": "259da39ce09dff24c4f61b34a0a133e5bdd4f2d4b91407f7dfaf0e44cacdbad7"
 }
