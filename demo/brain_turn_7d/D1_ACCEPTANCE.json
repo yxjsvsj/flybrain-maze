@@ -1,0 +1,1201 @@
+{
+  "task": "DEMO-BRAIN-TURN-D1",
+  "baseline": "1855e91",
+  "scope": "offline audit and replay only; no new full-brain dynamics, no motors, no training",
+  "verdict": "NO_GO",
+  "reason_codes": [
+    "OPEN_LOOP_PERSISTENT_TURN",
+    "C_RIGHT_OUTER_SENSOR_NOT_IN_NEURAL_SIDE",
+    "READOUT_IS_HAND_TEACHER_IMITATION",
+    "NO_LEFT_ARCHIVE",
+    "NO_RECOVERY_ARCHIVE",
+    "NO_REPEATED_RUN_STABILITY"
+  ],
+  "readout": {
+    "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\readout_real.npz",
+    "sha256": "632cddb1c9ae43de7bde63a5bd8851036009c4625d12c113bf0e96119ace083e",
+    "kind": "ridge",
+    "components": 120,
+    "lambda": 0.001,
+    "bias": 0.15313830084722949,
+    "cv_score": -0.02974397262064215,
+    "input": "1314 descending-neuron Trace values",
+    "output": "single scalar turn",
+    "trained_target": "clip(0.6 * (0.9 - dmin_R), -1, 1) for scripted follow_side=R",
+    "training_code": "loop/train_readout.py",
+    "training_note": "linear ridge imitates a hand-written teacher; not a natural fly motor program",
+    "natural_motor_circuit": false
+  },
+  "sensor_baseline": {
+    "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\readout_real_sensor.npz",
+    "sha256": "68bf3587eafc79b06e57dd90658ae84c046fddd9612152a5492b456701c696ac",
+    "kind": "ridge",
+    "components": null,
+    "note": "2-feature sensor baseline; not used as the brain source"
+  },
+  "tof_chain": {
+    "sensor_order": [
+      "L",
+      "FL",
+      "F",
+      "FR",
+      "R"
+    ],
+    "sensor_angles_deg": {
+      "L": 70.0,
+      "FL": 30.0,
+      "F": 0.0,
+      "FR": -30.0,
+      "R": -70.0
+    },
+    "avoidance_fov_deg": 120.0,
+    "neural_side_groups": {
+      "left": [
+        "FL",
+        "F"
+      ],
+      "right": [
+        "F",
+        "FR"
+      ]
+    },
+    "outer_LR_used_for_neural_side": false,
+    "note": "outer L/R (±70°) are outside the ±60° neural avoidance FOV; they remain available for mapping but do not drive the DN side input"
+  },
+  "archive_manifest": [
+    {
+      "name": "readout_real.npz",
+      "origin": "C:\\AA_project\\guoying\\readout_real.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\readout_real.npz",
+      "bytes": 639642,
+      "sha256": "632cddb1c9ae43de7bde63a5bd8851036009c4625d12c113bf0e96119ace083e",
+      "origin_sha256": "632cddb1c9ae43de7bde63a5bd8851036009c4625d12c113bf0e96119ace083e",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "readout_real_sensor.npz",
+      "origin": "C:\\AA_project\\guoying\\readout_real_sensor.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\readout_real_sensor.npz",
+      "bytes": 2274,
+      "sha256": "68bf3587eafc79b06e57dd90658ae84c046fddd9612152a5492b456701c696ac",
+      "origin_sha256": "68bf3587eafc79b06e57dd90658ae84c046fddd9612152a5492b456701c696ac",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_open.csv",
+      "origin": "C:\\AA_project\\guoying\\static_open.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open.csv",
+      "bytes": 25440,
+      "sha256": "cada9f8bc1c962bb0ec69ef6f9d79c220b8079da9d2d7116ad0136a275aaa41b",
+      "origin_sha256": "cada9f8bc1c962bb0ec69ef6f9d79c220b8079da9d2d7116ad0136a275aaa41b",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_open_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_open_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open_feats.npz",
+      "bytes": 325767,
+      "sha256": "4169dbeca3bce9c728bdff4ead7233bfde747b06b1dfcb8f5355ccc5e6d1f521",
+      "origin_sha256": "4169dbeca3bce9c728bdff4ead7233bfde747b06b1dfcb8f5355ccc5e6d1f521",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_right_370.csv",
+      "origin": "C:\\AA_project\\guoying\\static_right_370.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370.csv",
+      "bytes": 29402,
+      "sha256": "dcaf4bf82110219fbcfa31c7cec30eb50dbaa18412ebd4c845e0264171c7b750",
+      "origin_sha256": "dcaf4bf82110219fbcfa31c7cec30eb50dbaa18412ebd4c845e0264171c7b750",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_right_370_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_right_370_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370_feats.npz",
+      "bytes": 328890,
+      "sha256": "56f2d481f57d5aa9314910552b91445532bf374d1d4a48362c0a1e451df0a465",
+      "origin_sha256": "56f2d481f57d5aa9314910552b91445532bf374d1d4a48362c0a1e451df0a465",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_right_perp_400.csv",
+      "origin": "C:\\AA_project\\guoying\\static_right_perp_400.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400.csv",
+      "bytes": 29400,
+      "sha256": "00b83ab5163ccd31ea77fe948adb8c706b6ee58b3200f62f9758a648419567f2",
+      "origin_sha256": "00b83ab5163ccd31ea77fe948adb8c706b6ee58b3200f62f9758a648419567f2",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_right_perp_400_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_right_perp_400_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400_feats.npz",
+      "bytes": 326572,
+      "sha256": "33d5ae6bc72d87d2805ac83be90d59d713c25f2fb0b296bf5011e2a610d54d0a",
+      "origin_sha256": "33d5ae6bc72d87d2805ac83be90d59d713c25f2fb0b296bf5011e2a610d54d0a",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0350.csv",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0350.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350.csv",
+      "bytes": 40710,
+      "sha256": "328a408a32320e0902e6043b853ad4a4ecbeb2d7bcd32728659659fac1469bf0",
+      "origin_sha256": "328a408a32320e0902e6043b853ad4a4ecbeb2d7bcd32728659659fac1469bf0",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0350_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0350_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350_feats.npz",
+      "bytes": 331101,
+      "sha256": "4361a151ac65334cf1a1dcfea56bc9f37d2cf4a2e2b323dbc0655fcc92fe62c6",
+      "origin_sha256": "4361a151ac65334cf1a1dcfea56bc9f37d2cf4a2e2b323dbc0655fcc92fe62c6",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0400.csv",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0400.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400.csv",
+      "bytes": 40711,
+      "sha256": "de41bf5335bf6f9d9c3aec2a23e35006e385a7e0fc8798b6ed5d914aa7b5631f",
+      "origin_sha256": "de41bf5335bf6f9d9c3aec2a23e35006e385a7e0fc8798b6ed5d914aa7b5631f",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0400_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0400_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400_feats.npz",
+      "bytes": 324744,
+      "sha256": "7e571319a56aa5b2238b4696df2aed4ed5c35f528f510396def194e16f1d7101",
+      "origin_sha256": "7e571319a56aa5b2238b4696df2aed4ed5c35f528f510396def194e16f1d7101",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0500.csv",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0500.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500.csv",
+      "bytes": 40750,
+      "sha256": "a04e6d7a79a17256702a3be1b36d6dbc9d2fa51b96cd2374aaef2669c57827dd",
+      "origin_sha256": "a04e6d7a79a17256702a3be1b36d6dbc9d2fa51b96cd2374aaef2669c57827dd",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_0500_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_corr_0500_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500_feats.npz",
+      "bytes": 329678,
+      "sha256": "b6adb7b25ecb153cd9a1f23dc07983be59efe52f42fc0fbf27f51a39c9c0e5ee",
+      "origin_sha256": "b6adb7b25ecb153cd9a1f23dc07983be59efe52f42fc0fbf27f51a39c9c0e5ee",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_1000.csv",
+      "origin": "C:\\AA_project\\guoying\\static_corr_1000.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000.csv",
+      "bytes": 39746,
+      "sha256": "2b47a8a8a0d2eb00cabf994d2d1513ba8d7f3bdbb84d727667e4277bcf34e2ab",
+      "origin_sha256": "2b47a8a8a0d2eb00cabf994d2d1513ba8d7f3bdbb84d727667e4277bcf34e2ab",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_corr_1000_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_corr_1000_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000_feats.npz",
+      "bytes": 322533,
+      "sha256": "7238c6e6e6c23967b70fc75aeed4bd777dbe555d8c534cea7d6a491105ff1e48",
+      "origin_sha256": "7238c6e6e6c23967b70fc75aeed4bd777dbe555d8c534cea7d6a491105ff1e48",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_front_1000.csv",
+      "origin": "C:\\AA_project\\guoying\\static_front_1000.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000.csv",
+      "bytes": 32028,
+      "sha256": "ffa5e9504cb1277c7557caf43924bb6309573f317953d9318cf620c7f4d2a3d7",
+      "origin_sha256": "ffa5e9504cb1277c7557caf43924bb6309573f317953d9318cf620c7f4d2a3d7",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_front_1000_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_front_1000_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000_feats.npz",
+      "bytes": 319561,
+      "sha256": "88a7befe44df74c3bd92c56f6c7445e6b0bf032b908b291b33cf5055cf07228e",
+      "origin_sha256": "88a7befe44df74c3bd92c56f6c7445e6b0bf032b908b291b33cf5055cf07228e",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_fr_front_400.csv",
+      "origin": "C:\\AA_project\\guoying\\static_fr_front_400.csv",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400.csv",
+      "bytes": 32544,
+      "sha256": "79dfaca74bd2f41ec1c89de7ba762000621f1c86353793bbc44fb543c8f966b8",
+      "origin_sha256": "79dfaca74bd2f41ec1c89de7ba762000621f1c86353793bbc44fb543c8f966b8",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "static_fr_front_400_feats.npz",
+      "origin": "C:\\AA_project\\guoying\\static_fr_front_400_feats.npz",
+      "snapshot": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400_feats.npz",
+      "bytes": 319515,
+      "sha256": "8d35ab98ca2fbb2302e03bf570f3b11366675231fe6f0c84dd571cbc229afc80",
+      "origin_sha256": "8d35ab98ca2fbb2302e03bf570f3b11366675231fe6f0c84dd571cbc229afc80",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/train_readout.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\train_readout.py",
+      "snapshot": null,
+      "bytes": 7700,
+      "sha256": "4748a1a27b2f3fc86bf2e4ff45434f764e751469c7529979b4c0a709553e999a",
+      "origin_sha256": "4748a1a27b2f3fc86bf2e4ff45434f764e751469c7529979b4c0a709553e999a",
+      "role": "training code: ridge DN readout imitates scripted follow_side=R",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/brain_readout_compare.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\brain_readout_compare.py",
+      "snapshot": null,
+      "bytes": 4864,
+      "sha256": "f57c10cd1a8f9daa79b8342a5e4c0c87e9897cc68d4869f9fef7d50399cbcbb1",
+      "origin_sha256": "f57c10cd1a8f9daa79b8342a5e4c0c87e9897cc68d4869f9fef7d50399cbcbb1",
+      "role": "offline comparison code; not a natural motor readout",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/physical_static_diag.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\physical_static_diag.py",
+      "snapshot": null,
+      "bytes": 11652,
+      "sha256": "bf285672b13f1d18c4c11506afa3e7e74ae8f87e5bc6c5cab52391eac9a61362",
+      "origin_sha256": "bf285672b13f1d18c4c11506afa3e7e74ae8f87e5bc6c5cab52391eac9a61362",
+      "role": "real-ToF static diagnostic; no motors",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2_readout_recoverability.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2_readout_recoverability.py",
+      "snapshot": null,
+      "bytes": 5022,
+      "sha256": "d10b0b3501a90d4c1cd9960d22778b56b87b4d34c1efad3a611b84d7c640bc1c",
+      "origin_sha256": "d10b0b3501a90d4c1cd9960d22778b56b87b4d34c1efad3a611b84d7c640bc1c",
+      "role": "LODO DN-vs-sensor probe code",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/decode.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\decode.py",
+      "snapshot": null,
+      "bytes": 8378,
+      "sha256": "5e7b8ddc47332045a6a2ba52b0ecd2167334fdd8aa51fb3284b21d78c605455c",
+      "origin_sha256": "5e7b8ddc47332045a6a2ba52b0ecd2167334fdd8aa51fb3284b21d78c605455c",
+      "role": "decoder; readout mode and memory_gain",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/encode_tof.py",
+      "origin": "C:\\AA_project\\guoying\\loop\\encode_tof.py",
+      "snapshot": null,
+      "bytes": 6736,
+      "sha256": "60f856b15df73c360f7da7ffa3617c5bb6085b4bd8c43fd8c0aa99429b4003da",
+      "origin_sha256": "60f856b15df73c360f7da7ffa3617c5bb6085b4bd8c43fd8c0aa99429b4003da",
+      "role": "real 5-ToF encoder; side masks",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/P2D28_REPORT.md",
+      "origin": "C:\\AA_project\\guoying\\loop\\P2D28_REPORT.md",
+      "snapshot": null,
+      "bytes": 5114,
+      "sha256": "c365b58063f39dc3db7fd79dbb56414a943a1dd3058dc4b9af934bcfb8c2835a",
+      "origin_sha256": "c365b58063f39dc3db7fd79dbb56414a943a1dd3058dc4b9af934bcfb8c2835a",
+      "role": "archived causal diagnosis; FAIL",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/P2D29_REPORT.md",
+      "origin": "C:\\AA_project\\guoying\\loop\\P2D29_REPORT.md",
+      "snapshot": null,
+      "bytes": 4962,
+      "sha256": "a7f0b6d1eeab1a418d6129604dfd9c641f61fcfc8db1a99da18ac73bb922e9c5",
+      "origin_sha256": "a7f0b6d1eeab1a418d6129604dfd9c641f61fcfc8db1a99da18ac73bb922e9c5",
+      "role": "archived L50/R50 candidate; FAIL, route closed",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d28_metrics.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d28_metrics.json",
+      "snapshot": null,
+      "bytes": 4647,
+      "sha256": "8505fa7077481c3306c43d523d747d4bbb4c28521c883ff461f28753d3ca2e89",
+      "origin_sha256": "8505fa7077481c3306c43d523d747d4bbb4c28521c883ff461f28753d3ca2e89",
+      "role": "P2d-28 six-trial metrics",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d28_events.csv",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d28_events.csv",
+      "snapshot": null,
+      "bytes": 976,
+      "sha256": "4d54263fdc625b76c5169550b2d65bf9dff0c4e020728d583f50277df80094ee",
+      "origin_sha256": "4d54263fdc625b76c5169550b2d65bf9dff0c4e020728d583f50277df80094ee",
+      "role": "P2d-28 event table",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d29_base.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d29_base.json",
+      "snapshot": null,
+      "bytes": 528,
+      "sha256": "cc031519d14c5d83d792f2a259b1648d4485a484944dc83e7e694136e0107f9b",
+      "origin_sha256": "cc031519d14c5d83d792f2a259b1648d4485a484944dc83e7e694136e0107f9b",
+      "role": "P2d-29 raw baseline",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d29_offline.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d29_offline.json",
+      "snapshot": null,
+      "bytes": 1786,
+      "sha256": "451300913e593884fe34e6dcad95e93705c4d5ef6836b6c13974b04b2f200e88",
+      "origin_sha256": "451300913e593884fe34e6dcad95e93705c4d5ef6836b6c13974b04b2f200e88",
+      "role": "P2d-29 raw offline result",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d29_openloop.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d29_openloop.json",
+      "snapshot": null,
+      "bytes": 2160,
+      "sha256": "20f7fe601b40e10dd498caeb7319c725c5ecf4e3037f3654e812e5c018f44b48",
+      "origin_sha256": "20f7fe601b40e10dd498caeb7319c725c5ecf4e3037f3654e812e5c018f44b48",
+      "role": "P2d-29 raw open-loop result",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d29_closedloop.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d29_closedloop.json",
+      "snapshot": null,
+      "bytes": 18412,
+      "sha256": "f64b33448db574d6f0dcff6073faccad243149f130f0ba13592bebd0ed46b92f",
+      "origin_sha256": "f64b33448db574d6f0dcff6073faccad243149f130f0ba13592bebd0ed46b92f",
+      "role": "P2d-29 raw exploratory closed-loop result",
+      "byte_identical_to_origin": true
+    },
+    {
+      "name": "loop/p2d29_gate_confirm.json",
+      "origin": "C:\\AA_project\\guoying\\loop\\p2d29_gate_confirm.json",
+      "snapshot": null,
+      "bytes": 167,
+      "sha256": "3da313e78ce66e1c0316b9e7c783a117b811e551134395c472f7955a7cdf3ff4",
+      "origin_sha256": "3da313e78ce66e1c0316b9e7c783a117b811e551134395c472f7955a7cdf3ff4",
+      "role": "P2d-29 confirm-only gate",
+      "byte_identical_to_origin": true
+    }
+  ],
+  "scenes": {
+    "A_OPEN": {
+      "id": "A_OPEN",
+      "class": "A",
+      "label": "A 无遮挡",
+      "side": "none",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open_feats.npz",
+      "csv_sha256": "cada9f8bc1c962bb0ec69ef6f9d79c220b8079da9d2d7116ad0136a275aaa41b",
+      "feats_sha256": "4169dbeca3bce9c728bdff4ead7233bfde747b06b1dfcb8f5355ccc5e6d1f521",
+      "frames_total": 90,
+      "frames_active": 87,
+      "duration_s": 9.342,
+      "max_readout_recompute_error": 4.9849555780953625e-05,
+      "neural_turn": {
+        "mean": -0.27734,
+        "median": -0.2893,
+        "std": 0.12214,
+        "min": -0.498,
+        "max": 0.1329,
+        "positive_fraction": 0.0345,
+        "negative_fraction": 0.9655,
+        "sign_changes": 1,
+        "longest_same_sign_s": 8.484,
+        "sustained": true,
+        "mean_abs": 0.284343,
+        "teacher_corr": 0.0
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 0,
+          "FL": 0,
+          "F": 0,
+          "FR": 0,
+          "R": 0
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": null,
+            "min": null
+          },
+          "FL": {
+            "mean": null,
+            "min": null
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": null,
+            "min": null
+          },
+          "R": {
+            "mean": null,
+            "min": null
+          }
+        },
+        "dmin_L_mean": 5.78,
+        "dmin_R_mean": 5.78,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          87,
+          1314
+        ],
+        "mean_l2": 17.8139,
+        "mean": 0.235657,
+        "max_abs": 5.288335
+      },
+      "brain_fired_count": {
+        "median": 7676,
+        "max": 8476,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "C_RIGHT_370": {
+      "id": "C_RIGHT_370",
+      "class": "C",
+      "label": "C 右侧墙 370mm",
+      "side": "right",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370_feats.npz",
+      "csv_sha256": "dcaf4bf82110219fbcfa31c7cec30eb50dbaa18412ebd4c845e0264171c7b750",
+      "feats_sha256": "56f2d481f57d5aa9314910552b91445532bf374d1d4a48362c0a1e451df0a465",
+      "frames_total": 90,
+      "frames_active": 88,
+      "duration_s": 9.427,
+      "max_readout_recompute_error": 4.949541259668955e-05,
+      "neural_turn": {
+        "mean": -0.271981,
+        "median": -0.2941,
+        "std": 0.128241,
+        "min": -0.5575,
+        "max": 0.0945,
+        "positive_fraction": 0.0455,
+        "negative_fraction": 0.9545,
+        "sign_changes": 1,
+        "longest_same_sign_s": 8.484,
+        "sustained": true,
+        "mean_abs": 0.279335,
+        "teacher_corr": 0.0
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 0,
+          "FL": 0,
+          "F": 0,
+          "FR": 0,
+          "R": 88
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": null,
+            "min": null
+          },
+          "FL": {
+            "mean": null,
+            "min": null
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": null,
+            "min": null
+          },
+          "R": {
+            "mean": 428.9,
+            "min": 411.0
+          }
+        },
+        "dmin_L_mean": 5.78,
+        "dmin_R_mean": 5.78,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": true
+      },
+      "features": {
+        "shape": [
+          88,
+          1314
+        ],
+        "mean_l2": 17.8723,
+        "mean": 0.236696,
+        "max_abs": 5.472169
+      },
+      "brain_fired_count": {
+        "median": 7637,
+        "max": 9674,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "C_RIGHT_PERP_400": {
+      "id": "C_RIGHT_PERP_400",
+      "class": "C",
+      "label": "C 右侧墙垂直 400mm",
+      "side": "right",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400_feats.npz",
+      "csv_sha256": "00b83ab5163ccd31ea77fe948adb8c706b6ee58b3200f62f9758a648419567f2",
+      "feats_sha256": "33d5ae6bc72d87d2805ac83be90d59d713c25f2fb0b296bf5011e2a610d54d0a",
+      "frames_total": 90,
+      "frames_active": 88,
+      "duration_s": 9.402,
+      "max_readout_recompute_error": 4.950630924205335e-05,
+      "neural_turn": {
+        "mean": -0.268334,
+        "median": -0.2918,
+        "std": 0.130889,
+        "min": -0.4961,
+        "max": 0.1489,
+        "positive_fraction": 0.0455,
+        "negative_fraction": 0.9545,
+        "sign_changes": 1,
+        "longest_same_sign_s": 8.484,
+        "sustained": true,
+        "mean_abs": 0.277925,
+        "teacher_corr": 0.0
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 0,
+          "FL": 0,
+          "F": 0,
+          "FR": 0,
+          "R": 88
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": null,
+            "min": null
+          },
+          "FL": {
+            "mean": null,
+            "min": null
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": null,
+            "min": null
+          },
+          "R": {
+            "mean": 398.6,
+            "min": 387.0
+          }
+        },
+        "dmin_L_mean": 5.78,
+        "dmin_R_mean": 5.78,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": true
+      },
+      "features": {
+        "shape": [
+          88,
+          1314
+        ],
+        "mean_l2": 17.6095,
+        "mean": 0.233236,
+        "max_abs": 5.329292
+      },
+      "brain_fired_count": {
+        "median": 7659,
+        "max": 8421,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "D_BOTH_350": {
+      "id": "D_BOTH_350",
+      "class": "D",
+      "label": "D 双侧走廊 350mm",
+      "side": "both",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350_feats.npz",
+      "csv_sha256": "328a408a32320e0902e6043b853ad4a4ecbeb2d7bcd32728659659fac1469bf0",
+      "feats_sha256": "4361a151ac65334cf1a1dcfea56bc9f37d2cf4a2e2b323dbc0655fcc92fe62c6",
+      "frames_total": 90,
+      "frames_active": 88,
+      "duration_s": 9.426,
+      "max_readout_recompute_error": 5.005290503823541e-05,
+      "neural_turn": {
+        "mean": 0.071038,
+        "median": 0.0763,
+        "std": 0.110767,
+        "min": -0.1338,
+        "max": 0.5102,
+        "positive_fraction": 0.7386,
+        "negative_fraction": 0.2614,
+        "sign_changes": 39,
+        "longest_same_sign_s": 1.01,
+        "sustained": false,
+        "mean_abs": 0.100526,
+        "teacher_corr": -0.0261
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 88,
+          "FL": 88,
+          "F": 0,
+          "FR": 88,
+          "R": 88
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": 173.1,
+            "min": 161.0
+          },
+          "FL": {
+            "mean": 350.9,
+            "min": 344.0
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": 407.6,
+            "min": 397.0
+          },
+          "R": {
+            "mean": 175.5,
+            "min": 170.0
+          }
+        },
+        "dmin_L_mean": 0.6573,
+        "dmin_R_mean": 0.7989,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          88,
+          1314
+        ],
+        "mean_l2": 18.0344,
+        "mean": 0.244038,
+        "max_abs": 5.422932
+      },
+      "brain_fired_count": {
+        "median": 7814,
+        "max": 9164,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "D_BOTH_400": {
+      "id": "D_BOTH_400",
+      "class": "D",
+      "label": "D 双侧走廊 400mm",
+      "side": "both",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400_feats.npz",
+      "csv_sha256": "de41bf5335bf6f9d9c3aec2a23e35006e385a7e0fc8798b6ed5d914aa7b5631f",
+      "feats_sha256": "7e571319a56aa5b2238b4696df2aed4ed5c35f528f510396def194e16f1d7101",
+      "frames_total": 90,
+      "frames_active": 88,
+      "duration_s": 9.424,
+      "max_readout_recompute_error": 4.949243913518475e-05,
+      "neural_turn": {
+        "mean": 0.048022,
+        "median": 0.04955,
+        "std": 0.123792,
+        "min": -0.2178,
+        "max": 0.4766,
+        "positive_fraction": 0.6932,
+        "negative_fraction": 0.3068,
+        "sign_changes": 33,
+        "longest_same_sign_s": 0.707,
+        "sustained": false,
+        "mean_abs": 0.107067,
+        "teacher_corr": -0.0303
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 88,
+          "FL": 88,
+          "F": 0,
+          "FR": 88,
+          "R": 88
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": 204.6,
+            "min": 193.0
+          },
+          "FL": {
+            "mean": 412.7,
+            "min": 406.0
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": 452.7,
+            "min": 439.0
+          },
+          "R": {
+            "mean": 199.0,
+            "min": 194.0
+          }
+        },
+        "dmin_L_mean": 0.8118,
+        "dmin_R_mean": 0.9116,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          88,
+          1314
+        ],
+        "mean_l2": 17.9121,
+        "mean": 0.238025,
+        "max_abs": 5.304259
+      },
+      "brain_fired_count": {
+        "median": 7754,
+        "max": 9352,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "D_BOTH_500": {
+      "id": "D_BOTH_500",
+      "class": "D",
+      "label": "D 双侧走廊 500mm",
+      "side": "both",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500_feats.npz",
+      "csv_sha256": "a04e6d7a79a17256702a3be1b36d6dbc9d2fa51b96cd2374aaef2669c57827dd",
+      "feats_sha256": "b6adb7b25ecb153cd9a1f23dc07983be59efe52f42fc0fbf27f51a39c9c0e5ee",
+      "frames_total": 90,
+      "frames_active": 88,
+      "duration_s": 9.422,
+      "max_readout_recompute_error": 4.9406644928029486e-05,
+      "neural_turn": {
+        "mean": -0.026385,
+        "median": -0.01755,
+        "std": 0.13421,
+        "min": -0.3565,
+        "max": 0.3201,
+        "positive_fraction": 0.4773,
+        "negative_fraction": 0.5227,
+        "sign_changes": 29,
+        "longest_same_sign_s": 1.313,
+        "sustained": false,
+        "mean_abs": 0.109106,
+        "teacher_corr": 0.0387
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 88,
+          "FL": 88,
+          "F": 0,
+          "FR": 88,
+          "R": 88
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": 249.4,
+            "min": 225.0
+          },
+          "FL": {
+            "mean": 508.2,
+            "min": 451.0
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": 587.7,
+            "min": 571.0
+          },
+          "R": {
+            "mean": 247.5,
+            "min": 240.0
+          }
+        },
+        "dmin_L_mean": 1.0506,
+        "dmin_R_mean": 1.2493,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          88,
+          1314
+        ],
+        "mean_l2": 17.8092,
+        "mean": 0.241138,
+        "max_abs": 5.601468
+      },
+      "brain_fired_count": {
+        "median": 7708,
+        "max": 8872,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "D_BOTH_1000": {
+      "id": "D_BOTH_1000",
+      "class": "D",
+      "label": "D 双侧走廊 1000mm",
+      "side": "both",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000_feats.npz",
+      "csv_sha256": "2b47a8a8a0d2eb00cabf994d2d1513ba8d7f3bdbb84d727667e4277bcf34e2ab",
+      "feats_sha256": "7238c6e6e6c23967b70fc75aeed4bd777dbe555d8c534cea7d6a491105ff1e48",
+      "frames_total": 88,
+      "frames_active": 86,
+      "duration_s": 9.201,
+      "max_readout_recompute_error": 4.958068941895988e-05,
+      "neural_turn": {
+        "mean": -0.025938,
+        "median": -0.04385,
+        "std": 0.135799,
+        "min": -0.4367,
+        "max": 0.4156,
+        "positive_fraction": 0.3605,
+        "negative_fraction": 0.6395,
+        "sign_changes": 26,
+        "longest_same_sign_s": 2.02,
+        "sustained": false,
+        "mean_abs": 0.107545,
+        "teacher_corr": -0.0923
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 86,
+          "FL": 85,
+          "F": 0,
+          "FR": 86,
+          "R": 86
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": 312.4,
+            "min": 281.0
+          },
+          "FL": {
+            "mean": 719.8,
+            "min": 677.0
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": 613.7,
+            "min": 590.0
+          },
+          "R": {
+            "mean": 333.8,
+            "min": 325.0
+          }
+        },
+        "dmin_L_mean": 1.6283,
+        "dmin_R_mean": 1.3142,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          86,
+          1314
+        ],
+        "mean_l2": 17.6349,
+        "mean": 0.234736,
+        "max_abs": 5.393699
+      },
+      "brain_fired_count": {
+        "median": 7698,
+        "max": 8576,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "FRONT_1000": {
+      "id": "FRONT_1000",
+      "class": "EXTRA",
+      "label": "额外：正前方 1000mm",
+      "side": "front",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000_feats.npz",
+      "csv_sha256": "ffa5e9504cb1277c7557caf43924bb6309573f317953d9318cf620c7f4d2a3d7",
+      "feats_sha256": "88a7befe44df74c3bd92c56f6c7445e6b0bf032b908b291b33cf5055cf07228e",
+      "frames_total": 87,
+      "frames_active": 85,
+      "duration_s": 9.124,
+      "max_readout_recompute_error": 4.990375367480704e-05,
+      "neural_turn": {
+        "mean": -0.171046,
+        "median": -0.18,
+        "std": 0.124744,
+        "min": -0.5434,
+        "max": 0.129,
+        "positive_fraction": 0.0824,
+        "negative_fraction": 0.9176,
+        "sign_changes": 5,
+        "longest_same_sign_s": 4.141,
+        "sustained": true,
+        "mean_abs": 0.184133,
+        "teacher_corr": 0.0
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 0,
+          "FL": 0,
+          "F": 85,
+          "FR": 82,
+          "R": 0
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": null,
+            "min": null
+          },
+          "FL": {
+            "mean": null,
+            "min": null
+          },
+          "F": {
+            "mean": 1178.0,
+            "min": 1146.0
+          },
+          "FR": {
+            "mean": 1179.1,
+            "min": 1136.0
+          },
+          "R": {
+            "mean": null,
+            "min": null
+          }
+        },
+        "dmin_L_mean": 2.7249,
+        "dmin_R_mean": 2.7041,
+        "dmin_F_mean": 2.7249,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          85,
+          1314
+        ],
+        "mean_l2": 17.5841,
+        "mean": 0.234277,
+        "max_abs": 5.365358
+      },
+      "brain_fired_count": {
+        "median": 7700,
+        "max": 8667,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "FR_FRONT_400": {
+      "id": "FR_FRONT_400",
+      "class": "EXTRA",
+      "label": "额外：右前+正前 400mm",
+      "side": "front",
+      "source_csv": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400.csv",
+      "source_feats": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400_feats.npz",
+      "csv_sha256": "79dfaca74bd2f41ec1c89de7ba762000621f1c86353793bbc44fb543c8f966b8",
+      "feats_sha256": "8d35ab98ca2fbb2302e03bf570f3b11366675231fe6f0c84dd571cbc229afc80",
+      "frames_total": 88,
+      "frames_active": 86,
+      "duration_s": 9.223,
+      "max_readout_recompute_error": 4.9786264815221415e-05,
+      "neural_turn": {
+        "mean": 0.082274,
+        "median": 0.0785,
+        "std": 0.124495,
+        "min": -0.1714,
+        "max": 0.3737,
+        "positive_fraction": 0.7558,
+        "negative_fraction": 0.2442,
+        "sign_changes": 26,
+        "longest_same_sign_s": 1.616,
+        "sustained": false,
+        "mean_abs": 0.116481,
+        "teacher_corr": 0.051
+      },
+      "tof": {
+        "valid_counts": {
+          "L": 0,
+          "FL": 0,
+          "F": 0,
+          "FR": 86,
+          "R": 86
+        },
+        "ranges_mm": {
+          "L": {
+            "mean": null,
+            "min": null
+          },
+          "FL": {
+            "mean": null,
+            "min": null
+          },
+          "F": {
+            "mean": null,
+            "min": null
+          },
+          "FR": {
+            "mean": 420.7,
+            "min": 411.0
+          },
+          "R": {
+            "mean": 468.0,
+            "min": 426.0
+          }
+        },
+        "dmin_L_mean": 5.78,
+        "dmin_R_mean": 0.8318,
+        "dmin_F_mean": 5.78,
+        "outer_L_valid_but_ignored_by_neural_side": false,
+        "outer_R_valid_but_ignored_by_neural_side": false
+      },
+      "features": {
+        "shape": [
+          86,
+          1314
+        ],
+        "mean_l2": 17.8851,
+        "mean": 0.235958,
+        "max_abs": 5.42482
+      },
+      "brain_fired_count": {
+        "median": 7727,
+        "max": 8988,
+        "note": "archived field is total brain fired events, not a DN-only spike count"
+      }
+    },
+    "B_LEFT": {
+      "id": "B_LEFT",
+      "class": "B",
+      "label": "B 左侧障碍",
+      "status": "MISSING",
+      "reason": "no archived left-only real-ToF/DN recording was found; nothing was synthesized"
+    }
+  },
+  "coverage": {
+    "A": "AVAILABLE",
+    "B": "MISSING",
+    "C": "AVAILABLE_BUT_SENSOR_NOT_IN_NEURAL_SIDE",
+    "D": "AVAILABLE_BUT_NOT_LEFT_ONLY"
+  },
+  "questions": {
+    "Q1_opposite_direction": {
+      "answer": "INSUFFICIENT_EVIDENCE",
+      "reason": "no left-only archive; right-only archives do not enter the neural side input",
+      "opposite_direction_not_testable": true
+    },
+    "Q2_open_sustained": {
+      "answer": "FAIL",
+      "reason": "open scene has a sustained nonzero neural turn",
+      "mean": -0.27734,
+      "negative_fraction": 0.9655,
+      "longest_same_sign_s": 8.484,
+      "sustained": true
+    },
+    "Q3_recovery": {
+      "answer": "INSUFFICIENT_EVIDENCE",
+      "reason": "all archived scenes are constant; no readout_real approach/removal sequence exists"
+    },
+    "Q4_stability": {
+      "answer": "INSUFFICIENT_EVIDENCE",
+      "reason": "one recording per scene/class; no repeated independent runs of the same condition"
+    },
+    "Q5_domain_shift": {
+      "answer": "DOMAIN_MISMATCH_EVIDENCE",
+      "reason": "readout is a simulated hand-teacher imitation; real outer R is valid but excluded from the neural right-side input; real open-loop output is strongly biased",
+      "outer_R_ignored_for_C": true,
+      "C_has_no_neural_side_input": true,
+      "readout_training": "linear ridge imitates a hand-written teacher; not a natural fly motor program"
+    }
+  },
+  "next_authorization": {
+    "experiment": "D1-NEXT-STATIC-TOF",
+    "authorized_now": false,
+    "scope": "one static real 5-ToF brain-response test; no robot motion and no training",
+    "requires": [
+      "NEW_FULL_BRAIN_AUTHORIZATION=True",
+      "one explicit static-run approval"
+    ],
+    "fixed": [
+      "MaleCNS",
+      "BASE PhysicalToFEncoder",
+      "readout_real.npz",
+      "memory_gain=0"
+    ],
+    "scenes": [
+      "A open",
+      "B left-only",
+      "C right-only",
+      "D both"
+    ],
+    "repeats_per_scene": 3,
+    "sequence": "open -> side -> removal -> open",
+    "duration_s": 10,
+    "pre_registered_gates": [
+      "opposite sign for left vs right",
+      "open sustained |mean| < 0.05",
+      "return to baseline within 1 s after removal",
+      "same sign in at least 2/3 repeats"
+    ],
+    "does_not_fix": [
+      "open-loop bias",
+      "outer L/R neural-side coverage"
+    ]
+  },
+  "replay": {
+    "modes": [
+      "BRAIN",
+      "ZERO",
+      "FLIP"
+    ],
+    "memory_gain": 0.0,
+    "pursuit_turn": false,
+    "dijkstra": false,
+    "map": false,
+    "fixed_forward_mps": 0.35,
+    "wheel_track_m": 0.19,
+    "max_omega_rad_s": 1.2,
+    "actuator": "DISCONNECTED",
+    "safety": "REPLAY_ONLY"
+  },
+  "limits": [
+    "No new MaleCNS/FlyBrain run was performed.",
+    "No natural motor program is claimed; the readout is a linear imitation of a hand controller.",
+    "B-left and recovery/stability are missing or insufficient; no result was fabricated.",
+    "P2d-29 L50/R50 route remains FAIL and closed; it is not reused as a success."
+  ],
+  "frames_note": "raw frames remain in the archived CSV/NPZ snapshots; not duplicated here"
+}

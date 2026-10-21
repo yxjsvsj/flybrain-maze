@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>D1 · Brain Turn Replay</title>
+<style>
+:root{color-scheme:dark;--bg:#090d15;--panel:#111a27;--line:#263447;--ink:#e9f1ff;--mut:#8ea1b9;--accent:#62d6ff;--ok:#45e3a2;--bad:#ff5d72;--warn:#ffc95c;--violet:#b79cff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% -10%,#17314d 0,#090d15 45%,#06080d 100%);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,"Segoe UI",sans-serif}
+.page{max-width:1280px;margin:0 auto;padding:18px 22px 40px}
+.top{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+h1{margin:0;font-size:25px;letter-spacing:.04em}h2{margin:0 0 10px;font-size:13px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+.sub{color:var(--mut);margin:5px 0 0}
+.replay{display:inline-flex;align-items:center;gap:10px;background:#ffcc4d;color:#171106;border-radius:8px;padding:10px 15px;font-weight:900;letter-spacing:.16em;font-size:21px;box-shadow:0 0 0 3px #ffcc4d22,0 8px 26px #ffcc4d22}
+.replay small{display:block;font-size:9px;letter-spacing:.08em;font-weight:700;opacity:.8}
+.verdict{border:1px solid #ff5d7255;background:#2a1119;color:#ff9aaa;padding:8px 12px;border-radius:8px;font-weight:800;letter-spacing:.08em}
+.grid{display:grid;grid-template-columns:1.18fr .82fr;gap:14px;margin-top:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.panel{background:linear-gradient(180deg,#141e2d,#0f1724);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 12px 36px #00000033}
+.chain{display:flex;gap:6px;align-items:center;color:var(--mut);font-size:11px;letter-spacing:.05em;flex-wrap:wrap;margin:12px 0 0}
+.chain b{color:var(--ink);background:#18283a;border:1px solid #2d445e;padding:4px 7px;border-radius:6px;font-weight:700}
+.chain span{color:var(--accent)}
+.tof{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tofcard{background:#0c1420;border:1px solid var(--line);border-radius:9px;padding:10px;min-height:98px;position:relative;overflow:hidden}
+.tofcard .name{font-size:12px;color:var(--mut);font-weight:800;letter-spacing:.1em}.tofcard .mm{font-size:21px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}.tofcard .st{font-size:10px;color:var(--mut);margin-top:3px}
+.tofcard.valid{border-color:#2d6b59}.tofcard.valid .mm{color:var(--ok)}.tofcard.no .mm{color:#65758a}.bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#1b2b3c}.bar i{display:block;height:100%;background:var(--accent);width:0}
+.big{font-size:46px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.03em}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.violet{color:var(--violet)}
+.gauge{height:12px;background:#182639;border:1px solid #2a3b52;border-radius:8px;position:relative;margin-top:12px;overflow:hidden}.gauge:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#ffffff55}.needle{position:absolute;top:-5px;width:3px;height:22px;background:var(--accent);border-radius:2px;transform:translateX(-50%)}
+.rawrow{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:12px}
+.chart{display:flex;align-items:flex-end;height:70px;gap:3px;margin-top:8px}.chart i{flex:1;min-width:3px;background:linear-gradient(180deg,#b79cff,#4a8cff);border-radius:2px 2px 0 0;height:2%}
+.kv{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:12px}.kv span:nth-child(odd){color:var(--mut)}
+.motor{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wheel{background:#0b1320;border:1px solid var(--line);border-radius:9px;padding:11px}.wheel .side{font-size:11px;color:var(--mut);letter-spacing:.12em}.wheel .val{font-size:27px;font-weight:800;margin:4px 0}.wheel .mps{font-size:11px;color:var(--mut)}
+.previewtag{border:1px dashed #ffcc4d66;color:var(--warn);border-radius:7px;padding:6px 8px;font-size:10px;letter-spacing:.08em;margin-top:10px}
+.safety{display:grid;grid-template-columns:1fr 1fr;gap:6px}.safety div{background:#0b1320;border:1px solid #2a3b52;border-radius:7px;padding:7px;font-size:11px}.safety b{display:block;color:var(--ok);font-size:11px}.safety .no{color:var(--bad)}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+select,button,input[type=range]{accent-color:var(--accent)}select{background:#0c1420;color:var(--ink);border:1px solid #344a64;border-radius:7px;padding:8px}button{background:#1b3047;color:var(--ink);border:1px solid #355476;border-radius:7px;padding:8px 13px;font-weight:700;cursor:pointer}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:not-allowed}
+.statusline{display:flex;gap:12px;flex-wrap:wrap;color:var(--mut);font-size:11px;margin-top:10px}.pill{background:#132235;border:1px solid #2e455f;border-radius:20px;padding:3px 9px;color:#bcd3ea}
+.warnbox{border-left:3px solid var(--bad);background:#2a1119;padding:9px 12px;border-radius:5px;color:#ffb8c2;font-size:12px;margin-top:12px}
+.foot{color:#66788e;font-size:11px;margin-top:18px;line-height:1.7}
+@media(max-width:850px){.grid,.grid3{grid-template-columns:1fr}.tof{grid-template-columns:repeat(5,minmax(0,1fr))}.big{font-size:36px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="top">
+    <div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="replay">REPLAY <small>OFFLINE / NO MOTOR</small></div>
+        <div class="verdict" id="verdict">NO_GO</div>
+      </div>
+      <h1 style="margin-top:12px">DEMO-BRAIN-TURN-D1 · 脑源转向回放</h1>
+      <p class="sub">ToF → DN Trace → frozen readout → brain turn → wheel preview → safety。仅回放已归档数据。</p>
+      <div class="chain"><b>ToF L/FL/F/FR/R</b><span>→</span><b>Neural activity</b><span>→</span><b>Brain turn</b><span>→</span><b>Left / Right preview</b><span>→</span><b>Safety</b></div>
+    </div>
+    <div style="text-align:right">
+      <div class="mut" style="font-size:11px">FROZEN READOUT</div>
+      <div class="mono" id="readoutShort" style="font-size:12px">--</div>
+      <div class="mut" style="font-size:11px;margin-top:5px">READ-ONLY · 127.0.0.1</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label class="mut" for="scene">SCENE</label><select id="scene"></select>
+    <label class="mut" for="mode">MODE</label><select id="mode"><option>BRAIN</option><option>ZERO</option><option>FLIP</option></select>
+    <button id="play">PAUSE</button>
+    <input id="timeline" type="range" min="0" max="1" value="0" style="flex:1;min-width:180px"/>
+    <span class="pill mono" id="frameLabel">0 / 0</span>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>ToF 五路 · archived real sensor frame</h2>
+      <div class="tof" id="tof"></div>
+      <div class="statusline"><span id="tofmeta">--</span></div>
+      <div class="warnbox" id="banner">BRAIN 模式：转向方向只来自冻结 readout。ZERO/FLIP 仅用于离线对照与消融。</div>
+    </section>
+
+    <section class="panel">
+      <h2>Neural activity · 1314 DN Trace</h2>
+      <div class="chart" id="chart"></div>
+      <div class="rawrow"><span class="mut">raw neural turn</span><span class="mono big" id="neuralRaw" style="font-size:27px">0</span></div>
+      <div class="kv" style="margin-top:8px"><span>feature L2</span><span class="mono" id="featL2">--</span><span>brain fired events (median)</span><span class="mono" id="fired">--</span><span>source</span><span class="mono" id="neuralSrc">--</span></div>
+    </section>
+  </div>
+
+  <div class="grid3">
+    <section class="panel">
+      <h2>Brain turn · frozen readout output</h2>
+      <div class="big mono" id="brainTurn">0.000</div>
+      <div class="mut" style="font-size:11px" id="modeNote">BRAIN: archived neural direction</div>
+      <div class="gauge"><div class="needle" id="needle" style="left:50%"></div></div>
+      <div class="kv" style="margin-top:10px"><span>omega preview</span><span class="mono" id="omega">0</span><span>memory gain</span><span class="mono">0.0</span><span>pursuit / map / Dijkstra</span><span class="mono">OFF</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>Motor command · PREVIEW ONLY</h2>
+      <div class="motor">
+        <div class="wheel"><div class="side">LEFT</div><div class="val mono" id="leftCmd">0.00</div><div class="mps mono" id="leftMps">0.000 m/s</div></div>
+        <div class="wheel"><div class="side">RIGHT</div><div class="val mono" id="rightCmd">0.00</div><div class="mps mono" id="rightMps">0.000 m/s</div></div>
+      </div>
+      <div class="previewtag">PREVIEW ONLY · NOT SENT · NO ARDUINO / NO /api/drive</div>
+      <div class="kv" style="margin-top:10px"><span>fixed forward</span><span class="mono" id="fixedV">--</span><span>wheel track</span><span class="mono" id="track">--</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>Safety state</h2>
+      <div class="safety">
+        <div><b>REPLAY_ONLY</b>offline data</div>
+        <div><b class="no">DISCONNECTED</b>actuators</div>
+        <div><b class="no">NOT_PRESENT</b>drive API</div>
+        <div><b>PREVIEW_ONLY</b>motor output</div>
+      </div>
+      <div class="kv" style="margin-top:10px"><span>POST /api/drive</span><span class="mono bad">405</span><span>motor interface</span><span class="mono bad">none</span></div>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-top:14px">
+    <h2>Source / provenance</h2>
+    <div class="kv" id="source" style="grid-template-columns:150px 1fr"></div>
+  </section>
+
+  <p class="foot">D1 verdict: <b id="verdict2">--</b>. This replay is not evidence of natural flight-motor circuitry and does not authorize new full-brain dynamics or robot motion. Left/right wheel values are a fixed-forward differential preview, not actuator commands.</p>
+</main>
+<script>
+"use strict";
+const $=(id)=>document.getElementById(id);
+let meta=null, frames=[], index=0, playing=true, timer=null, scene="A_OPEN", mode="BRAIN";
+const NAMES=["L","FL","F","FR","R"];
+const fmt=(x,n=3)=>(x==null?"--":Number(x).toFixed(n));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+async function getJSON(url){const r=await fetch(url,{method:"GET",cache:"no-store"});if(!r.ok)throw new Error(url+" "+r.status);return await r.json();}
+
+async function boot(){
+  meta=await getJSON("/api/meta");
+  $("verdict").textContent=meta.verdict;
+  $("verdict2").textContent=meta.verdict+" — "+meta.reason_codes.join(" / ");
+  $("readoutShort").textContent=meta.readout.sha256.slice(0,16)+"…";
+  $("fixedV").textContent=meta.constants.fixed_forward_mps+" m/s";
+  $("track").textContent=meta.constants.wheel_track_m+" m";
+  const sel=$("scene"); sel.innerHTML="";
+  for(const s of meta.scenes){
+    const o=document.createElement("option"); o.value=s.id; o.textContent=s.label+(s.frames?` (${s.frames} frames)`:"");
+    if(s.missing)o.disabled=true; sel.appendChild(o);
+  }
+  sel.value=meta.default_scene; scene=sel.value;
+  sel.onchange=()=>{scene=sel.value;load()};
+  $("mode").onchange=()=>{mode=$("mode").value;load()};
+  $("timeline").oninput=()=>{index=Number($("timeline").value);render()};
+  $("play").onclick=()=>{playing=!playing;$("play").textContent=playing?"PAUSE":"PLAY";tick()};
+  await load();
+}
+async function load(){
+  const d=await getJSON(`/api/replay?scene=${encodeURIComponent(scene)}&mode=${encodeURIComponent(mode)}`);
+  frames=d.frames; index=Math.min(index,Math.max(0,frames.length-1));
+  $("timeline").max=Math.max(0,frames.length-1); $("timeline").value=index;
+  render(); tick();
+}
+function render(){
+  if(!frames.length)return; index=Math.min(index,frames.length-1);
+  const f=frames[index];
+  $("frameLabel").textContent=`${index+1} / ${frames.length}  t=${fmt(f.t,2)}s`;
+  $("timeline").value=index;
+  $("tof").innerHTML=NAMES.map(n=>{
+    const mm=f.tof_mm[n], st=f.tof_status[n]||"--";
+    const valid=st==="VALID"&&mm!=null;
+    const pct=mm==null?0:clamp(100-(mm/2000)*100,2,100);
+    return `<div class="tofcard ${valid?"valid":"no"}"><div class="name">${n}</div><div class="mm">${mm==null?"----":mm.toFixed(0)}</div><div class="st">${st}</div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+  $("tofmeta").textContent=`frame ${f.i} · ${f.scene_label} · archived ToF (no live sensor)`;
+  const maxBin=Math.max(0.001,...f.neural.feature_bins);
+  $("chart").innerHTML=f.neural.feature_bins.map(v=>`<i style="height:${Math.max(2,100*v/maxBin)}%"></i>`).join("");
+  $("neuralRaw").textContent=fmt(f.neural.turn_raw,4);
+  $("featL2").textContent=fmt(f.neural.feature_l2,2);
+  $("fired").textContent=f.neural.brain_fired_count;
+  $("neuralSrc").textContent=f.neural.turn_source;
+  $("brainTurn").textContent=fmt(f.brain_turn,4);
+  $("omega").textContent=fmt(f.omega_rad_s,4)+" rad/s";
+  $("needle").style.left=(50+50*clamp(f.brain_turn,-1,1))+"%";
+  $("leftCmd").textContent=fmt(f.motor_preview.left_cmd,2);
+  $("rightCmd").textContent=fmt(f.motor_preview.right_cmd,2);
+  $("leftMps").textContent=fmt(f.motor_preview.left_mps,3)+" m/s";
+  $("rightMps").textContent=fmt(f.motor_preview.right_mps,3)+" m/s";
+  $("modeNote").textContent=f.mode==="BRAIN"?"BRAIN: archived neural direction":(f.mode==="ZERO"?"ZERO: ablation, no turn":"FLIP: ablation only, never a demo direction");
+  $("banner").textContent=f.mode==="BRAIN"?"BRAIN：方向仅来自冻结 readout；无手写 ToF 左右规则参与 omega。":"ABLATION："+f.mode+" 不用于正式演示。";
+  $("source").innerHTML=[
+    ["archive CSV",`<span class="mono">${f.source.csv}</span>`],
+    ["CSV SHA-256",`<span class="mono">${f.source.csv_sha256}</span>`],
+    ["feats NPZ",`<span class="mono">${f.source.feats}</span>`],
+    ["feats SHA-256",`<span class="mono">${f.source.feats_sha256}</span>`],
+    ["readout",`<span class="mono">${meta.readout.path} · ${meta.readout.sha256}</span>`],
+    ["memory_gain",`<span class="mono">${f.memory_gain}</span>`]
+  ].map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join("");
+}
+function tick(){
+  clearInterval(timer);
+  if(playing&&frames.length>1)timer=setInterval(()=>{index=(index+1)%frames.length;render();},100);
+}
+boot().catch(e=>{document.body.innerHTML=`<pre style="color:#ff9aaa;padding:30px">${e}</pre>`});
+</script>
+</body>
+</html>
