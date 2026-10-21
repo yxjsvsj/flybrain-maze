@@ -1,0 +1,360 @@
+{
+  "task": "DEMO-BRAIN-TURN-D2",
+  "baseline": "0d1d845",
+  "scope": "offline review, pre-registration, synthetic gates; no full brain, no training, no motor",
+  "conclusion": "INSUFFICIENT_EVIDENCE",
+  "old_route": {
+    "d1_verdict": "NO_GO",
+    "d1_report": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\D1_ACCEPTANCE.json",
+    "readout_sha256": "632cddb1c9ae43de7bde63a5bd8851036009c4625d12c113bf0e96119ace083e",
+    "readout_identity": "linear ridge imitates a hand-written teacher; not a natural fly motor program; not a natural motor readout",
+    "why_failed": [
+      "readout_real imitates a hand-written follow_side=R teacher; it is not a natural motor readout",
+      "D1 A_OPEN showed a persistent negative turn (mean -0.2773, 96.5% negative)",
+      "D1 C_RIGHT used an outer R valid at 380-450mm but dmin_R remained 5.78; it never entered the neural side input",
+      "D1 B_LEFT is missing; no left-only real ToF/DN archive exists",
+      "P2d-29 L50/R50 remains FAIL_OFFLINE / FAIL and is closed"
+    ],
+    "p2d29_offline_verdict": "FAIL_OFFLINE",
+    "p2d29_closed": true,
+    "reopen_forbidden": true
+  },
+  "candidate": {
+    "status": "INSUFFICIENT_EVIDENCE",
+    "architecture": [
+      "real FL/F/FR ToF",
+      "PhysicalToFEncoder",
+      "MaleCNS with fixed W (no synaptic update)",
+      "1314 descending-neuron Trace",
+      "new external linear motion readout",
+      "omega and left/right motor preview"
+    ],
+    "feature_dim": 1314,
+    "left_only_archives": [],
+    "right_only_valid_neural_archives": [],
+    "both_sides_archives": [
+      "D_BOTH_350",
+      "D_BOTH_400",
+      "D_BOTH_500",
+      "D_BOTH_1000"
+    ],
+    "open_archive": [
+      "A_OPEN"
+    ],
+    "candidate_npz_present": [],
+    "candidate_trained": false,
+    "training_run": false,
+    "full_brain_run": false,
+    "recoverability_tool": {
+      "path": "C:\\AA_project\\guoying\\loop\\p2_readout_recoverability.py",
+      "expected_inputs": "static_A/B/C/D feats",
+      "current_inputs": [
+        "A_OPEN",
+        "C_RIGHT_370",
+        "C_RIGHT_PERP_400",
+        "D_BOTH_1000",
+        "D_BOTH_350",
+        "D_BOTH_400",
+        "D_BOTH_500",
+        "FRONT_1000",
+        "FR_FRONT_400"
+      ],
+      "compatible": false,
+      "reason": "no left-only B and no static_A/B/C/D archive; static_corr* would be mislabeled C by _label",
+      "run": false
+    },
+    "sufficient_for_bilateral_decision": false,
+    "reason": "left-only neural response data is absent; right-only C is not in the neural side input; D both-sides data cannot establish opposite left/right signs; no repeated runs or removal data",
+    "not_a_no_go_for_a_future_study": true,
+    "not_a_candidate_go": true
+  },
+  "prereg": {
+    "protocol": "D2-STATIC-EXTERNAL-READOUT/v1",
+    "status": "PREREGISTERED; NOT_AUTHORIZED; NOT_RUN",
+    "fixed_biology": {
+      "connectome_W": "official MaleCNS, read-only",
+      "synaptic_dW": 0.0,
+      "training_scope": "external linear readout only",
+      "trace_tau_s": 0.2,
+      "brain_hz": 50.0,
+      "device": "CPU",
+      "batch": 1,
+      "teacher": "engineering rule, not biological ground truth",
+      "teacher_formula": "clip(3.0 * (prox_R - prox_L), -1, +1), positive = left",
+      "teacher_used_at_inference": false,
+      "inference_inputs": [
+        "1314 DN Trace values"
+      ],
+      "forbidden_at_inference": [
+        "raw ToF",
+        "teacher",
+        "map",
+        "Dijkstra",
+        "goal bearing",
+        "temporary bias subtraction",
+        "sign flip",
+        "manual left/right switch"
+      ],
+      "outer_LR": "excluded from neural side input; must not be used as FL/FR substitute"
+    },
+    "data_collection": {
+      "name": "D2-STATIC-v1",
+      "scenes": [
+        "A_open",
+        "B_FL_only",
+        "C_FR_only",
+        "D_FL_FR_symmetric"
+      ],
+      "distances_mm": {
+        "train": [
+          400
+        ],
+        "validation": [
+          700
+        ]
+      },
+      "train_seeds": [
+        3001,
+        3002,
+        3003
+      ],
+      "validation_seeds": [
+        3051,
+        3052
+      ],
+      "repeats_per_scene_seed": 3,
+      "seconds_per_run": 10.0,
+      "timeline_s": {
+        "open_pre": 2.0,
+        "side": 4.0,
+        "open_post": 4.0
+      },
+      "windows_s": {
+        "side": [
+          2.0,
+          6.0
+        ],
+        "recovery": [
+          6.0,
+          7.0
+        ]
+      },
+      "tof_hz": 10.0,
+      "runs": 120,
+      "brain_steps": 60000,
+      "motor": "OFF; static rig only",
+      "scene_purity": {
+        "B_FL_only": "FL valid; F/FR no target",
+        "C_FR_only": "FR valid; F/FL no target",
+        "D": "FL and FR valid and symmetric"
+      },
+      "right_outer_R": "not used"
+    },
+    "readout": {
+      "type": "zero-bias linear ridge on z-scored 1314 DN Trace",
+      "lambda": 0.01,
+      "components": "none (all 1314 features)",
+      "fit_intercept": false,
+      "turn_clip": [
+        -1.0,
+        1.0
+      ],
+      "training_split": "train seeds 3001-3003 at 400mm",
+      "validation_split": "validation seeds 3051-3052 at 700mm; never used for fitting",
+      "hyperparameter_search": false,
+      "feature_selection": false,
+      "random_seed": 20261022
+    },
+    "gates": {
+      "open_zero_bias": {
+        "max_abs_mean": 0.05
+      },
+      "unilateral_opposite": {
+        "fl_max": -0.1,
+        "fr_min": 0.1,
+        "fr_minus_fl_min": 0.2
+      },
+      "seed_repeatability": {
+        "fraction": 0.8
+      },
+      "removal_recovery": {
+        "max_abs_mean": 0.05
+      },
+      "zero_ablation": {
+        "omega": "exactly 0"
+      },
+      "shuffle": {
+        "original_min_accuracy": 0.75,
+        "shuffled_max_accuracy": 0.55,
+        "direction_accuracy": "fraction of B_FL_only + C_FR_only validation runs whose mean turn sign is correct",
+        "shuffle": "permute validation DN feature rows across runs; do not refit"
+      }
+    },
+    "judgement_rule": "all gates must pass; report every failure; no threshold changes",
+    "stopping_rule": "any gate fails -> INSUFFICIENT/NO_GO as applicable; no tuning, no seed selection, no route switch"
+  },
+  "source_manifest": [
+    {
+      "path": "C:\\AA_project\\guoying\\readout_real.npz",
+      "sha256": "632cddb1c9ae43de7bde63a5bd8851036009c4625d12c113bf0e96119ace083e",
+      "role": "old frozen readout (DO NOT REUSE)"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\D1_ACCEPTANCE.json",
+      "sha256": "71a6f10837d134a4410a53efdf3b0c79b576f143625a2a6a7f3bed854cbc0df5",
+      "role": "D1 permanent NO_GO report"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\D1_ACCEPTANCE.md",
+      "sha256": "f395191d01eff88974c443fba2b1945d4df4ebd58c4311fe108cdf96ed552a19",
+      "role": "D1 human report"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\loop\\train_p2_readout.py",
+      "sha256": "5138c22f07497795a8e128fd27a81fe73950c88278677ba9fd9e758eb8ac5c01",
+      "role": "future external teacher/readout reference; not run"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\loop\\p2_readout_recoverability.py",
+      "sha256": "d10b0b3501a90d4c1cd9960d22778b56b87b4d34c1efad3a611b84d7c640bc1c",
+      "role": "old recoverability tool; incompatible inputs"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\loop\\P2D29_REPORT.md",
+      "sha256": "a7f0b6d1eeab1a418d6129604dfd9c641f61fcfc8db1a99da18ac73bb922e9c5",
+      "role": "closed L50/R50 route"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\loop\\p2d29_offline.json",
+      "sha256": "451300913e593884fe34e6dcad95e93705c4d5ef6836b6c13974b04b2f200e88",
+      "role": "raw closed-route result"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open.csv",
+      "sha256": "cada9f8bc1c962bb0ec69ef6f9d79c220b8079da9d2d7116ad0136a275aaa41b",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_open_feats.npz",
+      "sha256": "4169dbeca3bce9c728bdff4ead7233bfde747b06b1dfcb8f5355ccc5e6d1f521",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370.csv",
+      "sha256": "dcaf4bf82110219fbcfa31c7cec30eb50dbaa18412ebd4c845e0264171c7b750",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_370_feats.npz",
+      "sha256": "56f2d481f57d5aa9314910552b91445532bf374d1d4a48362c0a1e451df0a465",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400.csv",
+      "sha256": "00b83ab5163ccd31ea77fe948adb8c706b6ee58b3200f62f9758a648419567f2",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_right_perp_400_feats.npz",
+      "sha256": "33d5ae6bc72d87d2805ac83be90d59d713c25f2fb0b296bf5011e2a610d54d0a",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350.csv",
+      "sha256": "328a408a32320e0902e6043b853ad4a4ecbeb2d7bcd32728659659fac1469bf0",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0350_feats.npz",
+      "sha256": "4361a151ac65334cf1a1dcfea56bc9f37d2cf4a2e2b323dbc0655fcc92fe62c6",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400.csv",
+      "sha256": "de41bf5335bf6f9d9c3aec2a23e35006e385a7e0fc8798b6ed5d914aa7b5631f",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0400_feats.npz",
+      "sha256": "7e571319a56aa5b2238b4696df2aed4ed5c35f528f510396def194e16f1d7101",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500.csv",
+      "sha256": "a04e6d7a79a17256702a3be1b36d6dbc9d2fa51b96cd2374aaef2669c57827dd",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_0500_feats.npz",
+      "sha256": "b6adb7b25ecb153cd9a1f23dc07983be59efe52f42fc0fbf27f51a39c9c0e5ee",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000.csv",
+      "sha256": "2b47a8a8a0d2eb00cabf994d2d1513ba8d7f3bdbb84d727667e4277bcf34e2ab",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_corr_1000_feats.npz",
+      "sha256": "7238c6e6e6c23967b70fc75aeed4bd777dbe555d8c534cea7d6a491105ff1e48",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000.csv",
+      "sha256": "ffa5e9504cb1277c7557caf43924bb6309573f317953d9318cf620c7f4d2a3d7",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_front_1000_feats.npz",
+      "sha256": "88a7befe44df74c3bd92c56f6c7445e6b0bf032b908b291b33cf5055cf07228e",
+      "role": "DN features archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400.csv",
+      "sha256": "79dfaca74bd2f41ec1c89de7ba762000621f1c86353793bbc44fb543c8f966b8",
+      "role": "real-ToF archive"
+    },
+    {
+      "path": "C:\\AA_project\\guoying\\demo\\brain_turn_7d\\data\\static_fr_front_400_feats.npz",
+      "sha256": "8d35ab98ca2fbb2302e03bf570f3b11366675231fe6f0c84dd571cbc229afc80",
+      "role": "DN features archive"
+    }
+  ],
+  "authorization": {
+    "NEW_FULL_BRAIN_AUTHORIZATION": false,
+    "READOUT_TRAINING_AUTHORIZATION": false,
+    "ROBOT_MOTION_AUTHORIZATION": false,
+    "REAL_SYNAPTIC_LEARNING_READY": false,
+    "D2_NEXT_EXPERIMENT_AUTHORIZED": false
+  },
+  "next_experiment": {
+    "name": "D2-AUTH-1-STATIC-TRAIN-AND-HELDOUT",
+    "authorized_now": false,
+    "authorization": "one explicit approval for D2-STATIC-v1 data collection plus external linear-readout fitting and held-out evaluation",
+    "full_brain": "static ToF runs under existing safety framework; no robot; W read-only; dW=0",
+    "training": "external linear readout only; no connectome training",
+    "runs": 120,
+    "brain_steps": 60000,
+    "resource_status": "UNVERIFIED; must be measured under the existing Job limit and reported",
+    "stop_conditions": [
+      "resource or Job failure",
+      "any gate fails after frozen evaluation",
+      "inference would need raw ToF/teacher/bias/sign/manual switching"
+    ]
+  },
+  "demo": {
+    "reuse": "demo/brain_turn_7d/replay.py",
+    "launcher": "demo/brain_turn_d2/dashboard.py",
+    "read_only": true,
+    "actuators": "DISCONNECTED",
+    "post_drive_route": "NONE",
+    "storyboard": "STORYBOARD.md"
+  },
+  "limits": [
+    "No new full-brain dynamics were run.",
+    "No readout was trained; no candidate weights exist.",
+    "No left-only real ToF/DN data exists; this is the primary evidence gap.",
+    "The right outer R-only archives are not valid neural right-side stimuli.",
+    "P2d-29 remains FAIL and closed; D1 remains NO_GO."
+  ]
+}
