@@ -1,0 +1,108 @@
+{
+ "protocol": "P11-2-S5-1/v1",
+ "baseline": "079da3f",
+ "status": "IMPLEMENTATION_EQUIVALENCE_GO; MODEL_MECHANISM_OBSERVABILITY_GO; BIOLOGICAL_VALIDITY_UNVALIDATED",
+ "source": {
+  "file": "C:\\AA_project\\guoying\\.venv\\Lib\\site-packages\\flybrain\\brain.py",
+  "sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "expected_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "match": true
+ },
+ "prototype": {
+  "module": "loop/p11_2_s5_1_tracer.py",
+  "class": "InstrumentedFlyBrain",
+  "writer": "TraceWriter",
+  "batch_supported": 1,
+  "official_full_brain_loaded": false,
+  "installed_package_modified": false,
+  "step_order_preserved": "synaptic* gain -> leak -> +tonic -> Bernoulli noise -> optional eye -> inject -> refractory -> threshold -> reset -> state/step",
+  "fields": ["step", "neuron", "v_start", "v_leak", "synaptic", "tonic", "noise", "eye", "inject", "v_pre_threshold", "v_post_reset", "threshold_distance", "fired", "refractory_zeroed"],
+  "dtypes": {"step": "<i4", "neuron": "<i4", "v_start": "<f8", "v_leak": "<f8", "synaptic": "<f8", "tonic": "<f8", "noise": "<f8", "eye": "<f8", "inject": "<f8", "v_pre_threshold": "<f8", "v_post_reset": "<f8", "threshold_distance": "<f8", "fired": "u1", "refractory_zeroed": "u1"},
+  "record_bytes": 90,
+  "index_order": "TraceWriter header target_indices order; one row per target per step",
+  "log_units": "FlyBrain model units; v dimensionless; not mV/nA"
+ },
+ "equivalence": {
+  "test_file": "loop/test_p11_2_s5_1_tracer.py",
+  "synthetic_neurons": 12,
+  "seed": 7,
+  "steps_per_case": 40,
+  "tests_ran": 6,
+  "tests_passed": 6,
+  "fired_indices_bitwise_equal": true,
+  "v_bitwise_equal": true,
+  "rng_bit_generator_state_equal": true,
+  "last_spike_equal_when_refractory": true,
+  "steps_equal": true,
+  "logging_on_off_same": true,
+  "component_closure_tolerance": 2e-06,
+  "covered": ["no injection", "low dose", "primary dose", "positive/negative weights", "Bernoulli noise", "post-spike reset", "no firing", "sustained firing", "eye_drive", "nonzero refractory", "logging on/off"],
+  "uncovered": ["official 166,700-neuron full brain", "batch>1", "CUDA"],
+  "note": "Equivalence is demonstrated only on the tiny synthetic CPU batch=1 network."
+ },
+ "observability": {
+  "pre_reset_v_captured": true,
+  "v_start_captured": true,
+  "leak_v_captured": true,
+  "synaptic_with_gain_captured": true,
+  "tonic_captured": true,
+  "noise_contribution_captured": true,
+  "eye_contribution_captured": true,
+  "inject_contribution_captured": true,
+  "threshold_distance_captured": true,
+  "post_reset_v_captured": true,
+  "fired_captured": true,
+  "refractory_zeroed_captured": true,
+  "inference_from_post_step_v": false,
+  "api_only_limitation_resolved": true,
+  "note": "Captured by instrumented step, not inferred from post-reset brain.v."
+ },
+ "trace_format": {
+  "binary_stream": ".bin fixed-size records",
+  "header": ".bin.json with target_indices, fields, dtypes, units, record count, SHA-256",
+  "hash": "SHA-256 of binary record stream",
+  "streaming": true,
+  "full_v_history": false
+ },
+ "resource_estimate": {
+  "core_targets": 415,
+  "core_KC_320_MBON_95": true,
+  "core_records": 166000,
+  "core_MiB": 14.247894287109375,
+  "with_1000_relays_MiB": 34.332275390625,
+  "with_1415_targets_MiB": 48.580169677734375,
+  "full_brain_v_history_saved": false,
+  "time_overhead": "UNVALIDATED",
+  "memory_risk": "LOW_STATIC_ESTIMATE_BUT_UNVERIFIED",
+  "note": "Estimate assumes 90 bytes/record and 400 steps; no full-brain measurement."
+ },
+ "biological_validity": {
+  "status": "UNVALIDATED",
+  "implementation_equivalence": "GO",
+  "model_mechanism_observability": "GO",
+  "biological_calibration": "NO",
+  "parameters_hand_calibrated": ["tonic", "gain", "noise_hz", "noise_amp"],
+  "threshold_reset_engineering": true,
+  "weights_anatomical_only": true,
+  "not_supported": ["biological threshold/reset", "biological current equivalence", "biological learning/function"]
+ },
+ "answers": {
+  "q1_stepwise_equivalent": "YES on tiny synthetic CPU batch=1 networks: fired, v, RNG state, steps and last_spike equal; official full brain untested.",
+  "q2_real_pre_reset_and_contributions": "YES in the instrumented step: v_start, leak, synaptic+gain, tonic, noise, eye, inject, pre-threshold and post-reset are recorded; not inferred.",
+  "q3_logging_changes_state": "NO in synthetic tests: logging on/off produced identical v/RNG/fired/state.",
+  "q4_full_brain_risk": "Small static log estimate: ~14.25 MiB for 415 core targets, ~34.33 MiB with 1000 relays, ~48.6 MiB with 1415; time overhead UNVALIDATED; no full-brain measurement.",
+  "q5_ready_for_observation_experiment": "Not yet automatically; use B-first model-semantics validation and a new explicit authorization. The prototype is ready for further synthetic validation, not official full-brain use."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_new_dynamics": true,
+ "no_official_full_brain_run": true
+}
