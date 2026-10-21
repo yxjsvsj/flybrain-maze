@@ -1,0 +1,377 @@
+{
+ "protocol": "P11-2-S4-OFFLINE/v1",
+ "baseline": "775de5b",
+ "status": "S4_OFFLINE_COMPLETE; NO_NEW_DYNAMICS; EXPLORATORY",
+ "frozen_s3": {
+  "status": "RUN_COMPLETE",
+  "decision": "INCONCLUSIVE_KC_NOT_DRIVEN",
+  "scientific_go": false,
+  "kc_primary": {
+   "mean": 0.022858125,
+   "sd": 0.007395459,
+   "p": 5.960464477539063e-08,
+   "ci": {
+    "ci_low": 0.0199255,
+    "ci_high": 0.025606891,
+    "n": 10000,
+    "seed": 20261019
+   },
+   "n": 25,
+   "pass": false,
+   "min_effect": 0.1
+  },
+  "mbon_primary": {
+   "mean": -0.000111579,
+   "sd": 0.006896449,
+   "p": 0.9374145269393921,
+   "ci": {
+    "ci_low": -0.002854789,
+    "ci_high": 0.00248,
+    "n": 10000,
+    "seed": 20261019
+   },
+   "n": 25,
+   "positive": false,
+   "negative": false,
+   "min_positive_effect": 0.05
+  },
+  "saturation": {
+   "mean_kc_primary": 0.2238375,
+   "fraction_cell_mean_ge095": 0.0,
+   "mean_lt_085": true,
+   "frac_le_010": true,
+   "pass": true
+  }
+ },
+ "archive": {
+  "raw_dir": "C:\\Users\\yang\\AppData\\Local\\Temp\\opencode\\p11_2_s3_full\\20261021T102823",
+  "backup_dir": "C:\\AA_project\\guoying_archive\\p11_2_s3_run_20261021T102823",
+  "npz_count": 75,
+  "raw_hashes_ok": true,
+  "backup_hashes_ok": true,
+  "raw_bad": [],
+  "backup_bad": [],
+  "run_meta_sha256_match": true,
+  "manifest_files": 79
+ },
+ "reproduction": {
+  "kc_primary": {
+   "mean": 0.022858125,
+   "sd": 0.007395459,
+   "min": 0.005953125,
+   "max": 0.035984375,
+   "n_positive": 25,
+   "n_negative": 0,
+   "n_zero": 0,
+   "p": 5.960464477539063e-08,
+   "ci": {
+    "ci_low": 0.0199255,
+    "ci_high": 0.025606891,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "kc_low": {
+   "mean": 0.011631875,
+   "sd": 0.005719058,
+   "min": 0.00275,
+   "max": 0.02321875,
+   "n_positive": 25,
+   "n_negative": 0,
+   "n_zero": 0,
+   "p": 5.960464477539063e-08,
+   "ci": {
+    "ci_low": 0.009444297,
+    "ci_high": 0.013893125,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "mbon_primary": {
+   "mean": -0.000111579,
+   "sd": 0.006896449,
+   "min": -0.016473684,
+   "max": 0.011526316,
+   "n_positive": 12,
+   "n_negative": 13,
+   "n_zero": 0,
+   "p": 0.9374145269393921,
+   "ci": {
+    "ci_low": -0.002854789,
+    "ci_high": 0.00248,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "mbon_low": {
+   "mean": 0.001347368,
+   "sd": 0.007776913,
+   "min": -0.007736842,
+   "max": 0.020315789,
+   "n_positive": 11,
+   "n_negative": 14,
+   "n_zero": 0,
+   "p": 0.39802277088165283,
+   "ci": {
+    "ci_low": -0.001564263,
+    "ci_high": 0.004465263,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "formal_kc_mean": 0.022858125,
+  "formal_kc_p": 5.960464477539063e-08,
+  "formal_mbon_mean": -0.000111579,
+  "formal_mbon_p": 0.9374145269393921,
+  "kc_match": true,
+  "kc_p_match": true,
+  "mbon_match": true,
+  "mbon_p_match": true
+ },
+ "dose_response": {
+  "kc_primary": {
+   "mean": 0.022858125,
+   "sd": 0.007395459,
+   "min": 0.005953125,
+   "max": 0.035984375,
+   "n_positive": 25,
+   "n_negative": 0,
+   "n_zero": 0,
+   "p": 5.960464477539063e-08,
+   "ci": {
+    "ci_low": 0.0199255,
+    "ci_high": 0.025606891,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "kc_low": {
+   "mean": 0.011631875,
+   "sd": 0.005719058,
+   "min": 0.00275,
+   "max": 0.02321875,
+   "n_positive": 25,
+   "n_negative": 0,
+   "n_zero": 0,
+   "p": 5.960464477539063e-08,
+   "ci": {
+    "ci_low": 0.009444297,
+    "ci_high": 0.013893125,
+    "n": 10000,
+    "seed": 20261019
+   }
+  },
+  "low_to_primary_aggregate_ratio": 0.508872666,
+  "per_seed_low_to_primary_ratio_mean": 0.529491977,
+  "primary_direction_positive": 25,
+  "low_direction_positive": 25,
+  "primary_sd": 0.007395459,
+  "low_sd": 0.005719058,
+  "note": "two fixed doses only; no extrapolation to untested stronger dose"
+ },
+ "cell_level": {
+  "matched_kc_primary": {
+   "mean": 0.022858125,
+   "sd": 0.017560121,
+   "min": -0.0042,
+   "max": 0.1028,
+   "n_positive": 311,
+   "n_negative": 3,
+   "n_zero": 6,
+   "positive_sum": 7.3192,
+   "negative_sum": -0.0046,
+   "net_sum": 7.3146,
+   "top_1pct_contribution_to_mean": 0.0009075,
+   "top_1pct_n": 3,
+   "max_abs": 0.1028
+  },
+  "matched_kc_low": {
+   "mean": 0.011631875,
+   "sd": 0.009426601,
+   "min": -0.001,
+   "max": 0.0592,
+   "n_positive": 295,
+   "n_negative": 13,
+   "n_zero": 12,
+   "positive_sum": 3.728,
+   "negative_sum": -0.0058,
+   "net_sum": 3.7222,
+   "top_1pct_contribution_to_mean": 0.00052125,
+   "top_1pct_n": 3,
+   "max_abs": 0.0592
+  },
+  "full_kc_primary": {
+   "mean": -0.00030753,
+   "sd": 0.009013646,
+   "min": -0.0246,
+   "max": 0.1028,
+   "n_positive": 1146,
+   "n_negative": 2737,
+   "n_zero": 181,
+   "positive_sum": 8.4186,
+   "negative_sum": -9.6684,
+   "net_sum": -1.2498,
+   "top_1pct_contribution_to_mean": 0.000539665354,
+   "top_1pct_n": 41,
+   "max_abs": 0.1028
+  },
+  "other_kc_primary": {
+   "mean": -0.0022875,
+   "sd": 0.003480062,
+   "min": -0.0246,
+   "max": 0.0116,
+   "n_positive": 835,
+   "n_negative": 2734,
+   "n_zero": 175,
+   "positive_sum": 1.0994,
+   "negative_sum": -9.6638,
+   "net_sum": -8.5644,
+   "top_1pct_contribution_to_mean": 6.0950855e-05,
+   "top_1pct_n": 37,
+   "max_abs": 0.0246
+  },
+  "matched_mbon_primary": {
+   "mean": -0.000111579,
+   "sd": 0.006636823,
+   "min": -0.0192,
+   "max": 0.0268,
+   "n_positive": 51,
+   "n_negative": 43,
+   "n_zero": 1,
+   "positive_sum": 0.1918,
+   "negative_sum": -0.2024,
+   "net_sum": -0.0106,
+   "top_1pct_contribution_to_mean": 0.000282105263,
+   "top_1pct_n": 1,
+   "max_abs": 0.0268
+  },
+  "matched_mbon_low": {
+   "mean": 0.001347368,
+   "sd": 0.004821336,
+   "min": -0.0092,
+   "max": 0.0242,
+   "n_positive": 60,
+   "n_negative": 34,
+   "n_zero": 1,
+   "positive_sum": 0.2226,
+   "negative_sum": -0.0946,
+   "net_sum": 0.128,
+   "top_1pct_contribution_to_mean": 0.000254736842,
+   "top_1pct_n": 1,
+   "max_abs": 0.0242
+  },
+  "primary_matched_rate_max": 0.5734,
+  "sham_matched_rate_max": 0.54,
+  "primary_cells_ge085": 0,
+  "primary_cells_ge095": 0,
+  "note": "cell-level descriptive; not 25 independent samples; no cell selection"
+ },
+ "time_bins": {
+  "bins": [
+   0,
+   100,
+   150,
+   200,
+   250,
+   300,
+   400
+  ],
+  "kc_primary_minus_sham": [
+   0.0,
+   0.0248025,
+   0.0242225,
+   0.0184225,
+   0.023985,
+   0.00134625
+  ],
+  "kc_low_minus_sham": [
+   0.0,
+   0.0123975,
+   0.0155975,
+   0.009015,
+   0.0095175,
+   -0.000335
+  ],
+  "mbon_primary_minus_sham": [
+   0.0,
+   0.000185263,
+   0.001861053,
+   -0.00304,
+   0.000547368,
+   0.004117895
+  ],
+  "note": "sustained vs transient; EXPLORATORY"
+ },
+ "model_semantics": {
+  "source_file": "C:\\AA_project\\guoying\\.venv\\Lib\\site-packages\\flybrain\\brain.py",
+  "source_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "inject_is_voltage": true,
+  "reset_to_zero": true,
+  "threshold": true,
+  "dt": 0.02,
+  "tau": 0.1,
+  "decay": 0.818730753077982,
+  "amount_primary": 0.03625384938440364,
+  "amount_low": 0.01812692469220182,
+  "dv_inf_primary": 0.2,
+  "dv_inf_low": 0.1,
+  "observed_kc_rate_delta_primary": 0.022858125,
+  "observed_kc_rate_delta_low": 0.011631875,
+  "low_to_primary_rate_ratio": 0.508872666,
+  "low_to_primary_dv_ratio": 0.5
+ },
+ "mechanism": {
+  "OBSERVED": [
+   "Inject is direct voltage; primary steady subthreshold increment DV_inf=0.20, low=0.10.",
+   "Observed matched KC increment +0.022858 (primary) and +0.011632 (low); all 25 seeds positive.",
+   "KC response is widespread: 311/320 matched KCs positive, 3 negative, 6 zero; top 1% contributes only ~4% of mean.",
+   "No matched KC saturation: primary max rate 0.5734 <0.85; zero cells >=0.95.",
+   "Matched KC positive, other KC mean -0.002287; full-4064 mean -0.000308.",
+   "KC effect is sustained across 100-300, not a failed short-window transient; post-window residual small."
+  ],
+  "SUPPORTED_HYPOTHESIS": [
+   "The small response is consistent with threshold/subthreshold gating and post-spike reset limiting the effective rate increment; two-dose ratio ~0.509 is consistent with the DV ratio 0.5 but does not prove linearity.",
+   "Non-injected KC negative shift is consistent with network interaction/redistribution; it is descriptive, not causal."
+  ],
+  "UNKNOWN": [
+   "Actual voltage trajectories, threshold distance, synaptic currents, and the relative contribution of reset vs network input are not recorded.",
+   "Whether a stronger direct voltage dose would produce interpretable biology cannot be inferred by linear extrapolation."
+  ]
+ },
+ "decision": {
+  "priority": "B",
+  "A": "A new independent KC-drive dose experiment could test a prespecified dose range, but current data cannot justify stronger dose selection and no voltage traces exist.",
+  "B": "Pause stronger stimulation; first validate LIF/network and biological-drive semantics, including subthreshold voltage and reset behavior.",
+  "falsifiable_hypotheses": [
+   "H1 threshold: most nonresponding KCs stay below threshold; responders sit near threshold. If voltage traces contradict, reject.",
+   "H2 reset: post-spike reset dominates the rate ceiling; if traces/rate relation contradict, reject.",
+   "H3 network: negative other-KC shift comes from shared network input; if isolated/voltage traces show none, reject.",
+   "H4 aggregation: KC response is transient and hidden by window averaging; already contradicted by sustained bins."
+  ],
+  "stop_conditions": [
+   "No voltage/current traces or semantic mismatch between FlyBrain inject and intended biological drive.",
+   "Proposed run exceeds 900 s / 2048 MiB or requires a new authorization absent.",
+   "KC saturation or no monotonic dose response in a validated model.",
+   "Any attempt to extrapolate a stronger dose without a new preregistration."
+  ],
+  "next_experiment_candidate": "B-first: an independent model-semantics/voltage-trace study (or a validated LIF/current mapping) before any stronger KC stimulation. A dose experiment only after that, with prespecified doses and voltage monitoring."
+ },
+ "answers": {
+  "q1_formal_reproduced": true,
+  "q2_strongest_observation": "The KC response is significant but only 0.0229, far below the +0.10 gate, despite DV_inf=0.20; it is widespread, not a few-cell artifact, and not saturated.",
+  "q3_likely_limiter": "SUPPORTED_HYPOTHESIS: threshold/reset/effective-voltage gating (and possibly network redistribution); exact cause UNKNOWN.",
+  "q4_next_direction": "B: pause stronger stimulation and validate model/biological-drive semantics with voltage/current traces; A only after that.",
+  "q5_no_extrapolation": "Do not infer a stronger dose from the approximate low/primary ratio."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_new_dynamics": true
+}
