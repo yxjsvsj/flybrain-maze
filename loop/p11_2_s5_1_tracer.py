@@ -161,7 +161,13 @@ class InstrumentedFlyBrain(FlyBrain):
     def __init__(self, *args, targets=None, trace_path=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_supported()
-        self._targets = None if targets is None else np.asarray(sorted(set(int(x) for x in targets)), dtype=np.int64)
+        if targets is None:
+            self._targets = None
+        else:
+            arr = np.asarray([int(x) for x in targets], dtype=np.int64)
+            if len(set(arr.tolist())) != len(arr):
+                raise ValueError("targets must be unique")
+            self._targets = arr
         if self._targets is not None and (self._targets.size == 0 or self._targets.min() < 0 or self._targets.max() >= self.n):
             raise ValueError("targets out of range")
         self._trace = self._targets is not None
@@ -250,7 +256,17 @@ class InstrumentedFlyBrain(FlyBrain):
         flat = fired if xp is np else fired.get()
         return flat
 
+    def start_trace(self, path: str):
+        if not self._trace:
+            raise ValueError("no targets configured")
+        if self._writer is not None:
+            self._writer.close()
+        self._writer = TraceWriter(path, self._targets)
+        return os.path.abspath(path)
+
     def close_trace(self):
         if self._writer is not None:
-            return self._writer.close()
+            h = self._writer.close()
+            self._writer = None
+            return h
         return None

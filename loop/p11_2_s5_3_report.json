@@ -1,0 +1,169 @@
+{
+ "protocol": "P11-2-S5-3/v1",
+ "baseline": "1855e91",
+ "status": "PREREGISTRATION_COMPLETE; SYNTHETIC_ACCEPTANCE_GO; TRACE_INTEGRITY_GO; RESOURCE_PLAUSIBLE; FULL_BRAIN_EQUIVALENCE_UNVERIFIED; NOT_AUTHORIZED; NO_RUN",
+ "ready_to_request_one_observation_run": "YES_CONDITIONAL",
+ "execution_authorization": "NOT_AUTHORIZED",
+ "new_full_brain_authorization": false,
+ "training_authorization": false,
+ "real_synaptic_learning_ready": "NO",
+ "biological_validity": "UNVALIDATED",
+ "science_question": "Why did direct matched-KC voltage injection in S3 produce only +0.022858125 KC rate change, below the +0.10 gate? Observe threshold distance, pre-reset v, synaptic/tonic/noise/inject, and reset.",
+ "frozen_s3": {
+  "decision": "INCONCLUSIVE_KC_NOT_DRIVEN",
+  "scientific_go": false,
+  "entry_diff": 0.066634727,
+  "matched_kc_diff": 0.022858125,
+  "matched_mbon_diff": -0.000111579,
+  "unchanged": true
+ },
+ "design": {
+  "network": "official MaleCNS synthetic B; only 642,933 KC->KC removed",
+  "seeds": [
+   301,
+   305
+  ],
+  "seed_count": 5,
+  "conditions": [
+   "sham",
+   "kc_low",
+   "kc_primary"
+  ],
+  "steps_per_seed_condition": 400,
+  "groups": 15,
+  "total_steps": 6000,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "matched-320 KC + matched-95 MBON",
+  "target_count": 415,
+  "target_kc_sha256": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "target_mbon_sha256": "2248dccc680981af16270f12f6365ca5832fab2a12bb5ace3b80cc73580b61a6",
+  "joint_target_sha256": "942d87d267711edf943b0804ab9089ab23cec7532f017d10ebf81c3ec4c12567",
+  "target_order": "sorted matched KC (320) then sorted matched MBON (95); frozen joint vector",
+  "amount_low": 0.01812692469220182,
+  "amount_primary": 0.03625384938440364,
+  "sham": "no injection",
+  "no_mbon_or_sensory_injection": true,
+  "cpu_only": true,
+  "batch": 1,
+  "trace_format": "S5TRACE/1; 90-byte records",
+  "trace_targets": "only the 415 frozen targets; no relay cells",
+  "trace_steps": 400,
+  "trace_fields": [
+   "step",
+   "neuron",
+   "v_start",
+   "v_leak",
+   "synaptic",
+   "tonic",
+   "noise",
+   "eye",
+   "inject",
+   "v_pre_threshold",
+   "v_post_reset",
+   "threshold_distance",
+   "fired",
+   "refractory_zeroed"
+  ]
+ },
+ "readouts_frozen": {
+  "unit": "5 seeds; 415 cells and 400 steps are not independent seed samples",
+  "descriptive": [
+   "pre-threshold v and threshold distance by condition",
+   "fraction closer than 0.05/0.10/0.20",
+   "synaptic/tonic/noise/inject components",
+   "fired/reset vs threshold distance",
+   "KC and MBON window rates",
+   "contribution decomposition"
+  ],
+  "new_primary_endpoint": false,
+  "new_biological_significance": false,
+  "dose_selection_after_results": false
+ },
+ "implementation": {
+  "experiment": "loop/p11_2_s5_3_experiment.py",
+  "launcher": "loop/p11_2_s5_3_launcher.py",
+  "tracer": "loop/p11_2_s5_1_tracer.py",
+  "authorization_template": "loop/p11_2_s5_3_authorization.json",
+  "freeze": "loop/p11_2_s5_3_script_freeze.json",
+  "approval_template": "loop/P11_2_S5_3_ONE_RUN_APPROVAL.md",
+  "tests": "loop/test_p11_2_s5_3_launcher.py",
+  "job": {
+   "wall_cap_s": 900.0,
+   "mem_cap_MiB": 2048,
+   "named_job": true,
+   "kill_on_job_close": true,
+   "pid_membership": true,
+   "create_suspended_resume": true
+  },
+  "one_shot_lock": true,
+  "no_auto_retry": true,
+  "default_refuse_before_full_brain": true,
+  "s3_auth_or_lock_reused": false,
+  "historical_s3_parent_modified": false
+ },
+ "source": {
+  "flybrain_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+  "tracer_sha256": "59978c1eb01e740976ffbd8341292b08a864cb711442731bc8c02dcbe66d6014",
+  "experiment_sha256": "4562f4b2931da805b2fb7bd0d2e6692355a0c3fe620a9c741df373763b6c9642"
+ },
+ "freeze": {
+  "file": "loop/p11_2_s5_3_script_freeze.json",
+  "matches": true
+ },
+ "tests": {
+  "file": "loop/test_p11_2_s5_3_launcher.py",
+  "ran": 6,
+  "passed": 6,
+  "cases": [
+   "unauthorized production refusal",
+   "atomic synthetic lock/second refusal",
+   "15-group synthetic trace success/integrity",
+   "missing/truncated/hash/target-order rejection",
+   "report/manifest persistence failure",
+   "synthetic Job exit/timeout/memory"
+  ],
+  "official_full_brain_loaded": false
+ },
+ "resource": {
+  "single_group_MiB": 14.247894287109375,
+  "groups": 15,
+  "trace_total_MiB": 213.71841430664062,
+  "trace_total_GiB": 0.20871,
+  "backup_total_MiB": 427.43682861328125,
+  "backup_total_GiB": 0.41742,
+  "writer_only_415_seconds_per_group": 0.0409,
+  "writer_only_15_groups_est_seconds": 0.6135,
+  "s3_job_peak_MiB": 1932.29,
+  "instrumentation_extra_memory_MiB": "UNVERIFIED",
+  "instrumentation_extra_time_s": "UNVERIFIED",
+  "full_brain_equivalence": "UNVERIFIED",
+  "resource_status": "RESOURCE_PLAUSIBLE",
+  "resource_not_ready": false,
+  "note": "Trace logs are streamed per group; 15 groups are not held in memory. Full-brain instrumentation peak/time and equivalence were not measured."
+ },
+ "answers": {
+  "q1_ready_to_request": "YES_CONDITIONAL: pre-registration and synthetic acceptance are complete; full-brain equivalence and resource safety remain unverified.",
+  "q2_trace_integrity": "GO for synthetic 15-group 415-target traces; missing/truncated/hash/order all rejected.",
+  "q3_cpu_batch": "STRICT: CPU, NumPy, batch=1 only; CUDA/other/batch>1 rejected.",
+  "q4_resource": "RESOURCE_PLAUSIBLE: 214 MiB raw traces, 427 MiB with backup; S3 peak 1932.29 MiB; instrumentation overhead and full-brain peak/time UNVERIFIED.",
+  "q5_interpretation": "Only descriptive mechanism observation; S3 remains INCONCLUSIVE_KC_NOT_DRIVEN; no new biological significance or dose selection."
+ },
+ "gates": {
+  "NEW_FULL_BRAIN_AUTHORIZATION": false,
+  "NEW_S5_3_EXECUTION_AUTHORIZATION": false,
+  "TRAINING_AUTHORIZATION": false,
+  "REAL_SYNAPTIC_LEARNING_READY": "NO",
+  "BIOLOGICAL_VALIDITY": "UNVALIDATED",
+  "Level_A/B/C/Biological": "NO-GO",
+  "Robot": "NO-GO",
+  "Maze": "NO-GO",
+  "Dijkstra": "NO-GO",
+  "DeltaW": "NO-GO"
+ },
+ "no_full_brain_run": true,
+ "no_s3_rerun": true,
+ "notes": "Preregistration and synthetic acceptance only; no APPROVED authorization or production lock."
+}

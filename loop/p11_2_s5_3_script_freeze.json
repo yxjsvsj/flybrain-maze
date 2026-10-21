@@ -1,0 +1,14 @@
+{
+ "protocol": "P11-2-S5-3/v1",
+ "status": "FROZEN_STATIC_ONLY_NOT_APPROVED",
+ "experiment": "loop/p11_2_s5_3_experiment.py",
+ "experiment_sha256": "4562f4b2931da805b2fb7bd0d2e6692355a0c3fe620a9c741df373763b6c9642",
+ "tracer": "loop/p11_2_s5_1_tracer.py",
+ "tracer_sha256": "59978c1eb01e740976ffbd8341292b08a864cb711442731bc8c02dcbe66d6014",
+ "flybrain_source_sha256": "142ecfffd5d32e30655829e34b38b04024e49beae662bd078279e9610c789b0c",
+ "target_sha256": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+ "mbon_sha256": "2248dccc680981af16270f12f6365ca5832fab2a12bb5ace3b80cc73580b61a6",
+ "joint_target_sha256": "942d87d267711edf943b0804ab9089ab23cec7532f017d10ebf81c3ec4c12567",
+ "target_count": 415,
+ "created": "2026-10-21"
+}

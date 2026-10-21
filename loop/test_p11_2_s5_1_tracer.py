@@ -302,6 +302,17 @@ class S51Test(unittest.TestCase):
             self.assertEqual(r["sha256"], _sha(p))
 
 
+    def test_target_order_preserved(self):
+        path = os.path.join(self.tmp, "order.bin")
+        inst = tracer.InstrumentedFlyBrain(data=self.tmp, seed=7, device="cpu", batch=1,
+                                           dt=0.020, targets=[3, 0, 2], trace_path=path)
+        inst.step(inject=[(np.array([3]), 0.01)])
+        hdr = inst.close_trace()
+        self.assertEqual(hdr["target_indices"], [3, 0, 2])
+        h, rows = tracer.read_trace(path)
+        self.assertEqual(h["target_indices"], [3, 0, 2])
+        self.assertTrue(np.array_equal(rows[0]["neuron"], np.array([3, 0, 2], np.int32)))
+
     def test_s5_2_report(self):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                "p11_2_s5_2_report.json"), encoding="utf-8") as f:

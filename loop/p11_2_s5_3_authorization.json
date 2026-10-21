@@ -1,0 +1,45 @@
+{
+ "protocol": "P11-2-S5-3/v1",
+ "status": "NOT_AUTHORIZED",
+ "approved_by": null,
+ "approval_text": null,
+ "scope": {
+  "n_neurons": 166700,
+  "network": "B_synthetic_kc_kc_zero",
+  "remove_edges": 642933,
+  "conditions": [
+   "sham",
+   "kc_low",
+   "kc_primary"
+  ],
+  "seeds": [
+   301,
+   302,
+   303,
+   304,
+   305
+  ],
+  "steps": 400,
+  "total_steps": 6000,
+  "groups": 15,
+  "window": [
+   100,
+   300
+  ],
+  "targets": "matched-320 KC + matched-95 MBON",
+  "target_sha256": "6e5f35f5662578fa06ec396973befc34bd53f171985fb8f752c3a8e37d350385",
+  "mbon_sha256": "2248dccc680981af16270f12f6365ca5832fab2a12bb5ace3b80cc73580b61a6",
+  "joint_target_sha256": "942d87d267711edf943b0804ab9089ab23cec7532f017d10ebf81c3ec4c12567",
+  "target_count": 415,
+  "amount_primary": 0.03625384938440364,
+  "amount_low": 0.01812692469220182,
+  "device": "cpu",
+  "wall_cap_s": 900.0,
+  "mem_cap_MiB": 2048,
+  "one_run": true,
+  "auto_retry": false,
+  "training": false,
+  "dW": 0
+ },
+ "checksum": "7b1cb5ed887947bb7c25ae6d7b0b747d4becb74608e8b6d32a8cd3878b196dcf"
+}
