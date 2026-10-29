@@ -17,6 +17,14 @@
 | `dashboard.py` | 独立 D2 启动器，复用 D1 REPLAY 页面；无电机路径 |
 | `gates.py` | 预注册老师/推理契约/门控函数 |
 | `test_d2.py` | 合成门控与证据回归 |
+| `protocol.py` | 120-run 固定协议、授权、freeze、一次性锁 |
+| `D2_AUTHORIZATION.json` / `D2_SCRIPT_FREEZE.json` | 当前 `NOT_AUTHORIZED`；无生产锁 |
+| `frames.py` / `capture.py` | 真实 ToF 帧包校验 / 采集（不跑脑、不动电机） |
+| `collect.py` | 静态完整脑采集；默认无授权拒绝 |
+| `train.py` | 外部零偏置线性拟合；默认无授权拒绝 |
+| `evaluate.py` | 独立 700mm 留出验证与 G1–G7 |
+| `pipeline.py` | 一次性 fail-closed 总入口；默认拒绝 |
+| `test_pipeline.py` | 合成数据采集/拟合/验证/授权回归 |
 | `STORYBOARD.md` | 7 天视频分镜、真实失败素材备选 |
 
 ## 运行
@@ -27,10 +35,18 @@
 
 # 合成门控测试
 .\.venv\Scripts\python.exe -m unittest demo.brain_turn_d2.test_d2 -v
+.\.venv\Scripts\python.exe -m unittest demo.brain_turn_d2.test_pipeline -v
+
+# 完整流水线：默认会 REFUSED/NOT_AUTHORIZED，不会加载脑
+.\.venv\Scripts\python.exe -m demo.brain_turn_d2.pipeline
 
 # 复用 D1 只读 REPLAY 仪表盘（D2 启动器）
 .\.venv\Scripts\python.exe -m demo.brain_turn_d2.dashboard --open
 ```
+
+当前 `D2_AUTHORIZATION.json` 是 `NOT_AUTHORIZED`，没有授权锁；
+`D2_RUNS/` 不存在，`D2_CANDIDATE.npz` 不存在，`D2_EVAL.json` 不存在。
+`pipeline.py` 只有显式批准后才可能运行 120 个静态完整脑 run。
 
 D1 页面（`http://127.0.0.1:8765/`）继续只读：没有 `/api/drive`、没有
 `/api/manual/drive`、没有 Arduino/串口/电机输出。D2 不另造一套可驱动页面。

@@ -45,6 +45,17 @@
     "candidate_trained": false,
     "training_run": false,
     "full_brain_run": false,
+    "pipeline": {
+      "implemented": true,
+      "authorized": false,
+      "collect": "collect.py",
+      "external_fit": "train.py",
+      "heldout_gates": "evaluate.py",
+      "one_shot": "pipeline.py",
+      "synthetic_tests": "test_pipeline.py",
+      "authorization": "D2_AUTHORIZATION.json",
+      "freeze": "D2_SCRIPT_FREEZE.json"
+    },
     "recoverability_tool": {
       "path": "C:\\AA_project\\guoying\\loop\\p2_readout_recoverability.py",
       "expected_inputs": "static_A/B/C/D feats",

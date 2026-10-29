@@ -72,7 +72,16 @@
 - 分镜与诚实失败备选见 `STORYBOARD.md`。
 - 当前页面只能展示历史 readout/失败证据，不能展示实体车运动。
 
-## 7. 限制
+## 7. 已实现的 fail-closed 流水线
+
+- `collect.py`：静态完整脑采集；未授权直接拒绝。
+- `train.py`：只拟合外部零偏置线性读出；不加载脑。
+- `evaluate.py`：独立 700mm 验证与 G1–G7。
+- `pipeline.py`：auth → freeze → lock → collect → fit → evaluate；默认拒绝、无重试。
+- `test_pipeline.py`：合成数据/授权/门控回归；本轮未跑真实采集或训练。
+- 当前 `D2_AUTHORIZATION.json=NOT_AUTHORIZED`，无锁、无 `D2_RUNS`、无候选权重。
+
+## 8. 限制
 
 - No new full-brain dynamics were run.
 - No readout was trained; no candidate weights exist.

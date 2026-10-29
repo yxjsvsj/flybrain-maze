@@ -1,6 +1,6 @@
 # DEMO-BRAIN-TURN-D2 — 预注册：双向外部线性读出
 
-**状态：`PREREGISTERED; NOT_AUTHORIZED; NOT_RUN`**
+**状态：`PREREGISTERED; PIPELINE_IMPLEMENTED; NOT_AUTHORIZED; NOT_RUN`**
 
 基线：`0d1d845`
 D1：`NO_GO`，永久保留；旧 `readout_real.npz` SHA：
@@ -119,3 +119,15 @@ B 场景必须只让 FL 有效；C 只让 FR 有效；D 的 FL/FR 对称且接�
 4. 只报告，不接电机、不跑迷宫、不训练连接组。
 
 不包含：实体车、自动调参、重启 P2d-29、改变 D1 历史结论。
+
+## 8. 已实现的 fail-closed 流水线
+
+- `protocol.py`：固定 120-run scope、auth 校验、脚本 freeze、一次性锁。
+- `frames.py` / `capture.py`：真实 ToF 帧包校验与采集；不跑脑、不动电机。
+- `collect.py`：静态完整脑采集；未授权直接拒绝。
+- `train.py`：只拟合外部零偏置线性读出；不加载脑。
+- `evaluate.py`：独立 700mm 验证与 G1–G7。
+- `pipeline.py`：auth → freeze → lock → collect → fit → evaluate；默认拒绝，无重试。
+- `test_pipeline.py`：合成数据/授权/锁/门控回归；本轮未执行真实采集或真实训练。
+
+当前 `D2_AUTHORIZATION.json` 为 `NOT_AUTHORIZED`，无锁、无 `D2_RUNS`、无候选权重。

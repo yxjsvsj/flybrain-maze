@@ -1,0 +1,49 @@
+{
+  "protocol": "DEMO-BRAIN-TURN-D2/v1",
+  "status": "NOT_AUTHORIZED",
+  "approved_by": null,
+  "approval_text": null,
+  "scope": {
+    "protocol": "DEMO-BRAIN-TURN-D2/v1",
+    "scenes": [
+      "A_open",
+      "B_FL_only",
+      "C_FR_only",
+      "D_FL_FR_symmetric"
+    ],
+    "distances_mm": [
+      400,
+      700
+    ],
+    "train_distance_mm": 400,
+    "val_distance_mm": 700,
+    "train_seeds": [
+      3001,
+      3002,
+      3003
+    ],
+    "val_seeds": [
+      3051,
+      3052
+    ],
+    "repeats": 3,
+    "seconds": 10.0,
+    "tof_hz": 10.0,
+    "brain_hz": 50.0,
+    "steps_per_run": 500,
+    "tof_frames_per_run": 100,
+    "runs": 120,
+    "total_steps": 60000,
+    "trace_tau": 0.2,
+    "ridge_lambda": 0.01,
+    "random_seed": 20261022,
+    "device": "cpu",
+    "batch": 1,
+    "motor": false,
+    "training": "external_linear_only",
+    "synaptic_dW": 0.0,
+    "wall_cap_s": 1800.0,
+    "mem_cap_MiB": 2048
+  },
+  "checksum": "b4169c4c4bd7248e2f43c2d6ff09a62bff6c0e1a5f13ddf2b2dc201674b648f2"
+}

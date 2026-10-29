@@ -1,0 +1,15 @@
+{
+  "protocol": "DEMO-BRAIN-TURN-D2/v1",
+  "status": "FROZEN_NOT_AUTHORIZED",
+  "scripts": {
+    "protocol.py": "b0808f35e5ecd2176b6a8e11826a6019afbc51b50abf9776d0f58e21636fb80b",
+    "frames.py": "97b2ccc450af4da25c0c994a73c7c181d636a931ea0e5938cc6599657092265c",
+    "readout.py": "0def52ed5c67f000e0931ce9b62c4b9cc4f4219d4748bace8c55bd52372e857d",
+    "collect.py": "ee84dfa66792d79c912d9802d883dd668fa873ac6251f727ec2f3d0dac60e9a9",
+    "train.py": "bb7c84ebf4be51d88fbcdeb9d573e4f5a066c67f08f8a47f6d59012df71f6aba",
+    "evaluate.py": "d880a8fc12137a4288a29ca647974374b6564a01c6de69e3484a0db49b0b1bc8",
+    "pipeline.py": "201f5133b107d43217caff7f1e481e6300c418a16d274ea85c5eac3b97f80a99",
+    "gates.py": "1c6d167dc9d4329a3f880759e0b4222d90b216cf742560c0c9b0298b4a45bd28",
+    "capture.py": "1ff62c1f8e51fd70c9f656fd23fba03d0ab1dc77d204c491fa9a033fe32dfc28"
+  }
+}
